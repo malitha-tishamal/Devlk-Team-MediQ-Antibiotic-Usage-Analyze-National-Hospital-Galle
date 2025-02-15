@@ -17,7 +17,7 @@ Localhost Database Name = <strong>mediq_db</strong><br /><br />
    
 # Attention to these things
 <strong>* Before start the works, you have to pull the project.</strong><br />
-<strong>* Don't edit codes, without asking from @supuncharuk.</strong><br />
+<strong>* Don't edit codes, without asking from @malitha.</strong><br />
 
 # Best Practices
 \* You have to name custom css classes like this -> <strong>my-heading </strong><br />
