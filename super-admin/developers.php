@@ -18,7 +18,7 @@
     <!-- ======= Header ======= -->
     <header id="header" class="header fixed-top d-flex align-items-center">
         <div class="d-flex align-items-center justify-content-between">
-            <a href="index.html" class="logo d-flex align-items-center">
+            <a href="index.php" class="logo d-flex align-items-center">
                 <img src="../assets\images\logos\favicon.png " width="35px">
                 <span class="d-none d-lg-block">Medi-Q</span>
             </a>
