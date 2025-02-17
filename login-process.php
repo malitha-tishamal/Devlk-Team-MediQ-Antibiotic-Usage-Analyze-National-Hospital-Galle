@@ -6,57 +6,66 @@ if (isset($_POST['submit'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // First, check if the user is an admin
-    $sql_admin = "SELECT * FROM admins WHERE email = ?";
-    if ($stmt = $conn->prepare($sql_admin)) {
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $admin = $result->fetch_assoc();
-
-        if ($admin && password_verify($password, $admin['password'])) {
-            // Check if the account is activated for admin
-            if ($admin['status'] == 'approved') {
-                $_SESSION['admin_id'] = $admin['id'];
-                $_SESSION['success_message'] = "Welcome Admin!";
-                header("Location: super-admin/index.php");
-                exit(); // Stop further execution after redirect
-            } else {
-                // Admin account is not approved
-                $_SESSION['error_message'] = "Your account has not been approved yet.";
-                header("Location: index.php"); // Redirect back to login page with error
-                exit();
-            }
+    // Function to check user credentials
+    function checkUser($conn, $table, $email) {
+        $sql = "SELECT * FROM $table WHERE email = ?";
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            return $result->fetch_assoc();
         }
+        return null;
     }
 
-    // If not an admin, check in the users table
-    $sql_user = "SELECT * FROM users WHERE email = ?";
-    if ($stmt = $conn->prepare($sql_user)) {
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-
-        if ($user && password_verify($password, $user['password'])) {
-            // Check if the user account is activated
-            if ($user['status'] == 'approved') {
-                $_SESSION['user_id'] = $user['id']; // Store user session
-                $_SESSION['success_message'] = "Welcome back! You're logged in.";
-                header("Location: pages-home.php"); // Redirect to user profile
-                exit(); // Stop further execution after redirect
-            } else {
-                // User account is not approved
-                $_SESSION['error_message'] = "Your account has not been approved yet.";
-                header("Location: index.php"); // Redirect back to login page with error
-                exit();
-            }
+    // Check in admins table
+    $admin = checkUser($conn, 'admins', $email);
+    if ($admin && password_verify($password, $admin['password'])) {
+        if ($admin['status'] == 'approved') {
+            $_SESSION['admin_id'] = $admin['id'];
+            $_SESSION['success_message'] = "Welcome Admin!";
+            header("Location: admin/index.php");
+            exit();
         } else {
-            // Incorrect login details
-            $_SESSION['error_message'] = "Invalid email or password.";
-            header("Location: index.php"); // Redirect back to login page with error
+            $_SESSION['error_message'] = "Your admin account has not been approved yet.";
+            header("Location: index.php");
             exit();
         }
     }
+
+    // Check in teachers table
+    $teacher = checkUser($conn, 'teachers', $email);
+    if ($teacher && password_verify($password, $teacher['password'])) {
+        if ($teacher['status'] == 'approved') {
+            $_SESSION['teacher_id'] = $teacher['id'];
+            $_SESSION['success_message'] = "Welcome Teacher!";
+            header("Location: teachers/index.php");
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Your teacher account has not been approved yet.";
+            header("Location: index.php");
+            exit();
+        }
+    }
+
+    // Check in users table
+    $user = checkUser($conn, 'users', $email);
+    if ($user && password_verify($password, $user['password'])) {
+        if ($user['status'] == 'approved') {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['success_message'] = "Welcome back! You're logged in.";
+            header("Location: pages-home.php");
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Your user account has not been approved yet.";
+            header("Location: index.php");
+            exit();
+        }
+    }
+
+    // If no match found
+    $_SESSION['error_message'] = "Invalid email or password.";
+    header("Location: index.php");
+    exit();
 }
 ?>
