@@ -74,13 +74,13 @@ $stmt->close();
                 if (popupAlert) {
                     popupAlert.style.display = 'none';
                 }
-            }, 10000);
+            }, 500);
 
             // If success message, redirect to index.php after 10 seconds
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
                     window.location.href = 'pages-add-antibiotic.php'; // Redirect after 10 seconds
-                }, 10000); // Delay 10 seconds before redirecting
+                }, 500); // Delay 10 seconds before redirecting
             <?php endif; ?>
         </script>
 

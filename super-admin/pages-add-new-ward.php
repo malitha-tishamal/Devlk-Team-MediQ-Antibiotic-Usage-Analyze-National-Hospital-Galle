@@ -67,12 +67,12 @@ $stmt->close();
                 if (popupAlert) {
                     popupAlert.style.display = 'none';
                 }
-            }, 10000);
+            }, 500);
 
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
                     window.location.href = 'pages-add-new-ward.php';
-                }, 10000);
+                }, 500);
             <?php endif; ?>
         </script>
 
