@@ -17,7 +17,7 @@
             <ul id="antibiotics-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
                 <li>
                     <a href="pages-release-antibiotic.php">
-                        <i class="bi bi-circle"></i><span>Release Antibiotic</span>
+                        <i class="bi bi-circle"></i><span>Dispensing Antibiotics</span>
                     </a>
                 </li>
                 <li>

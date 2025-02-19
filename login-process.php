@@ -43,7 +43,7 @@ if (isset($_POST['submit'])) {
             if ($user['status'] == 'approved') {
                 $_SESSION['user_id'] = $user['id']; // Store user session
                 $_SESSION['success_message'] = "Welcome back! You're logged in.";
-                header("Location: pages-home.php"); // Redirect to user profile
+                header("Location: pages-release-antibiotic.php"); // Redirect to user profile
                 exit(); // Stop further execution after redirect
             } else {
                 // User account is not approved

@@ -145,6 +145,18 @@ $pieChartResult = $pieStmt->get_result();
                             <form method="POST">
                                 <div class="form-row mb-3 d-flex">
                                     <div class="col-sm-3">
+                                        <label for="year_select" class="col-form-label">Select Year:</label>
+                                        <select name="year_select" id="year_select" class="form-select">
+                                            <?php
+                                            $currentYear = date('Y');
+                                            for ($i = 2020; $i <= $currentYear; $i++) {
+                                                echo "<option value='$i'" . ($i == $selectedYear ? ' selected' : '') . ">$i</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-sm-3">
                                         <label for="month_select" class="col-form-label">Select Month:</label>
                                         <select name="month_select" id="month_select" class="form-select">
                                             <?php
@@ -155,17 +167,6 @@ $pieChartResult = $pieStmt->get_result();
                                             ];
                                             foreach ($months as $monthNum => $monthName) {
                                                 echo "<option value='$monthNum'" . ($monthNum == $selectedMonth ? ' selected' : '') . ">$monthName</option>";
-                                            }
-                                            ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <label for="year_select" class="col-form-label">Select Year:</label>
-                                        <select name="year_select" id="year_select" class="form-select">
-                                            <?php
-                                            $currentYear = date('Y');
-                                            for ($i = 2020; $i <= $currentYear; $i++) {
-                                                echo "<option value='$i'" . ($i == $selectedYear ? ' selected' : '') . ">$i</option>";
                                             }
                                             ?>
                                         </select>

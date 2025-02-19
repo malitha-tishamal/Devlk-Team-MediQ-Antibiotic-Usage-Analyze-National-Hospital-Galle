@@ -18,10 +18,11 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Get selected month, year, and ward
+// Get selected month, year, ward, and type
 $selectedMonth = $_POST['month_select'] ?? date('m');
 $selectedYear = $_POST['year_select'] ?? date('Y');
 $selectedWard = $_POST['ward_select'] ?? '';
+$selectedType = $_POST['type_select'] ?? ''; // Added for MSD/LP
 
 // Fetch all wards from the database
 $wardQuery = "SELECT DISTINCT ward_name FROM releases ORDER BY ward_name";
@@ -29,17 +30,18 @@ $wardStmt = $conn->prepare($wardQuery);
 $wardStmt->execute();
 $wardResult = $wardStmt->get_result();
 
-// Query for antibiotic usage filtered by selected month, year, and ward
+// Query for antibiotic usage filtered by selected month, year, ward, and type
 $query = "
-    SELECT ward_name, antibiotic_name, dosage, SUM(item_count) AS usage_count
+    SELECT ward_name, antibiotic_name, dosage, type, SUM(item_count) AS usage_count
     FROM releases
     WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
     AND (ward_name = ? OR ? = '')
+    AND (type = ? OR ? = '')
     GROUP BY ward_name, antibiotic_name, dosage
     ORDER BY ward_name, usage_count DESC
 ";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("iiss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard);
+$stmt->bind_param("iissss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard, $selectedType, $selectedType);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -110,6 +112,18 @@ $wardUsageStmt->close();
 
                             <form method="POST">
                                 <div class="form-row mb-3 d-flex">
+                                     <div class="col-sm-3">
+                                        <label for="year_select" class="col-form-label">Select Year:</label>
+                                        <select name="year_select" id="year_select" class="form-select">
+                                            <?php
+                                            $currentYear = date('Y');
+                                            for ($i = 2020; $i <= $currentYear; $i++) {
+                                                echo "<option value='$i'" . ($i == $selectedYear ? ' selected' : '') . ">$i</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                    
                                     <div class="col-sm-3">
                                         <label for="month_select" class="col-form-label">Select Month:</label>
                                         <select name="month_select" id="month_select" class="form-select">
@@ -125,17 +139,7 @@ $wardUsageStmt->close();
                                             ?>
                                         </select>
                                     </div>
-                                    <div class="col-sm-3">
-                                        <label for="year_select" class="col-form-label">Select Year:</label>
-                                        <select name="year_select" id="year_select" class="form-select">
-                                            <?php
-                                            $currentYear = date('Y');
-                                            for ($i = 2020; $i <= $currentYear; $i++) {
-                                                echo "<option value='$i'" . ($i == $selectedYear ? ' selected' : '') . ">$i</option>";
-                                            }
-                                            ?>
-                                        </select>
-                                    </div>
+                                  
                                     <div class="col-sm-3">
                                         <label for="ward_select" class="col-form-label">Select Ward:</label>
                                         <select name="ward_select" id="ward_select" class="form-select">
@@ -146,6 +150,16 @@ $wardUsageStmt->close();
                                                 echo "<option value='$wardName'" . ($wardName == $selectedWard ? ' selected' : '') . ">$wardName</option>";
                                             }
                                             ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Added MSD/LP Filter -->
+                                    <div class="col-sm-3">
+                                        <label for="type_select" class="col-form-label">Select Stock:</label>
+                                        <select name="type_select" id="type_select" class="form-select">
+                                            <option value="">All Types</option>
+                                            <option value="msd" <?php echo ($selectedType == 'msd') ? 'selected' : ''; ?>>MSD</option>
+                                            <option value="lp" <?php echo ($selectedType == 'lp') ? 'selected' : ''; ?>>LP</option>
                                         </select>
                                     </div>
                                 </div>
@@ -195,7 +209,7 @@ $wardUsageStmt->close();
                                         $rowNumber++;
                                     }
                                 } else {
-                                    echo "<tr><td colspan='6' class='text-center'>No data available for the selected month, year, and ward</td></tr>";
+                                    echo "<tr><td colspan='6' class='text-center'>No data available for the selected month, year, ward, and type</td></tr>";
                                 }
                                 ?>
                             </tbody>

@@ -162,6 +162,27 @@ $stmt->close();
                                         <input type="number" id="itemCount" name="item_count" class="form-control w-50" placeholder="Enter item count" required>
                                     </div>
 
+                                    <div class="mb-3">
+                                        <label for="option" class="form-label">Type:</label>
+                                        <select name="ant_type" id="" class="form-select w-50" required>
+                                            <option >--Select Type--</option>
+                                            <option value="oral">Oral</option>
+                                            <option value="intravenous">Intravenous</option>
+                                            <option value="topical">Topical</option>
+                                            <option value="topical">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="type" class="form-label">Stock of Antibiotic:</label>
+                                        <br>
+                                        <label for="type" class="form-label">MSD</label>
+                                        <input type="radio" id="" name="type" class="" value="msd">
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <label for="type" class="form-label">LP</label>
+                                        <input type="radio" id="" name="type" class="" value="lp" >
+                                    </div>
+
                                     <button type="submit" class="btn btn-primary mt-3">Update Release</button>
                                     <button type="reset" class="btn btn-danger mt-3">Clear</button>
                                 </form>

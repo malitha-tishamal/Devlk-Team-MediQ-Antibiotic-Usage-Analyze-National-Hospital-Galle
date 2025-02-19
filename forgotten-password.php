@@ -33,7 +33,7 @@
                                         <h5 class="card-title text-center pb-0 fs-4">Forgotten Password</h5>
                                     </div>
 
-                                    <form action="" method="POST" class="row g-3 needs-validation" novalidate>
+                                    <form action="fogot.php" method="POST" class="row g-3 needs-validation" novalidate>
                                         <div class="col-12">
                                             <label for="email" class="form-label">Email</label>
                                             <input type="email" class="form-control" id="email" name="email" required>

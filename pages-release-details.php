@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT name, email, nic,mobile FROM users WHERE id = ?";
+$sql = "SELECT name, email, nic, mobile FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -18,9 +18,13 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Fetch users from the database
-$sql = "SELECT id, antibiotic_name, dosage, item_count,ward_name, release_time FROM releases";
-$result = $conn->query($sql);
+// Handle date filter
+$filter_date = isset($_POST['filter_date']) ? $_POST['filter_date'] : date('Y-m-d');
+$sql = "SELECT id, antibiotic_name, dosage, item_count, ward_name, type, ant_type, release_time FROM releases WHERE DATE(release_time) = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $filter_date);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -36,10 +40,8 @@ $result = $conn->query($sql);
 </head>
 
 <body>
-
-    <?php include_once("includes/header.php") ?>
-
-    <?php include_once("includes/user-sidebar.php") ?>
+    <?php include_once("includes/header.php"); ?>
+    <?php include_once("includes/user-sidebar.php"); ?>
 
     <main id="main" class="main">
         <div class="pagetitle">
@@ -60,16 +62,28 @@ $result = $conn->query($sql);
                         <div class="card-body">
                             <h5 class="card-title">Antibiotic Release Details</h5>
 
-                            <!-- Table with user data -->
+                            <!-- Date Filter Form -->
+                            <form method="POST" class="mb-3">
+                                <div class="d-flex">
+                                    <label for="filter_date">Select Date:</label>
+                                    <input type="date" name="filter_date" id="filter_date" value="<?php echo htmlspecialchars($filter_date); ?>" class="form-control w-25">
+                                    &nbsp;&nbsp;
+                                    <button type="submit" class="btn btn-primary">Filter</button>
+                                </div>
+                            </form>
+
+                            <!-- Table with release data -->
                             <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th class="text-center">#</th>
-                                        <th class="text-center ">antibiotic_name</th>
-                                        <th class="text-center">dosage</th>
-                                        <th class="text-center">iteam_count</th>
+                                        <th class="text-center">Antibiotic Name</th>
+                                        <th class="text-center">Dosage</th>
+                                        <th class="text-center">Item Count</th>
                                         <th class="text-center">Ward Name</th>
-                                        <th class="text-center">release_time</th>
+                                        <th class="text-center">Stock Type</th>
+                                        <th class="text-center">Antibiotic Type</th>
+                                        <th class="text-center">Release Time</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -77,23 +91,23 @@ $result = $conn->query($sql);
                                     if ($result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
                                             echo "<tr>";
-                                            echo "<td >" . $row['id'] . "</td>";
-                                            echo "<td>" . $row['antibiotic_name'] . "</td>";
-                                            echo "<td>" . $row['dosage'] . "</td>";
-                                            echo "<td>" . $row['item_count'] . "</td>";
-                                            echo "<td>" . $row['ward_name'] . "</td>";
-                                            echo "<td>" . $row['release_time'] . "</td>";
-
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['id']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['antibiotic_name']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['dosage']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['item_count']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['ward_name']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['type']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['ant_type']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['release_time']) . "</td>";
+                                            echo "</tr>";
                                         }
                                     } else {
-                                        echo "<tr><td colspan='9' class='text-center'>No users found.</td></tr>";
+                                        echo "<tr><td colspan='8' class='text-center'>No antibiotic releases found for this date.</td></tr>";
                                     }
                                     ?>
                                 </tbody>
-
                             </table>
-                            <!-- End Table with user data -->
-
+                            <!-- End Table with release data -->
                         </div>
                     </div>
                 </div>
@@ -101,14 +115,10 @@ $result = $conn->query($sql);
         </section>
     </main>
 
-    <?php include_once("includes/footer.php") ?>
-
+    <?php include_once("includes/footer.php"); ?>
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-    <?php include_once("includes/js-links-inc.php") ?>
-
+    <?php include_once("includes/js-links-inc.php"); ?>
 </body>
-
 </html>
 
 <?php
