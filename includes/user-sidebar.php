@@ -23,7 +23,7 @@
                 </li>
                 <li>
                     <a href="pages-release-details.php">
-                        <i class="bi bi-circle"></i><span>Release Details</span>
+                        <i class="bi bi-circle"></i><span>Dispensing Details</span>
                     </a>
                 </li>
                 <li>
