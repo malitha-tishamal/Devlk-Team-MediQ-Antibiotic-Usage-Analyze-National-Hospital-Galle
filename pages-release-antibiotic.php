@@ -24,7 +24,7 @@ $stmt->close();
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Release Antibiotic - Mediq</title>
+    <title>Dispensing Antibiotics - Mediq</title>
 
     <?php include_once("includes/css-links-inc.php"); ?>
 
@@ -117,12 +117,12 @@ $stmt->close();
 
     <main id="main" class="main">
         <div class="pagetitle">
-            <h1>Release Antibiotic</h1>
+            <h1>Dispensing Antibiotics</h1>
             <nav>
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="index.html">Home</a></li>
                     <li class="breadcrumb-item">Pages</li>
-                    <li class="breadcrumb-item active">Release Antibiotic</li>
+                    <li class="breadcrumb-item active">Dispensing Antibiotics</li>
                 </ol>
             </nav>
         </div>
@@ -132,7 +132,7 @@ $stmt->close();
                 <div class="col-lg-10">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Release Antibiotic</h5>
+                            <h5 class="card-title">Dispensing Antibiotics</h5>
 
                             <div class="container mt-3">
                                 <form action="update_release.php" method="POST" id="releaseForm">
@@ -183,8 +183,10 @@ $stmt->close();
                                         <input type="radio" id="" name="type" class="" value="lp" >
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary mt-3">Update Release</button>
+                                    <button type="submit" class="btn btn-success mt-3">Update Database</button>
                                     <button type="reset" class="btn btn-danger mt-3">Clear</button>
+                                    <button class="btn btn-primary mt-3" onclick="window.location.href='pages-release-antibiotic-odd.php'">Click to Update Previous Details</button>
+
                                 </form>
                             </div>
 
