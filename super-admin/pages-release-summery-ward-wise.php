@@ -38,7 +38,7 @@ $query = "
     AND (ward_name = ? OR ? = '')
     AND (type = ? OR ? = '')
     GROUP BY ward_name, antibiotic_name, dosage
-    ORDER BY ward_name, usage_count DESC
+    ORDER BY ward_name, antibiotic_name ASC, usage_count DESC
 ";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("iissss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard, $selectedType, $selectedType);
@@ -123,7 +123,7 @@ $wardUsageStmt->close();
                                             ?>
                                         </select>
                                     </div>
-                                    
+                                  
                                     <div class="col-sm-3">
                                         <label for="month_select" class="col-form-label">Select Month:</label>
                                         <select name="month_select" id="month_select" class="form-select">
@@ -152,7 +152,7 @@ $wardUsageStmt->close();
                                             ?>
                                         </select>
                                     </div>
-                                    
+                                  
                                     <!-- Added MSD/LP Filter -->
                                     <div class="col-sm-3">
                                         <label for="type_select" class="col-form-label">Select Stock:</label>
@@ -172,7 +172,7 @@ $wardUsageStmt->close();
                         
                         <!-- DataTable -->
                         <div style="padding: 15px;">
-                            <table class="table datatable">
+                          <table class="table datatable">
                             <thead class="align-middle text-center">
                                 <tr>
                                     <th>#</th>

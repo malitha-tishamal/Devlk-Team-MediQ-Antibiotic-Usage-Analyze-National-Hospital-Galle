@@ -82,14 +82,24 @@ $pieChartResult = $pieStmt->get_result();
                 title: 'Antibiotic Usage Distribution (<?php echo date('F Y', strtotime("$selectedYear-$selectedMonth-01")); ?>)',
                 pieHole: 0.4, // Converts to a donut chart
                 colors: [
-                    '#FF5733', '#33FF57', '#5733FF', '#FF33A1', '#33A1FF', '#A1FF33', '#FFC300', '#DAF7A6', 
-                    '#C70039', '#900C3F', '#581845', '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', '#E74C3C', 
-                    '#F39C12', '#D35400', '#27AE60', '#16A085', '#2980B9', '#8E44AD', '#2C3E50', '#F1C40F', 
-                    '#E67E22', '#ECF0F1', '#95A5A6', '#7F8C8D', '#DFFF00', '#FFBF00', '#FF7F50', '#DE3163', 
-                    '#9FE2BF', '#40E0D0', '#6495ED', '#CCCCFF', '#800000', '#FF4500', '#2E8B57', '#8B4513', 
-                    '#808000', '#00CED1', '#20B2AA', '#5F9EA0', '#4B0082', '#4682B4', '#D2691E', '#8A2BE2', 
-                    '#6B8E23', '#FF1493', '#00BFFF', '#DC143C'
-                ],
+                '#FF5733', '#33FF57', '#5733FF', '#FF33A1', '#33A1FF', '#A1FF33', '#FFC300', '#DAF7A6',
+                '#C70039', '#900C3F', '#581845', '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', '#E74C3C',
+                '#F39C12', '#D35400', '#27AE60', '#16A085', '#2980B9', '#8E44AD', '#2C3E50', '#F1C40F',
+                '#E67E22', '#ECF0F1', '#95A5A6', '#7F8C8D', '#DFFF00', '#FFBF00', '#FF7F50', '#DE3163',
+                '#9FE2BF', '#40E0D0', '#6495ED', '#CCCCFF', '#800000', '#FF4500', '#2E8B57', '#8B4513',
+                '#808000', '#00CED1', '#20B2AA', '#5F9EA0', '#4B0082', '#4682B4', '#D2691E', '#8A2BE2',
+                '#6B8E23', '#FF1493', '#00BFFF', '#DC143C', '#FFD700', '#ADFF2F', '#F0E68C', '#90EE90',
+                '#FF6347', '#EE82EE', '#D8BFD8', '#00FFFF', '#FF00FF', '#8B0000', '#B22222', '#228B22',
+                '#32CD32', '#F0F8FF', '#FAFAD2', '#FFFF00', '#FF1493', '#800080', '#FF6347', '#00FF7F',
+                '#C71585', '#FFD700', '#9ACD32', '#32CD32', '#FF4500', '#98FB98', '#D3D3D3', '#808080',
+                '#E0FFFF', '#C0C0C0', '#ADD8E6', '#B0E0E6', '#A52A2A', '#F5F5DC', '#F0F0F0', '#DCDCDC',
+                '#F4A300', '#C9E4CA', '#DFFF00', '#4B0082', '#A52A2A', '#D2691E', '#C71585', '#DDA0DD',
+                '#FF7F50', '#DC143C', '#B0C4DE', '#F08080', '#FF8C00', '#B22222', '#FF4500', '#3CB371',
+                '#9B30FF', '#FF6347', '#98FB98', '#2F4F4F', '#8B008B', '#556B2F', '#2F4F4F', '#4B0082',
+                '#00FFFF', '#7FFFD4', '#8A2BE2', '#BC8F8F', '#F0FFF0', '#DAA520', '#CD5C5C', '#FFFACD',
+                '#D3D3D3', '#B8860B', '#A9A9A9', '#ADFF2F', '#A52A2A', '#D2691E', '#8B0000', '#E9967A',
+                '#CD5C5C', '#00008B', '#008B8B', '#BDB76B', '#8B4513', '#D2B48C', '#9ACD32', '#8B008B'
+            ],
                 fontSize: 14,
                 legend: { position: 'right', textStyle: { fontSize: 14 } },
                 chartArea: { width: '85%', height: '75%' }
@@ -172,10 +182,11 @@ $pieChartResult = $pieStmt->get_result();
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-sm-3">
+                                <div class="col-sm-5">
                                     <button type="submit" class="btn btn-primary mt-4">Filter</button>
                                     <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
                                 </div>
+
                             </form>
 
                             <div id="piechart" style="float: left;"></div>
@@ -228,5 +239,6 @@ $pieChartResult = $pieStmt->get_result();
     </main>
 
     <?php include_once("../includes/footer.php") ?>
+
 </body>
 </html>

@@ -28,11 +28,11 @@
         </li>
 
         <li class="nav-item">
-            <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
-                <i class="bi bi-bar-chart"></i></i></i></i><span>Analyze</span><i class="bi bi-chevron-down ms-auto"></i>
+            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#components-nav">
+                <i class="bi bi-bar-chart"></i><span>Analyze</span><i class="bi bi-chevron-down ms-auto"></i>
             </a>
 
-            <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+            <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
                 <li>
                     <a href="../super-admin/pages-release-summery.php">
                         <i class="bi bi-circle"></i><span>Antibiotic Release Only </span>
@@ -47,7 +47,7 @@
         </li>
 
         <li class="nav-item">
-            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#wards-nav" >
+            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#wards-nav">
                 <i class="bi bi-building-fill-gear"></i> <span>Wards</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul id="wards-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
@@ -116,6 +116,6 @@
     </ul>
 </aside><!-- End Sidebar -->
 
-<!-- ✅ Include Bootstrap CSS & JS -->
+<!-- Include Bootstrap CSS & JS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
