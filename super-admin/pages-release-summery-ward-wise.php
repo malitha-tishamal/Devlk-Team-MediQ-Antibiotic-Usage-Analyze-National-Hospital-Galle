@@ -18,11 +18,12 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Get selected month, year, ward, and type
+// Get selected month, year, ward, type, and ant_type
 $selectedMonth = $_POST['month_select'] ?? date('m');
 $selectedYear = $_POST['year_select'] ?? date('Y');
 $selectedWard = $_POST['ward_select'] ?? '';
 $selectedType = $_POST['type_select'] ?? ''; // Added for MSD/LP
+$selectedAntType = $_POST['ant_type_select'] ?? ''; // Added for Antibiotic Type (ant_type)
 
 // Fetch all wards from the database
 $wardQuery = "SELECT DISTINCT ward_name FROM releases ORDER BY ward_name";
@@ -30,18 +31,19 @@ $wardStmt = $conn->prepare($wardQuery);
 $wardStmt->execute();
 $wardResult = $wardStmt->get_result();
 
-// Query for antibiotic usage filtered by selected month, year, ward, and type
+// Query for antibiotic usage filtered by selected month, year, ward, type, and ant_type
 $query = "
-    SELECT ward_name, antibiotic_name, dosage, type, SUM(item_count) AS usage_count
+    SELECT ward_name, antibiotic_name, dosage, type, ant_type, SUM(item_count) AS usage_count
     FROM releases
     WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
     AND (ward_name = ? OR ? = '')
     AND (type = ? OR ? = '')
-    GROUP BY ward_name, antibiotic_name, dosage
+    AND (ant_type = ? OR ? = '')
+    GROUP BY ward_name, antibiotic_name, dosage, type, ant_type
     ORDER BY ward_name, antibiotic_name ASC, usage_count DESC
 ";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("iissss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard, $selectedType, $selectedType);
+$stmt->bind_param("iissssss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard, $selectedType, $selectedType, $selectedAntType, $selectedAntType);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -62,10 +64,12 @@ $wardUsage = [];
 while ($row = $wardUsageResult->fetch_assoc()) {
     $wardUsage[$row['ward_name']] = $row['ward_total'];
 }
+
 $stmt->close();
 $wardStmt->close();
 $wardUsageStmt->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -167,9 +171,20 @@ $wardUsageStmt->close();
                                             <option value="msd" <?php echo ($selectedType == 'msd') ? 'selected' : ''; ?>>MSD</option>
                                             <option value="lp" <?php echo ($selectedType == 'lp') ? 'selected' : ''; ?>>LP</option>
                                         </select>
-                                    </div>
+                                  </div>
                                 </div>
-                                <div class="col-sm-6">
+                                <div class="col-sm-3">
+                                   <label for="route_select" class="col-form-label">Select Route:</label>
+                                   <select name="ant_type_select" id="ant_type_select" class="form-select">
+                                    <option value="">All Types</option>
+                                    <option value="oral" <?php echo ($selectedAntType == 'oral') ? 'selected' : ''; ?>>Oral</option>
+                                    <option value="intravenous" <?php echo ($selectedAntType == 'intravenous') ? 'selected' : ''; ?>>Intravenous</option>
+                                    <option value="topical" <?php echo ($selectedAntType == 'topical') ? 'selected' : ''; ?>>Topical</option>
+                                    <option value="other" <?php echo ($selectedAntType == 'other') ? 'selected' : ''; ?>>Other</option>
+                                </select>
+                                </div>
+
+                                <div class="col-sm-7">
                                     <button type="submit" class="btn btn-primary mt-4">Filter</button>
                                     <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
                                     <button class="btn btn-success mt-4 ml-2" onclick="exportTableToExcel()">Export to Excel</button>

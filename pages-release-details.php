@@ -82,7 +82,7 @@ $result = $stmt->get_result();
                                         <th class="text-center">Item Count</th>
                                         <th class="text-center">Ward Name</th>
                                         <th class="text-center">Stock Type</th>
-                                        <th class="text-center">Antibiotic Type</th>
+                                        <th class="text-center">Route Type</th>
                                         <th class="text-center">Release Time</th>
                                     </tr>
                                 </thead>

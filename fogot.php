@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (mail($email, $subject, $message, $headers)) {
                 // Redirect to confirmation page
                 $_SESSION['message'] = "A password reset link has been sent to your email address.";
-                header("Location: password_reset.php");
+                header("Location: pages-password_reset.php");
             } else {
                 $_SESSION['message'] = "Failed to send the reset email. Please try again later.";
             }

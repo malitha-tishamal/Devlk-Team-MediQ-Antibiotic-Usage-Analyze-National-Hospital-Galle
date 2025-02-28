@@ -18,20 +18,61 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Get selected month and year
+// Get selected month, year, day, and week
 $selectedMonth = $_POST['month_select'] ?? date('m');
 $selectedYear = $_POST['year_select'] ?? date('Y');
+$selectedDay = $_POST['day_select'] ?? null;
+$selectedWeek = $_POST['week_select'] ?? null;
 
-// Query for table data
-$query = "
-    SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count
-    FROM releases
-    WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
-    GROUP BY antibiotic_name, dosage
-    ORDER BY usage_count DESC
-";
+// Calculate start and end days for each week of the selected month
+$startOfMonth = "$selectedYear-$selectedMonth-01";
+$daysInMonth = cal_days_in_month(CAL_GREGORIAN, $selectedMonth, $selectedYear);
+$weeks = [];
+for ($i = 1; $i <= $daysInMonth; $i++) {
+    $date = date('Y-m-d', strtotime("$startOfMonth +$i days"));
+    $week = date('W', strtotime($date)); // Get the week number
+    if (!in_array($week, $weeks)) {
+        $weeks[] = $week;
+    }
+}
+
+// Query for table data (Day-wise or Week-wise)
+if ($selectedDay) {
+    $query = "
+        SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count, DAY(release_time) AS day
+        FROM releases
+        WHERE MONTH(release_time) = ? AND YEAR(release_time) = ? AND DAY(release_time) = ?
+        GROUP BY antibiotic_name, dosage, day
+        ORDER BY usage_count DESC
+    ";
+} elseif ($selectedWeek) {
+    $startDate = date('Y-m-d', strtotime("{$selectedYear}-W{$selectedWeek}-1")); // Start of the selected week
+    $endDate = date('Y-m-d', strtotime("{$selectedYear}-W{$selectedWeek}-7")); // End of the selected week
+    $query = "
+        SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count, WEEK(release_time, 1) AS week
+        FROM releases
+        WHERE YEAR(release_time) = ? AND WEEK(release_time, 1) = ?
+        GROUP BY antibiotic_name, dosage, week
+        ORDER BY usage_count DESC
+    ";
+} else {
+    $query = "
+        SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count
+        FROM releases
+        WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
+        GROUP BY antibiotic_name, dosage
+        ORDER BY usage_count DESC
+    ";
+}
+
 $stmt = $conn->prepare($query);
-$stmt->bind_param("ii", $selectedMonth, $selectedYear);
+if ($selectedDay) {
+    $stmt->bind_param("iii", $selectedMonth, $selectedYear, $selectedDay);
+} elseif ($selectedWeek) {
+    $stmt->bind_param("ii", $selectedYear, $selectedWeek);
+} else {
+    $stmt->bind_param("ii", $selectedMonth, $selectedYear);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -39,12 +80,12 @@ $result = $stmt->get_result();
 $pieChartQuery = "
     SELECT antibiotic_name, SUM(item_count) AS usage_count
     FROM releases
-    WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
+    WHERE YEAR(release_time) = ? AND MONTH(release_time) = ?
     GROUP BY antibiotic_name
     ORDER BY usage_count DESC
 ";
 $pieStmt = $conn->prepare($pieChartQuery);
-$pieStmt->bind_param("ii", $selectedMonth, $selectedYear);
+$pieStmt->bind_param("ii", $selectedYear, $selectedMonth);
 $pieStmt->execute();
 $pieChartResult = $pieStmt->get_result();
 ?>
@@ -133,8 +174,11 @@ $pieChartResult = $pieStmt->get_result();
     </script>
 
     <style>
-        #piechart { width: 50%; height: 400px; margin: auto; }
+        #piechart { width: 95%; height: 400px; margin: auto; }
         @media print { .no-print { display: none; } }
+        @media only screen and (min-width: 768px) {
+            .select-bar {display: flex;}
+        }
     </style>
     <script> function printPage() { window.print(); } </script>
 </head>
@@ -163,7 +207,7 @@ $pieChartResult = $pieStmt->get_result();
                             <h5 class="card-title">Antibiotic Release Details</h5>
 
                             <form method="POST">
-                                <div class="form-row mb-3 d-flex">
+                                <div class="form-row mb-3 select-bar">
                                     <div class="col-sm-3">
                                         <label for="year_select" class="col-form-label">Select Year:</label>
                                         <select name="year_select" id="year_select" class="form-select">
@@ -175,7 +219,7 @@ $pieChartResult = $pieStmt->get_result();
                                             ?>
                                         </select>
                                     </div>
-                                  
+
                                     <div class="col-sm-3">
                                         <label for="month_select" class="col-form-label">Select Month:</label>
                                         <select name="month_select" id="month_select" class="form-select">
@@ -191,54 +235,79 @@ $pieChartResult = $pieStmt->get_result();
                                             ?>
                                         </select>
                                     </div>
+
+                                    <div class="col-sm-3">
+                                        <label for="day_select" class="col-form-label">Select Day:</label>
+                                        <select name="day_select" id="day_select" class="form-select">
+                                            <option value="">--Select Day--</option>
+                                            <?php for ($i = 1; $i <= 31; $i++) { ?>
+                                                <option value="<?php echo $i ?>" <?php echo ($i == $selectedDay ? 'selected' : ''); ?>><?php echo $i ?></option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-sm-3">
+                                        <label for="week_select" class="col-form-label">Select Week:</label>
+                                        <select name="week_select" id="week_select" class="form-select">
+                                            <option value="">--Select Week--</option>
+                                            <?php foreach ($weeks as $week) { ?>
+                                                <option value="<?php echo $week ?>" <?php echo ($week == $selectedWeek ? 'selected' : ''); ?>>Week <?php echo $week ?></option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
                                 </div>
+
                                 <div class="col-sm-5">
                                     <button type="submit" class="btn btn-primary mt-4">Filter</button>
                                     <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
                                     <button class="btn btn-success mt-4 ml-2 no-print" onclick="downloadExcel()">Download Excel</button>
                                 </div>
-
                             </form>
 
                             <div id="piechart" style="float: left;"></div>
                         </div>
-                        
+
                         <!-- DataTable -->
                         <div style="padding: 15px;">
                             <table class="table datatable">
-                            <thead class="align-middle text-center">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Antibiotic Name</th>
-                                    <th>Dosage</th>
-                                    <th>Usage Count</th>
-                                    <th>Percentage (%)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody">
-                                <?php 
-                                // Get total usage count to calculate percentages
-                                $totalQuery = "SELECT SUM(item_count) AS total_usage FROM releases WHERE MONTH(release_time) = '$selectedMonth' AND YEAR(release_time) = '$selectedYear'";
-                                $totalResult = $conn->query($totalQuery);
-                                $totalRow = $totalResult->fetch_assoc();
-                                $totalUsage = $totalRow['total_usage'] ?? 1;
-
-                                if ($result->num_rows > 0) {
-                                    $rowNumber = 1;
-                                    while ($row = $result->fetch_assoc()) {
-                                        $percentage = round(($row['usage_count'] / $totalUsage) * 100, 2);
-                                        echo "<tr>";
-                                        echo "<td class='text-center'>{$rowNumber}</td>";
-                                        echo "<td class='text-center'>{$row['antibiotic_name']}</td>";
-                                        echo "<td class='text-center'>{$row['dosage']}</td>";
-                                        echo "<td class='text-center'>{$row['usage_count']}</td>";
-                                        echo "<td class='text-center'>{$percentage}%</td>";
-                                        echo "</tr>";
-                                        $rowNumber++;
+                                <thead class="align-middle text-center">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Antibiotic Name</th>
+                                        <th>Dosage</th>
+                                        <th>Usage Count</th>
+                                        <th>Percentage (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <?php 
+                                    // Get total usage count to calculate percentages
+                                    $totalQuery = "SELECT SUM(item_count) AS total_usage FROM releases WHERE YEAR(release_time) = '$selectedYear' AND MONTH(release_time) = '$selectedMonth'";
+                                    if ($selectedDay) {
+                                        $totalQuery .= " AND DAY(release_time) = '$selectedDay'";
+                                    } elseif ($selectedWeek) {
+                                        $totalQuery .= " AND WEEK(release_time, 1) = '$selectedWeek'";
                                     }
-                                }
-                                ?>
-                            </tbody>
+                                    $totalResult = $conn->query($totalQuery);
+                                    $totalRow = $totalResult->fetch_assoc();
+                                    $totalUsage = $totalRow['total_usage'] ?? 1;
+
+                                    if ($result->num_rows > 0) {
+                                        $rowNumber = 1;
+                                        while ($row = $result->fetch_assoc()) {
+                                            $percentage = round(($row['usage_count'] / $totalUsage) * 100, 2);
+                                            echo "<tr>";
+                                            echo "<td class='text-center'>{$rowNumber}</td>";
+                                            echo "<td class='text-center'>{$row['antibiotic_name']}</td>";
+                                            echo "<td class='text-center'>{$row['dosage']}</td>";
+                                            echo "<td class='text-center'>{$row['usage_count']}</td>";
+                                            echo "<td class='text-center'>{$percentage}%</td>";
+                                            echo "</tr>";
+                                            $rowNumber++;
+                                        }
+                                    }
+                                    ?>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -248,7 +317,8 @@ $pieChartResult = $pieStmt->get_result();
     </main>
 
     <?php include_once("../includes/footer.php") ?>
-   <script>
+
+    <script>
         function exportTableToPDF() {
             const { jsPDF } = window.jspdf;
             let doc = new jsPDF();
@@ -259,39 +329,14 @@ $pieChartResult = $pieStmt->get_result();
             doc.text("Antibiotic Usage Report", 105, 10, { align: "center" });
 
             // Get table data
-            let table = document.querySelector(".datatable");
-            let data = [];
-            let headers = [];
-
-            // Get headers
-            let headerCells = table.querySelectorAll("thead tr th");
-            headerCells.forEach(header => headers.push(header.innerText));
-            
-            // Get rows
-            let rows = table.querySelectorAll("tbody tr");
-            rows.forEach(row => {
-                let rowData = [];
-                let cells = row.querySelectorAll("td");
-                cells.forEach(cell => rowData.push(cell.innerText));
-                data.push(rowData);
-            });
-
-            // Add table to PDF
-            doc.autoTable({
-                head: [headers],
-                body: data,
-                startY: 20,
-                theme: "striped",
-                styles: { fontSize: 10 },
-                headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: "bold" },
-                alternateRowStyles: { fillColor: [240, 240, 240] },
-            });
+            const table = document.querySelector(".datatable");
+            doc.autoTable({ html: table, startY: 20 });
 
             // Save the PDF
-            doc.save("Antibiotic_Usage_Report.pdf");
+            doc.save("antibiotic_usage_report.pdf");
         }
+
+
     </script>
-
-
 </body>
 </html>

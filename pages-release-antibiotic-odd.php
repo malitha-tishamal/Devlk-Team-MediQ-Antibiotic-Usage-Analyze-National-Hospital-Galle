@@ -165,9 +165,9 @@ $stmt->close();
                                     </div>
 
                                     <div class="mb-3">
-                                        <label for="option" class="form-label">Type:</label>
+                                        <label for="option" class="form-label">Route:</label>
                                         <select name="ant_type" id="" class="form-select w-50" required>
-                                            <option >--Select Type--</option>
+                                            <option style="color: grey; ">--Select Route--</option>
                                             <option value="oral">Oral</option>
                                             <option value="intravenous">Intravenous</option>
                                             <option value="topical">Topical</option>
