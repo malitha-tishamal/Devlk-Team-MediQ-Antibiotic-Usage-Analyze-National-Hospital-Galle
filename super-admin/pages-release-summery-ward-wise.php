@@ -79,10 +79,16 @@ $wardUsageStmt->close();
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         #piechart { width: 50%; height: 400px; margin: auto; }
         @media print { .no-print { display: none; } }
+        @media only screen and (min-width: 768px) {
+            .select-bar {display: flex;}
+        } 
     </style>
     <script> function printPage() { window.print(); } </script>
 </head>
@@ -111,7 +117,7 @@ $wardUsageStmt->close();
                             <h5 class="card-title">Antibiotic Release Details</h5>
 
                             <form method="POST">
-                                <div class="form-row mb-3 d-flex">
+                                <div class="form-row mb-3 select-bar">
                                      <div class="col-sm-3">
                                         <label for="year_select" class="col-form-label">Select Year:</label>
                                         <select name="year_select" id="year_select" class="form-select">
@@ -163,9 +169,11 @@ $wardUsageStmt->close();
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-sm-3">
+                                <div class="col-sm-6">
                                     <button type="submit" class="btn btn-primary mt-4">Filter</button>
                                     <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
+                                    <button class="btn btn-success mt-4 ml-2" onclick="exportTableToExcel()">Export to Excel</button>
+                                    <button class="btn btn-warning mt-4 ml-2" onclick="exportTableToPDF()">Export to PDF</button>
                                 </div>
                             </form>
                         </div>
@@ -193,11 +201,14 @@ $wardUsageStmt->close();
                                         $totalUsageInWard = $wardUsage[$wardName];
                                         $percentage = round(($row['usage_count'] / $totalUsageInWard) * 100, 2);
                                         
+                                        // Group by ward name
                                         if ($wardName != $previousWard) {
-                                            echo "<tr><td colspan='6' class='text-center card-title'>$wardName</td></tr>";
+                                            // Insert a row for the ward name (row with colspan)
+                                            echo "<tr><td colspan='6' class='text-center card-title' style='background-color: #f8f9fa; font-weight: bold;'>$wardName</td></tr>";
                                             $previousWard = $wardName;
                                         }
 
+                                        // Regular data row
                                         echo "<tr>";
                                         echo "<td class='text-center'>{$rowNumber}</td>";
                                         echo "<td class='text-center'>{$row['ward_name']}</td>";
@@ -220,7 +231,66 @@ $wardUsageStmt->close();
             </div>
         </section>
     </main>
-
     <?php include_once("../includes/footer.php") ?>
+    <script type="text/javascript">
+        function exportTableToExcel() {
+            // Get the table element
+            let table = document.querySelector(".datatable");
+            
+            // Convert the table to a worksheet
+            let workbook = XLSX.utils.book_new();
+            let worksheet = XLSX.utils.table_to_sheet(table);
+            
+            // Add the worksheet to the workbook
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Antibiotic_Usage");
+
+            // Save the file
+            XLSX.writeFile(workbook, "Antibiotic_Usage_Report.xlsx");
+        }
+
+    </script>
+    <script>
+        function exportTableToPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+
+            // Title
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("Antibiotic Usage Report", 105, 10, { align: "center" });
+
+            // Get table data
+            let table = document.querySelector(".datatable");
+            let data = [];
+            let headers = [];
+
+            // Get headers
+            let headerCells = table.querySelectorAll("thead tr th");
+            headerCells.forEach(header => headers.push(header.innerText));
+            
+            // Get rows
+            let rows = table.querySelectorAll("tbody tr");
+            rows.forEach(row => {
+                let rowData = [];
+                let cells = row.querySelectorAll("td");
+                cells.forEach(cell => rowData.push(cell.innerText));
+                data.push(rowData);
+            });
+
+            // Add table to PDF
+            doc.autoTable({
+                head: [headers],
+                body: data,
+                startY: 20,
+                theme: "striped",
+                styles: { fontSize: 10 },
+                headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: "bold" },
+                alternateRowStyles: { fillColor: [240, 240, 240] },
+            });
+
+            // Save PDF
+            doc.save("Antibiotic_Usage_Report.pdf");
+        }
+    </script>
 </body>
 </html>
