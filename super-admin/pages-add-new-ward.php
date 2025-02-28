@@ -51,7 +51,7 @@ $stmt->close();
 <body>
 
     <?php include_once("../includes/header.php"); ?>
-    <?php include_once("../includes/sadmin-sidebar2.php"); ?>
+    <?php include_once("../includes/sadmin-sidebar.php"); ?>
 
     <!-- Displaying the message from the session -->
     <?php if (isset($_SESSION['status'])): ?>
@@ -122,6 +122,7 @@ $stmt->close();
     </main>
 
     <?php include_once("../includes/footer.php"); ?>
+    <?php include_once("../includes/js-links-inc.php") ?>
 
     <script>
         $(document).ready(function() {

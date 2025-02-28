@@ -123,7 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </div>
 
                                 <button type="submit" class="btn btn-success">Save Changes</button>
-                                <a href="pages-manage-wards.php" class="btn btn-secondary">Cancel</a>
+                                <a href="pages-manage-wards.php" class="btn btn-danger">Cancel</a>
                             </form>
                         </div>
                     </div>
@@ -133,5 +133,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </main>
 
     <?php include_once("../includes/footer.php"); ?>
+      <?php include_once("../includes/js-links-inc.php") ?>
 </body>
 </html>

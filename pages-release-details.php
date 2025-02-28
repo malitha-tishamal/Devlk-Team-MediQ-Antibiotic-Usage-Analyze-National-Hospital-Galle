@@ -116,8 +116,8 @@ $result = $stmt->get_result();
     </main>
 
     <?php include_once("includes/footer.php"); ?>
+    <?php include_once("includes/js-links-inc.php") ?>
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-    <?php include_once("includes/js-links-inc.php"); ?>
 </body>
 </html>
 

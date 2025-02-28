@@ -86,6 +86,7 @@ $wardUsageStmt->close();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
 
     <style>
         #piechart { width: 50%; height: 400px; margin: auto; }
@@ -99,7 +100,7 @@ $wardUsageStmt->close();
 
 <body>
     <?php include_once("../includes/header.php") ?>
-    <?php include_once("../includes/sadmin-sidebar2.php") ?>
+    <?php include_once("../includes/sadmin-sidebar.php") ?>
 
     <main id="main" class="main">
         <div class="pagetitle">
@@ -246,6 +247,7 @@ $wardUsageStmt->close();
             </div>
         </section>
     </main>
+    <?php include_once("../includes/js-links-inc.php") ?>
     <?php include_once("../includes/footer.php") ?>
     <script type="text/javascript">
         function exportTableToExcel() {

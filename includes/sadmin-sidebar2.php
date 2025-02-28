@@ -1,48 +1,66 @@
-<!-- ======= Sidebar ======= -->
 <aside id="sidebar" class="sidebar">
     <ul class="sidebar-nav" id="sidebar-nav">
 
-        <!-- Home -->
         <li class="nav-item">
             <a class="nav-link" href="index.php">
                 <i class="bi bi-house-door"></i> <span>Home</span>
             </a>
         </li>
 
-        <!-- Antibiotics -->
         <li class="nav-item">
-            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#antibiotics-nav" aria-expanded="false">
+            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#antibiotics-nav" role="button">
                 <i class="bi bi-capsule"></i> <span>Antibiotics</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul id="antibiotics-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-                <li><a href="../super-admin/pages-add-antibiotic.php"><i class="bi bi-circle"></i> Add Antibiotic</a></li>
-                <li><a href="../super-admin/pages-manage-antibiotic.php"><i class="bi bi-circle"></i> Manage Antibiotic</a></li>
+                <li>
+                    <a href="../super-admin/pages-add-antibiotic.php">
+                        <i class="bi bi-circle"></i> <span>Add Antibiotic</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../super-admin/pages-manage-antibiotic.php">
+                        <i class="bi bi-circle"></i> <span>Manage Antibiotic</span>
+                    </a>
+                </li>
             </ul>
         </li>
 
-        <!-- Analyze -->
         <li class="nav-item">
-            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#analyze-nav" aria-expanded="false">
+            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#analyze-nav" role="button">
                 <i class="bi bi-bar-chart"></i> <span>Analyze</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul id="analyze-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-                <li><a href="../super-admin/pages-release-summery.php"><i class="bi bi-circle"></i> Antibiotic Release Only</a></li>
-                <li><a href="../super-admin/pages-release-summery-ward-wise.php"><i class="bi bi-circle"></i> Ward Wise</a></li>
+                <li>
+                    <a href="../super-admin/pages-release-summery.php">
+                        <i class="bi bi-circle"></i> <span>Antibiotic Release Only</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../super-admin/pages-release-summery-ward-wise.php">
+                        <i class="bi bi-circle"></i> <span>Ward Wise</span>
+                    </a>
+                </li>
             </ul>
         </li>
 
-        <!-- Wards -->
         <li class="nav-item">
-            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#wards-nav" aria-expanded="false">
+            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#wards-nav" role="button">
                 <i class="bi bi-building-fill-gear"></i> <span>Wards</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul id="wards-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-                <li><a href="../super-admin/pages-add-new-ward.php"><i class="bi bi-circle"></i> Add New Wards</a></li>
-                <li><a href="../super-admin/pages-manage-wards.php"><i class="bi bi-circle"></i> Manage Wards</a></li>
+                <li>
+                    <a href="../super-admin/pages-add-new-ward.php">
+                        <i class="bi bi-circle"></i> <span>Add New Wards</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../super-admin/pages-manage-wards.php">
+                        <i class="bi bi-circle"></i> <span>Manage Wards</span>
+                    </a>
+                </li>
             </ul>
         </li>
 
-        <!-- Users -->
         <li class="nav-item">
             <a class="nav-link collapsed" data-bs-toggle="collapse" href="#users-nav" role="button">
                 <i class="bi bi-people"></i> <span>Users</span> <i class="bi bi-chevron-down ms-auto"></i>
@@ -90,9 +108,9 @@
                 <i class="bi bi-box-arrow-right"></i> <span>Log Out</span>
             </a>
         </li>
-</aside>
-<!-- End Sidebar -->
+
+    </ul>
+</aside><!-- End Sidebar -->
 
 <!-- Bootstrap JS (Ensure this is included) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-

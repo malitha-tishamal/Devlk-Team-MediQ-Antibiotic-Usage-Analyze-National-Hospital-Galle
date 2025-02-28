@@ -185,7 +185,7 @@ $pieChartResult = $pieStmt->get_result();
 
 <body>
     <?php include_once("../includes/header.php") ?>
-    <?php include_once("../includes/sadmin-sidebar2.php") ?>
+    <?php include_once("../includes/sadmin-sidebar.php") ?>
 
     <main id="main" class="main">
         <div class="pagetitle">
@@ -317,6 +317,7 @@ $pieChartResult = $pieStmt->get_result();
     </main>
 
     <?php include_once("../includes/footer.php") ?>
+    <?php include_once("../includes/js-links-inc.php") ?>
 
     <script>
         function exportTableToPDF() {

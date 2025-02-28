@@ -61,7 +61,7 @@ if ($result->num_rows > 0) {
 <body>
 
     <?php include_once("../includes/header.php"); ?>
-    <?php include_once("../includes/sadmin-sidebar2.php"); ?>
+    <?php include_once("../includes/sadmin-sidebar.php"); ?>
 
     <!-- Displaying session messages -->
     <?php if (isset($_SESSION['status'])): ?>
@@ -133,6 +133,7 @@ if ($result->num_rows > 0) {
     </main>
 
     <?php include_once("../includes/footer.php"); ?>
+    <?php include_once("../includes/js-links-inc.php") ?>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>

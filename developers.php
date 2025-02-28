@@ -98,7 +98,7 @@
     <!-- Footer -->
     <div class="dev-footer">
         <p>&copy; Copyright <strong><span>MediQ</span></strong> All Rights Reserved</p>
-        <p>Developed by <a href="developers.php">Devlk</a></p>
+        <p>Developed by <a href="developers.php">Devlk Team</a></p>
     </div>
 
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
