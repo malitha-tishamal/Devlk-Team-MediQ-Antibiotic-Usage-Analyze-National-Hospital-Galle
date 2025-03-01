@@ -10,91 +10,45 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic, mobile FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic,mobile,profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
-
-// Get selected month, year, ward, type, and ant_type
-$selectedMonth = $_POST['month_select'] ?? date('m');
-$selectedYear = $_POST['year_select'] ?? date('Y');
-$selectedWard = $_POST['ward_select'] ?? '';
-$selectedType = $_POST['type_select'] ?? ''; // Added for MSD/LP
-$selectedAntType = $_POST['ant_type_select'] ?? ''; // Added for Antibiotic Type (ant_type)
-
-// Fetch all wards from the database
-$wardQuery = "SELECT DISTINCT ward_name FROM releases ORDER BY ward_name";
-$wardStmt = $conn->prepare($wardQuery);
-$wardStmt->execute();
-$wardResult = $wardStmt->get_result();
-
-// Query for antibiotic usage filtered by selected month, year, ward, type, and ant_type
-$query = "
-    SELECT ward_name, antibiotic_name, dosage, type, ant_type, SUM(item_count) AS usage_count
-    FROM releases
-    WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
-    AND (ward_name = ? OR ? = '')
-    AND (type = ? OR ? = '')
-    AND (ant_type = ? OR ? = '')
-    GROUP BY ward_name, antibiotic_name, dosage, type, ant_type
-    ORDER BY ward_name, antibiotic_name ASC, usage_count DESC
-";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("iissssss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard, $selectedType, $selectedType, $selectedAntType, $selectedAntType);
-$stmt->execute();
-$result = $stmt->get_result();
-
-// Query to get total usage count per ward for percentage calculation
-$wardUsageQuery = "
-    SELECT ward_name, SUM(item_count) AS ward_total
-    FROM releases
-    WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
-    AND (ward_name = ? OR ? = '')
-    GROUP BY ward_name
-";
-$wardUsageStmt = $conn->prepare($wardUsageQuery);
-$wardUsageStmt->bind_param("iiss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard);
-$wardUsageStmt->execute();
-$wardUsageResult = $wardUsageStmt->get_result();
-
-$wardUsage = [];
-while ($row = $wardUsageResult->fetch_assoc()) {
-    $wardUsage[$row['ward_name']] = $row['ward_total'];
-}
-
-$stmt->close();
-$wardStmt->close();
-$wardUsageStmt->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Antibiotic Usage - Mediq</title>
-
-    <?php include_once("../includes/css-links-inc.php"); ?>
-    <!-- Include DataTables CSS and JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
+    <title>Users Profile - MediQ</title>
+    <meta content="" name="description">
+    <meta content="" name="keywords">
+    <?php include_once ("../includes/css-links-inc.php"); ?>
     <style>
-        #piechart { width: 50%; height: 400px; margin: auto; }
-        @media print { .no-print { display: none; } }
-        @media only screen and (min-width: 768px) {
-            .select-bar {display: flex;}
-        } 
+        /* Styling for the popup */
+        .popup-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px;
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            display: none; /* Hidden by default */
+            z-index: 9999;
+        }
+
+        .error-popup {
+            background-color: #dc3545;
+        }
     </style>
-    <script> function printPage() { window.print(); } </script>
-    
 </head>
 
 <body>
@@ -115,13 +69,13 @@ $wardUsageStmt->close();
                 if (popupAlert) {
                     popupAlert.style.display = 'none';
                 }
-            }, 500);
+            }, 1000);
 
             // If success message, redirect to index.php after 10 seconds
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
-                    window.location.href = 'pages-add-antibiotic.php'; // Redirect after 10 seconds
-                }, 500); // Delay 10 seconds before redirecting
+                    window.location.href = 'test.php'; // Redirect after 10 seconds
+                }, 1000); // Delay 10 seconds before redirecting
             <?php endif; ?>
         </script>
 
@@ -132,163 +86,142 @@ $wardUsageStmt->close();
         ?>
     <?php endif; ?>
 
-
-    <?php include_once("../includes/header.php") ?>
-
-    <?php include_once("../includes/sadmin-sidebar.php") ?>
+    <?php include_once ("../includes/header.php") ?>
+    <?php include_once ("../includes/sadmin-sidebar.php") ?>
 
     <main id="main" class="main">
         <div class="pagetitle">
-            <h1>Usage Details Ward Wise</h1>
+            <h1>Profile</h1>
             <nav>
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                    <li class="breadcrumb-item">Pages</li>
-                    <li class="breadcrumb-item active">Antibiotic Usage Details</li>
+                    <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+                    <li class="breadcrumb-item active">Profile</li>
                 </ol>
             </nav>
         </div>
 
-        <section class="section">
+        <section class="section profile">
             <div class="row">
-                <div class="col-lg-12">
+                <div class="">
                     <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Antibiotic Release Details</h5>
+                        <div class="card-body pt-3">
+                            <ul class="nav nav-tabs nav-tabs-bordered">
+                                <li class="nav-item">
+                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile-overview">Overview</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#profile-change-password">Change Password</button>
+                                </li>
+                            </ul>
 
-                            <form method="POST">
-                                <div class="form-row mb-3 select-bar">
-                                     <div class="col-sm-3">
-                                        <label for="year_select" class="col-form-label">Select Year:</label>
-                                        <select name="year_select" id="year_select" class="form-select">
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active profile-overview pt-3" id="profile-overview">
+                                   <div class="row">
+                                        <div class="col-lg-3 col-md-4 label">Profile Picture</div>
+                                        <div class="col-lg-9 col-md-8">
                                             <?php
-                                            $currentYear = date('Y');
-                                            for ($i = 2020; $i <= $currentYear; $i++) {
-                                                echo "<option value='$i'" . ($i == $selectedYear ? ' selected' : '') . ">$i</option>";
-                                            }
+
+                                          
+
+                                            // Check if profile picture exists, otherwise use default
+                                            $profilePic = isset($user['profile_picture']) && !empty($user['profile_picture']) ? $user['profile_picture'] : 'default.jpg';
+
+                                            // Display profile picture with timestamp to force refresh
+                                            echo "<img src='uploads/$profilePic?" . time() . "' alt='Profile Picture' class='img-thumbnail mb-1' style='width: 100px; height: 100px; border-radius:50%;'>";
                                             ?>
-                                        </select>
+                                            
+                                            <form action="update-profile-picture.php" method="POST" enctype="multipart/form-data">
+                                                <div class="d-flex">
+                                                    <input type="file" name="profile_picture" class="form-control form-control-sm w-25" accept="image/*" required>
+                                                    &nbsp;&nbsp;
+                                                    <input type="submit" name="submit" value="Upload Picture" class="btn btn-primary btn-sm">
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
-                                  
-                                    <div class="col-sm-3">
-                                        <label for="month_select" class="col-form-label">Select Month:</label>
-                                        <select name="month_select" id="month_select" class="form-select">
-                                            <?php
-                                            $months = [
-                                                '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
-                                                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
-                                                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
-                                            ];
-                                            foreach ($months as $monthNum => $monthName) {
-                                                echo "<option value='$monthNum'" . ($monthNum == $selectedMonth ? ' selected' : '') . ">$monthName</option>";
-                                            }
-                                            ?>
-                                        </select>
+
+
+                                    <div class="row">
+                                        <div class="col-lg-3 col-md-4 label">Full Name</div>
+                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['name']); ?></div>
                                     </div>
-                                  
-                                    <div class="col-sm-3">
-                                        <label for="ward_select" class="col-form-label">Select Ward:</label>
-                                        <select name="ward_select" id="ward_select" class="form-select">
-                                            <option value="">All Wards</option>
-                                            <?php
-                                            while ($wardRow = $wardResult->fetch_assoc()) {
-                                                $wardName = $wardRow['ward_name'];
-                                                echo "<option value='$wardName'" . ($wardName == $selectedWard ? ' selected' : '') . ">$wardName</option>";
-                                            }
-                                            ?>
-                                        </select>
+
+                                    <div class="row">
+                                        <div class="col-lg-3 col-md-4 label">Email</div>
+                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['email']); ?></div>
                                     </div>
-                                  
-                                    <!-- Added MSD/LP Filter -->
-                                    <div class="col-sm-3">
-                                        <label for="type_select" class="col-form-label">Select Stock:</label>
-                                        <select name="type_select" id="type_select" class="form-select">
-                                            <option value="">All Types</option>
-                                            <option value="msd" <?php echo ($selectedType == 'msd') ? 'selected' : ''; ?>>MSD</option>
-                                            <option value="lp" <?php echo ($selectedType == 'lp') ? 'selected' : ''; ?>>LP</option>
-                                        </select>
-                                  </div>
-                                </div>
-                                <div class="col-sm-3">
-                                   <label for="route_select" class="col-form-label">Select Route:</label>
-                                   <select name="ant_type_select" id="ant_type_select" class="form-select">
-                                    <option value="">All Types</option>
-                                    <option value="oral" <?php echo ($selectedAntType == 'oral') ? 'selected' : ''; ?>>Oral</option>
-                                    <option value="intravenous" <?php echo ($selectedAntType == 'intravenous') ? 'selected' : ''; ?>>Intravenous</option>
-                                    <option value="topical" <?php echo ($selectedAntType == 'topical') ? 'selected' : ''; ?>>Topical</option>
-                                    <option value="other" <?php echo ($selectedAntType == 'other') ? 'selected' : ''; ?>>Other</option>
-                                </select>
+
+                                    <div class="row">
+                                        <div class="col-lg-3 col-md-4 label">NIC</div>
+                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['nic']); ?></div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-lg-3 col-md-4 label">Mobile Number</div>
+                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['mobile']); ?></div>
+                                    </div>
                                 </div>
 
-                                <div class="col-sm-7">
-                                    <button type="submit" class="btn btn-primary mt-4">Filter</button>
-                                    <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
-                                    <button class="btn btn-success mt-4 ml-2" onclick="exportTableToExcel()">Export to Excel</button>
-                                    <button class="btn btn-warning mt-4 ml-2" onclick="exportTableToPDF()">Export to PDF</button>
+                                <!-- Change Password Form -->
+                                <div class="tab-pane fade pt-2" id="profile-change-password">
+                                    <form action="change-password.php" method="POST" class="needs-validation" novalidate>
+                                        <div class="row mb-3">
+                                            <label for="currentPassword" class="col-md-4 col-lg-3 col-form-label">Current Password</label>
+                                            <div class="col-md-8 col-lg-9">
+                                                <div class="input-group">
+                                                    <input type="password" class="form-control" id="myPassword" name="current_password" required>
+                                                    <span class="input-group-text" id="inputGroupPrepend">
+                                                        <i class="password-toggle-icon1 bx bxs-show" onclick="togglePasswordVisibility('myPassword', 'password-toggle-icon1')"></i>
+                                                    </span>
+                                                    <div class="invalid-feedback">Please enter your current password.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="newPassword" class="col-md-4 col-lg-3 col-form-label">New Password</label>
+                                            <div class="col-md-8 col-lg-9">
+                                                <div class="input-group">
+                                                    <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                                                    <span class="input-group-text" id="inputGroupPrepend">
+                                                        <i class="password-toggle-icon2 bx bxs-show" onclick="togglePasswordVisibility('newPassword', 'password-toggle-icon2')"></i>
+                                                    </span>
+                                                    <div class="invalid-feedback">Please enter your new password.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="confirmPassword" class="col-md-4 col-lg-3 col-form-label">Confirm New Password</label>
+                                            <div class="col-md-8 col-lg-9">
+                                                <div class="input-group">
+                                                    <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+                                                    <span class="input-group-text" id="inputGroupPrepend">
+                                                        <i class="password-toggle-icon3 bx bxs-show" onclick="togglePasswordVisibility('confirmPassword', 'password-toggle-icon3')"></i>
+                                                    </span>
+                                                    <div class="invalid-feedback">Please confirm your new password.</div>
+                                                </div>
+                                                <div style="color:red; font-size:14px;" id="confirmNewPasswordErrorMessage"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center">
+                                            <input type="submit" class="btn btn-primary" name="submit" value="Change Password">
+                                        </div>
+                                    </form>
                                 </div>
-                            </form>
-                        </div>
 
-    <?php include_once("../includes/footer2.php") ?>
+                            </div> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+        </section>
+    </main>
 
+    <?php include_once ("../includes/footer2.php") ?>
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-  
-    
-    <script>
-    document.getElementById('addDosageBtn').addEventListener('click', function() {
-        const dosageFields = document.getElementById('dosageFields');
-        
-        // Create a new row div to contain the input field and remove button
-        const newRow = document.createElement('div');
-        newRow.classList.add('row', 'mb-6', 'align-items-center'); // Bootstrap row for alignment
-
-        // Create a column div for the dosage input (col-md-2)
-        const newCol = document.createElement('div');
-        newCol.classList.add('col-md-5');
-
-        // Add input field
-        newCol.innerHTML = `
-            <label class="form-label">Dosage</label>
-            <input type="text" class="form-control" name="dosage[]" required placeholder="eg: 10mg">
-        `;
-
-        // Create a remove button with Bootstrap and set fixed width and same height as Add Dosage button
-        const removeButton = document.createElement('button');
-        removeButton.classList.add('btn', 'btn-danger', 'btn-sm', 'mt-2', 'ms-2');
-        removeButton.innerHTML = 'Remove';
-
-        // Set fixed width to 100px and same height as Add Dosage button
-        removeButton.style.width = '100px';  // Custom width of 100px
-        removeButton.style.height = '38px';  // Match height with Add Dosage button
-
-        // Add event listener to remove the dosage field
-        removeButton.addEventListener('click', function () {
-            dosageFields.removeChild(newRow); // Remove the entire row (input + button)
-        });
-
-        // Create a column for the Remove button and ensure alignment
-        const removeCol = document.createElement('div');
-        removeCol.classList.add('col-md-2');
-        removeCol.appendChild(removeButton);  // Append Remove button to column
-
-        // Create a wrapper column for both input and button to keep them aligned properly
-        const wrapperCol = document.createElement('div');
-        wrapperCol.classList.add('col-md-4');
-        
-        // Append dosage input column and remove button column to the wrapper
-        wrapperCol.appendChild(newCol);
-        wrapperCol.appendChild(removeCol);
-
-        // Append both dosage input and remove button to the new row
-        newRow.appendChild(wrapperCol);
-
-        // Append the new row to the dosage fields container
-        dosageFields.appendChild(newRow);
-    });
-</script>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <?php include_once ("../includes/js-links-inc.php") ?>
     <script>
         $(document).ready(function() {
             // On form submit
@@ -296,7 +229,7 @@ $wardUsageStmt->close();
                 event.preventDefault(); // Prevent form submission
 
                 $.ajax({
-                    url: "submit.php", // Send form data to register.php
+                    url: "test.php", // Send form data to register.php
                     type: "POST",
                     data: $(this).serialize(), // Serialize the form data
                     dataType: "json", // Expect JSON response
@@ -316,13 +249,13 @@ $wardUsageStmt->close();
                         // Hide the alert after 10 seconds
                         setTimeout(function() {
                             popupAlert.fadeOut();
-                        }, 10000);
+                        }, 1000);
 
                         // If success, redirect after message disappears
                         if (response.status === "success") {
                             setTimeout(function() {
-                                window.location.href = "pages-add-antibiotic.php"; // Change this to your target redirect URL
-                            }, 10000); // Same 10 seconds delay before redirect
+                                window.location.href = "user-profile.php"; // Change this to your target redirect URL
+                            }, 1000); // Same 10 seconds delay before redirect
                         }
                     },
                     error: function(xhr, status, error) {
@@ -332,9 +265,37 @@ $wardUsageStmt->close();
             });
         });
     </script>
+    <script>
+    $(document).ready(function() {
+        $('#profilePicForm').submit(function(event) {
+            event.preventDefault();  // Prevent default form submission
 
+            var formData = new FormData(this);  // Create a new FormData object to handle the file upload
+            
+            $.ajax({
+                url: 'update-profile-picture.php',  // The PHP script that will handle the upload
+                type: 'POST',
+                data: formData,
+                contentType: false,  // Let jQuery figure out the content type for the FormData
+                processData: false,  // Prevent jQuery from trying to convert the form data
+                success: function(response) {
+                    // Handle the success response (should return the new profile picture filename)
+                    if (response.status === "success") {
+                        // Update the profile picture in real time
+                        $('#profilePic').attr('src', '../uploads/' + response.newProfilePic);
+                        $('#message').html('<div class="alert alert-success">Profile picture updated successfully!</div>');
+                    } else {
+                        $('#message').html('<div class="alert alert-danger">Error: ' + response.message + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#message').html('<div class="alert alert-danger">AJAX Error: ' + xhr.responseText + '</div>');
+                }
+            });
+        });
+    });
+    </script>
 
 
 </body>
-
 </html>

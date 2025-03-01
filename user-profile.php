@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT name, email, nic,mobile FROM users WHERE id = ?";
+$sql = "SELECT name, email, nic,mobile,profile_picture FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -116,6 +116,27 @@ $stmt->close();
 
                             <div class="tab-content">
                                 <div class="tab-pane fade show active profile-overview pt-3" id="profile-overview">
+                                    <div class="row">
+                                        <div class="col-lg-3 col-md-4 label">Profile Picture</div>
+                                        <div class="col-lg-9 col-md-8">
+                                            <?php 
+
+                                            // Check if profile picture exists, otherwise use default
+                                            $profilePic = isset($user['profile_picture']) && !empty($user['profile_picture']) ? $user['profile_picture'] : 'default.jpg';
+
+                                            // Display profile picture with timestamp to force refresh
+                                            echo "<img src='uploads/$profilePic?" . time() . "' alt='Profile Picture' class='img-thumbnail mb-1' style='width: 100px; height: 100px; border-radius:50%;'>";
+                                            ?>
+                                            
+                                            <form action="update-profile-picture.php" method="POST" enctype="multipart/form-data">
+                                                <div class="d-flex">
+                                                    <input type="file" name="profile_picture" class="form-control form-control-sm w-25" accept="image/*" required>
+                                                    &nbsp;&nbsp;
+                                                    <input type="submit" name="submit" value="Update Picture" class="btn btn-primary btn-sm">
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
                                     <div class="row">
                                         <div class="col-lg-3 col-md-4 label">Full Name</div>
                                         <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['name']); ?></div>

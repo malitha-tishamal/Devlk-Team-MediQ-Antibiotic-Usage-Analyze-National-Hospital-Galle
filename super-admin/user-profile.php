@@ -10,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic,mobile FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic,mobile,profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -69,13 +69,13 @@ $stmt->close();
                 if (popupAlert) {
                     popupAlert.style.display = 'none';
                 }
-            }, 10000);
+            }, 1000);
 
             // If success message, redirect to index.php after 10 seconds
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
-                    window.location.href = 'index.php'; // Redirect after 10 seconds
-                }, 10000); // Delay 10 seconds before redirecting
+                    window.location.href = 'user-profile.php'; // Redirect after 10 seconds
+                }, 1000); // Delay 10 seconds before redirecting
             <?php endif; ?>
         </script>
 
@@ -116,6 +116,29 @@ $stmt->close();
 
                             <div class="tab-content">
                                 <div class="tab-pane fade show active profile-overview pt-3" id="profile-overview">
+                                   <div class="row">
+                                        <div class="col-lg-3 col-md-4 label">Profile Picture</div>
+                                        <div class="col-lg-9 col-md-8">
+                                            <?php 
+
+                                            // Check if profile picture exists, otherwise use default
+                                            $profilePic = isset($user['profile_picture']) && !empty($user['profile_picture']) ? $user['profile_picture'] : 'default.jpg';
+
+                                            // Display profile picture with timestamp to force refresh
+                                            echo "<img src='uploads/$profilePic?" . time() . "' alt='Profile Picture' class='img-thumbnail mb-1' style='width: 100px; height: 100px; border-radius:50%;'>";
+                                            ?>
+                                            
+                                            <form action="update-profile-picture.php" method="POST" enctype="multipart/form-data">
+                                                <div class="d-flex">
+                                                    <input type="file" name="profile_picture" class="form-control form-control-sm w-25" accept="image/*" required>
+                                                    &nbsp;&nbsp;
+                                                    <input type="submit" name="submit" value="Update Picture" class="btn btn-primary btn-sm">
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+
+
                                     <div class="row">
                                         <div class="col-lg-3 col-md-4 label">Full Name</div>
                                         <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['name']); ?></div>
@@ -204,7 +227,7 @@ $stmt->close();
                 event.preventDefault(); // Prevent form submission
 
                 $.ajax({
-                    url: "change-password.php", // Send form data to register.php
+                    url: "user-profile.php", // Send form data to register.php
                     type: "POST",
                     data: $(this).serialize(), // Serialize the form data
                     dataType: "json", // Expect JSON response
@@ -224,13 +247,13 @@ $stmt->close();
                         // Hide the alert after 10 seconds
                         setTimeout(function() {
                             popupAlert.fadeOut();
-                        }, 10000);
+                        }, 1000);
 
                         // If success, redirect after message disappears
                         if (response.status === "success") {
                             setTimeout(function() {
                                 window.location.href = "user-profile.php"; // Change this to your target redirect URL
-                            }, 10000); // Same 10 seconds delay before redirect
+                            }, 1000); // Same 10 seconds delay before redirect
                         }
                     },
                     error: function(xhr, status, error) {
@@ -240,6 +263,37 @@ $stmt->close();
             });
         });
     </script>
+    <script>
+    $(document).ready(function() {
+        $('#profilePicForm').submit(function(event) {
+            event.preventDefault();  // Prevent default form submission
+
+            var formData = new FormData(this);  // Create a new FormData object to handle the file upload
+            
+            $.ajax({
+                url: 'update-profile-picture.php',  // The PHP script that will handle the upload
+                type: 'POST',
+                data: formData,
+                contentType: false,  // Let jQuery figure out the content type for the FormData
+                processData: false,  // Prevent jQuery from trying to convert the form data
+                success: function(response) {
+                    // Handle the success response (should return the new profile picture filename)
+                    if (response.status === "success") {
+                        // Update the profile picture in real time
+                        $('#profilePic').attr('src', '../uploads/' + response.newProfilePic);
+                        $('#message').html('<div class="alert alert-success">Profile picture updated successfully!</div>');
+                    } else {
+                        $('#message').html('<div class="alert alert-danger">Error: ' + response.message + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#message').html('<div class="alert alert-danger">AJAX Error: ' + xhr.responseText + '</div>');
+                }
+            });
+        });
+    });
+    </script>
+
 
 </body>
 </html>
