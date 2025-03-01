@@ -71,9 +71,9 @@ if ($result->num_rows > 0) {
 
         <script>
             document.getElementById('popup-alert').style.display = 'block';
-            setTimeout(() => { document.getElementById('popup-alert').style.display = 'none'; }, 5000);
+            setTimeout(() => { document.getElementById('popup-alert').style.display = 'none'; }, 1000);
             <?php if ($_SESSION['status'] == 'success'): ?>
-                setTimeout(() => { window.location.href = 'pages-manage-wards.php'; }, 5000);
+                setTimeout(() => { window.location.href = 'pages-manage-wards.php'; }, 1000);
             <?php endif; ?>
         </script>
 
@@ -97,7 +97,8 @@ if ($result->num_rows > 0) {
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Ward List</h5>
-                            <table id="wardTable" class="table datatable">
+                            <!--table id="wardTable" class="table datatable"-->
+                            <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th>ID</th>
@@ -137,10 +138,8 @@ if ($result->num_rows > 0) {
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#wardTable').DataTable();
-        });
+    <script type="text/javascript">
+     
     </script>
 </body>
 </html>

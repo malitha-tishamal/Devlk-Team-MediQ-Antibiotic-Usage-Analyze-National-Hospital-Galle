@@ -96,7 +96,7 @@ $result = $conn->query($sql);
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Antibiotic List</h5>
-                            <table id="wardTable" class="table datatable">
+                            <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th>Name</th>
@@ -136,10 +136,5 @@ $result = $conn->query($sql);
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#wardTable').DataTable();
-        });
-    </script>
 </body>
 </html>

@@ -10,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic, mobile FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic, mobile,profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -153,18 +153,6 @@ $pieChartResult = $pieStmt->get_result();
             chart.draw(data, options);
         }
 
-        $(document).ready(function() {
-            // Initialize DataTables with the Show All Entries option
-            $('.datatable').DataTable({
-                "paging": true,
-                "searching": true,
-                "ordering": true,
-                "info": true,
-                "pageLength": 10, // Default page length (can be customized)
-                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "All"] ] // Show 'All' option
-            });
-        });
-
         // Download Excel function
         function downloadExcel() {
             var table = document.querySelector(".datatable");
@@ -269,6 +257,7 @@ $pieChartResult = $pieStmt->get_result();
 
                         <!-- DataTable -->
                         <div style="padding: 15px;">
+
                             <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
@@ -336,8 +325,9 @@ $pieChartResult = $pieStmt->get_result();
             // Save the PDF
             doc.save("antibiotic_usage_report.pdf");
         }
-
-
+    </script>
+    <script type="text/javascript">
+        
     </script>
 </body>
 </html>

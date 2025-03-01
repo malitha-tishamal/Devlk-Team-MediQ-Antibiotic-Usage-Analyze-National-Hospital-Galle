@@ -82,7 +82,7 @@
 
         <li class="nav-item">
             <a class="nav-link collapsed" data-bs-toggle="collapse" href="#admins-nav" role="button">
-                <i class="bi bi-people"></i> <span>Admins</span> <i class="bi bi-chevron-down ms-auto"></i>
+                <i class="bi bi-person-gear"></i> <span>Admins</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul id="admins-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
                 <li>
