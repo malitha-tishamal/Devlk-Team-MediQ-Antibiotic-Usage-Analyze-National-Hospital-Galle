@@ -108,11 +108,22 @@ $stmt->close();
                                 </div>
 
                                 <div class="mb-3">
+                                    <label for="manage" class="form-label">Managed By (Team): </label>
+                                    <input type="text" id="team" name="team" class="form-control w-75" placeholder="Team" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="manage" class="form-label">Managed By (Docters Name)</label>
+                                    <input type="text" id="manage" name="manage" class="form-control w-75" placeholder="Dr. Name" required>
+                                </div>
+
+                                <div class="mb-3">
                                     <label for="description" class="form-label">Description:</label>
                                     <textarea id="description" name="description" class="form-control w-75" placeholder="Any Notice Details"></textarea>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">Add Ward</button>
+                                <button type="reset" class="btn btn-danger">Clear</button>
                             </form>
                         </div>
                     </div>
@@ -125,42 +136,43 @@ $stmt->close();
     <?php include_once("../includes/js-links-inc.php") ?>
 
     <script>
-        $(document).ready(function() {
-            $("#ward-form").submit(function(event) {
-                event.preventDefault();
+       $(document).ready(function() {
+        $("#ward-form").submit(function(event) {
+            event.preventDefault();
 
-                $.ajax({
-                    url: "add_ward.php",
-                    type: "POST",
-                    data: $(this).serialize(),
-                    dataType: "json",
-                    success: function(response) {
-                        let popupAlert = $("#popup-alert");
+            $.ajax({
+                url: "add_ward.php",
+                type: "POST",
+                data: $(this).serialize(),
+                dataType: "json",
+                success: function(response) {
+                    let popupAlert = $("#popup-alert");
 
-                        if (response.status === "success") {
-                            popupAlert.removeClass("error-popup").addClass("popup-message").html(response.message);
-                        } else {
-                            popupAlert.addClass("error-popup").html(response.message);
-                        }
-
-                        popupAlert.show();
-
-                        setTimeout(function() {
-                            popupAlert.fadeOut();
-                        }, 10000);
-
-                        if (response.status === "success") {
-                            setTimeout(function() {
-                                window.location.href = "pages-add-new-ward.php";
-                            }, 10000);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert("AJAX Error: " + xhr.responseText);
+                    if (response.status === "success") {
+                        popupAlert.removeClass("error-popup").addClass("popup-message").html(response.message);
+                    } else {
+                        popupAlert.addClass("error-popup").html(response.message);
                     }
-                });
+
+                    popupAlert.show();
+
+                    setTimeout(function() {
+                        popupAlert.fadeOut();
+                    }, 1500);
+
+                    if (response.status === "success") {
+                        setTimeout(function() {
+                            window.location.href = "pages-add-new-ward.php";
+                        }, 1500);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert("AJAX Error: " + xhr.responseText);
+                }
             });
         });
+    });
+
     </script>
 </body>
 </html>

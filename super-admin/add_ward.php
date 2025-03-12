@@ -1,43 +1,65 @@
 <?php
 session_start();
-require_once "../includes/db-conn.php"; // Database connection
+header('Content-Type: application/json'); // Ensure JSON response
+
+require_once '../includes/db-conn.php'; // Database connection
+
+if (!isset($_SESSION['admin_id'])) {
+    $_SESSION['status'] = "error";
+    $_SESSION['message'] = "Unauthorized access!";
+    echo json_encode(["status" => "error", "message" => $_SESSION['message']]);
+    exit();
+}
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Sanitize and validate input
     $ward_name = trim($_POST['ward_name']);
+    $team = trim($_POST['team']);
+    $manage = trim($_POST['manage']);
     $description = trim($_POST['description']);
 
-    // Check if fields are empty
-    if (empty($ward_name) ) {
-        $_SESSION['status'] = 'error';
-        $_SESSION['message'] = 'All fields are required!';
-    } else {
-        try {
-            // Use prepared statement to insert data securely
-            $sql = "INSERT INTO ward (ward_name, description) VALUES (?, ?)";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $ward_name, $description);
-
-            if ($stmt->execute()) {
-                $_SESSION['status'] = 'success';
-                $_SESSION['message'] = 'Ward added successfully!';
-            } else {
-                throw new Exception('Database error: ' . $stmt->error);
-            }
-        } catch (Exception $e) {
-            $_SESSION['status'] = 'error';
-            $_SESSION['message'] = $e->getMessage();
-        } finally {
-            if (isset($stmt)) {
-                $stmt->close();
-            }
-            $conn->close();
-        }
+    if (empty($ward_name) || empty($team) || empty($manage)) {
+        $_SESSION['status'] = "error";
+        $_SESSION['message'] = "All fields are required!";
+        echo json_encode(["status" => "error", "message" => $_SESSION['message']]);
+        exit();
     }
 
-    // Redirect back to the form page
-    header("Location: pages-add-new-ward.php");
-    exit();
+    try {
+        $check_sql = "SELECT id FROM ward WHERE ward_name = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("s", $ward_name);
+        $check_stmt->execute();
+        $check_stmt->store_result();
+
+        if ($check_stmt->num_rows > 0) {
+            $_SESSION['status'] = "error";
+            $_SESSION['message'] = "Ward Name already exists!";
+            echo json_encode(["status" => "error", "message" => $_SESSION['message']]);
+            $check_stmt->close();
+            exit();
+        }
+        $check_stmt->close();
+
+        $sql = "INSERT INTO ward (ward_name, team, managed_by, description) VALUES (?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssss", $ward_name, $team, $manage, $description);
+
+        if ($stmt->execute()) {
+            $_SESSION['status'] = "success";
+            $_SESSION['message'] = "Ward added successfully!";
+            echo json_encode(["status" => "success", "message" => $_SESSION['message']]);
+        } else {
+            throw new Exception('Database error: ' . $stmt->error);
+        }
+    } catch (Exception $e) {
+        $_SESSION['status'] = "error";
+        $_SESSION['message'] = $e->getMessage();
+        echo json_encode(["status" => "error", "message" => $_SESSION['message']]);
+    } finally {
+        if (isset($stmt)) $stmt->close();
+        $conn->close();
+    }
 }
+exit();
 ?>

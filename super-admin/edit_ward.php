@@ -10,16 +10,13 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic, mobile,profile_picture FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
-
-
-
 
 // Get ward ID from URL
 if (!isset($_GET['id']) || empty($_GET['id'])) {
@@ -51,12 +48,14 @@ if (!$ward) {
 // If the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $ward_name = trim($_POST['ward_name']);
+    $team = trim($_POST['team']);
+    $managed_by = trim($_POST['managed_by']);
     $description = trim($_POST['description']);
 
     // Update query
-    $sql = "UPDATE ward SET ward_name = ?, description = ? WHERE id = ?";
+    $sql = "UPDATE ward SET ward_name = ?, team = ?, managed_by = ?, description = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssi", $ward_name, $description, $ward_id);
+    $stmt->bind_param("ssssi", $ward_name, $team, $managed_by, $description, $ward_id);
 
     if ($stmt->execute()) {
         $_SESSION['status'] = 'success';
@@ -114,7 +113,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <form method="POST">
                                 <div class="mb-3">
                                     <label for="ward_name" class="form-label">Ward Name:</label>
-                                    <input type="text" id="ward_name" name="ward_name" class="form-control" value="<?php echo htmlspecialchars($ward['ward_name']); ?>" required>
+                                    <input type="text" id="ward_name" name="ward_name" class="form-control" 
+                                        value="<?php echo htmlspecialchars($ward['ward_name']); ?>" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="team" class="form-label">Managed By (Team):</label>
+                                    <input type="text" id="team" name="team" class="form-control" 
+                                        value="<?php echo htmlspecialchars($ward['team']); ?>" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="managed_by" class="form-label">Managed By (Doctor Name):</label>
+                                    <input type="text" id="managed_by" name="managed_by" class="form-control" 
+                                        value="<?php echo htmlspecialchars($ward['managed_by']); ?>" required>
                                 </div>
 
                                 <div class="mb-3">
@@ -133,6 +145,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </main>
 
     <?php include_once("../includes/footer.php"); ?>
-      <?php include_once("../includes/js-links-inc.php") ?>
+    <?php include_once("../includes/js-links-inc.php"); ?>
 </body>
 </html>

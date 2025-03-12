@@ -61,7 +61,7 @@ if ($result->num_rows > 0) {
 <body>
 
     <?php include_once("includes/header.php"); ?>
-    <?php include_once("includes/user-sidebar 2.php"); ?>
+    <?php include_once("includes/user-sidebar.php"); ?>
 
     <!-- Displaying session messages -->
     <?php if (isset($_SESSION['status'])): ?>
@@ -98,11 +98,13 @@ if ($result->num_rows > 0) {
                         <div class="card-body">
                             <h5 class="card-title">Ward List</h5>
                              <h4 class="card-title text-danger">Only Admin Can Edit And Delete Wards Details</h4>
-                            <table id="wardTable" class="table datatables">
+                            <table class="table datatable">
                                 <thead class="">
                                     <tr>
                                         <th>ID</th>
                                         <th>Ward Name</th>
+                                        <th>Managed By(Team)</th>
+                                        <th>Managed By(Docters Name)</th>
                                         <th>Description</th>
                                         <th>Created At</th>
                                     </tr>
@@ -112,6 +114,8 @@ if ($result->num_rows > 0) {
                                         <tr>
                                             <td><?php echo htmlspecialchars($ward['id']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['ward_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($ward['team']); ?></td>
+                                            <td><?php echo htmlspecialchars($ward['managed_by']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['description']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['created_at']); ?></td>
                                         </tr>
@@ -126,13 +130,9 @@ if ($result->num_rows > 0) {
     </main>
 
     <?php include_once("includes/footer.php"); ?>
+    <?php include_once("includes/js-links-inc.php"); ?>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#wardTable').DataTable();
-        });
-    </script>
 </body>
 </html>

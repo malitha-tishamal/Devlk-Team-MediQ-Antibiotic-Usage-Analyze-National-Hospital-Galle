@@ -10,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic, mobile,profile_picture FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -51,7 +51,6 @@ if ($result->num_rows > 0) {
             display: none;
             z-index: 9999;
         }
-
         .error-popup {
             background-color: #dc3545;
         }
@@ -59,16 +58,13 @@ if ($result->num_rows > 0) {
 </head>
 
 <body>
-
     <?php include_once("../includes/header.php"); ?>
     <?php include_once("../includes/sadmin-sidebar.php"); ?>
 
-    <!-- Displaying session messages -->
     <?php if (isset($_SESSION['status'])): ?>
         <div class="popup-message <?php echo ($_SESSION['status'] == 'success') ? '' : 'error-popup'; ?>" id="popup-alert">
             <?php echo $_SESSION['message']; ?>
         </div>
-
         <script>
             document.getElementById('popup-alert').style.display = 'block';
             setTimeout(() => { document.getElementById('popup-alert').style.display = 'none'; }, 1000);
@@ -76,8 +72,7 @@ if ($result->num_rows > 0) {
                 setTimeout(() => { window.location.href = 'pages-manage-wards.php'; }, 1000);
             <?php endif; ?>
         </script>
-
-        <?php unset($_SESSION['status']); unset($_SESSION['message']); ?>
+        <?php unset($_SESSION['status'], $_SESSION['message']); ?>
     <?php endif; ?>
 
     <main id="main" class="main">
@@ -97,12 +92,13 @@ if ($result->num_rows > 0) {
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Ward List</h5>
-                            <!--table id="wardTable" class="table datatable"-->
                             <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th>ID</th>
                                         <th>Ward Name</th>
+                                        <th>Team</th>
+                                        <th>Managed By</th>
                                         <th>Description</th>
                                         <th>Created At</th>
                                         <th>Actions</th>
@@ -113,18 +109,18 @@ if ($result->num_rows > 0) {
                                         <tr>
                                             <td><?php echo htmlspecialchars($ward['id']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['ward_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($ward['team']); ?></td>
+                                            <td><?php echo htmlspecialchars($ward['managed_by']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['description']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['created_at']); ?></td>
                                             <td>
-                                                <a href="edit_ward.php?id=<?php echo $ward['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                                                <a href="delete_ward.php?id=<?php echo $ward['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this ward?');">Delete</a>
+                                                <a href="edit-ward.php?id=<?php echo $ward['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                                <a href="delete-ward.php?id=<?php echo $ward['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this ward?');">Delete</a>
                                             </td>
-
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
-
                             <a href="pages-add-new-ward.php" class="btn btn-primary mt-3">Add New Ward</a>
                         </div>
                     </div>
@@ -134,12 +130,8 @@ if ($result->num_rows > 0) {
     </main>
 
     <?php include_once("../includes/footer.php"); ?>
-    <?php include_once("../includes/js-links-inc.php") ?>
-
+    <?php include_once("../includes/js-links-inc.php"); ?>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript">
-     
-    </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 18, 2025 at 06:15 AM
+-- Generation Time: Mar 09, 2025 at 04:38 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -35,16 +35,17 @@ CREATE TABLE `admins` (
   `mobile` varchar(15) NOT NULL,
   `password` varchar(255) NOT NULL,
   `status` enum('pending','approved','disabled') NOT NULL DEFAULT 'pending',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `profile_picture` varchar(255) DEFAULT 'default.jpg'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `admins`
 --
 
-INSERT INTO `admins` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`) VALUES
-(1, '200202202615', 'Malitha', 'malithatishamal@gmail.com', '785530992', '$2y$10$e3yU/.35yCf9ZbkWhUHm8u9IkKvyaO3ZuO/0K2ALLHa/JRWR.5asm', 'approved', '2025-02-10 12:21:20'),
-(8, '200202226777', 'admin user', 'admin@gmail.com', '710000000', '$2y$10$FWwvXaoYAFTWI0hrO0RpAOV6eN3qN0PX2nGQy9h/qCsDwNiDutcgm', 'approved', '2025-02-15 22:38:05');
+INSERT INTO `admins` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`, `profile_picture`) VALUES
+(1, '200202202615', 'Malitha', 'malithatishamal@gmail.com', '785530992', '$2y$10$e3yU/.35yCf9ZbkWhUHm8u9IkKvyaO3ZuO/0K2ALLHa/JRWR.5asm', 'approved', '2025-02-10 12:21:20', '67c28f96e5acd-malitha3.jpg'),
+(8, '200202226777', 'admin user', 'admin@gmail.com', '710000000', '$2y$10$FWwvXaoYAFTWI0hrO0RpAOV6eN3qN0PX2nGQy9h/qCsDwNiDutcgm', 'approved', '2025-02-15 22:38:05', 'default.jpg');
 
 -- --------------------------------------------------------
 
@@ -62,47 +63,48 @@ CREATE TABLE `antibiotics` (
 --
 
 INSERT INTO `antibiotics` (`id`, `name`) VALUES
-(17, 'Vancomycin_IV'),
-(18, 'Tigecycline'),
-(19, 'Teicoplanin'),
-(20, 'Phenoxymethylpenicillin'),
-(21, 'Ofloxacin'),
-(22, 'Norfloxacin'),
-(23, 'Nitrofurantoin'),
-(24, 'Metronidazole_oral'),
-(25, 'Doxycycline'),
-(26, 'Co- Trimoxazole'),
-(27, 'Clofazimine'),
-(28, 'Benzathine penicillin'),
-(29, 'Benzylpenicillin'),
-(30, 'Cefepime'),
-(31, 'Cefixime'),
-(32, 'Cefotaxime'),
-(33, 'Ceftazidime'),
-(34, 'Ceftriaxone'),
-(35, 'Amikacin'),
-(36, 'Amoxicillin'),
-(37, 'Amoxicillin/clavulanic-acid (Coamoxiclav)'),
-(38, 'Ampicillin'),
-(39, 'Azithromycin'),
-(40, 'Cefalexin'),
-(41, 'Cefuroxime'),
-(42, 'Ciprofloxacin'),
-(43, 'Clarithromycin'),
-(44, 'Clindamycin'),
-(45, 'Erythromycin'),
-(46, 'Flucloxacillin'),
-(47, 'Gentamicin'),
-(48, 'Imipenem/cilastatin'),
-(49, 'Levofloxacin'),
-(50, 'Linezolid'),
-(51, 'Piperacillin/tazobactam'),
-(52, 'Sulbactam + Cefoperazone'),
-(53, 'Ticarcillin/ Clavulan'),
-(54, 'MDT-MB Pediatric'),
-(55, 'MDT-MB Adult'),
-(56, 'MDT-PB Pediatric'),
-(57, 'MDT-PB Adult');
+(1, 'Amikacin'),
+(2, 'Amoxicillin'),
+(3, 'Amoxicillin/clavulanic-acid (Co-amoxiclav)'),
+(4, 'Ampicillin'),
+(5, 'Azithromycin'),
+(6, 'Benzathine penicillin'),
+(7, 'Benzylpenicillin'),
+(8, 'Cefalexin'),
+(9, 'Cefepime'),
+(10, 'Cefixime'),
+(11, 'Cefotaxime'),
+(12, 'Ceftazidime'),
+(13, 'Ceftriaxone'),
+(14, 'Cefuroxime'),
+(22, 'Flucloxacillin'),
+(23, 'Gentamicin'),
+(24, 'Imipenem/cilastatin'),
+(25, 'Levofloxacin'),
+(26, 'Linezolid'),
+(27, 'Meropenem'),
+(28, 'Metronidazole'),
+(29, 'Nitrofurantoin'),
+(30, 'Norfloxacin'),
+(31, 'Ofloxacin'),
+(32, 'Phenoxymethylpenicillin'),
+(33, 'Piperacillin/tazobactam'),
+(34, 'Sulbactam + Cefoperazone'),
+(35, 'Teicoplanin'),
+(36, 'Ticarcillin/Clavulan'),
+(37, 'Tigecycline'),
+(38, 'Vancomycin'),
+(39, 'MDT-PB Adult'),
+(40, 'MDT-PB Pediatric'),
+(41, 'MDT-MB Adult'),
+(42, 'MDT-MB Pediatric'),
+(43, 'Ciprofloxacin'),
+(44, 'Clarithromycin'),
+(45, 'Clindamycin'),
+(46, 'Clofazimine'),
+(47, 'Co-Trimoxazole'),
+(48, 'Doxycycline'),
+(49, 'Erythromycin');
 
 -- --------------------------------------------------------
 
@@ -121,82 +123,102 @@ CREATE TABLE `dosages` (
 --
 
 INSERT INTO `dosages` (`id`, `antibiotic_id`, `dosage`) VALUES
-(28, 17, '500mg'),
-(29, 17, '1g'),
-(30, 18, '500 mg (injection)'),
-(31, 19, '400 mg (injection)'),
-(32, 20, '250 mg'),
-(33, 21, '200 mg'),
-(34, 22, '400 mg'),
-(35, 23, '50 mg'),
-(36, 24, '200 mg'),
-(37, 24, '400 mg'),
-(38, 25, '100 mg'),
-(39, 26, '50 ml (oral suspension)'),
-(40, 26, '400 mg'),
-(41, 27, '50 mg'),
-(42, 27, '100 mg'),
-(43, 28, '1.2 million units (injection)'),
-(44, 29, '1 million units (injection)'),
-(45, 30, '1 g (injection)'),
-(46, 31, '200 mg'),
-(47, 31, '1 g (Injection)'),
-(48, 32, '1g (injection)'),
-(49, 32, '500 mg(injection)'),
-(50, 33, '1g (injection)'),
-(51, 34, '1g (injection)'),
-(52, 35, '500 mg in 2ml (injection)'),
-(53, 36, '250mg'),
-(54, 36, '500mg'),
-(55, 36, '125 mg/ 5 ml (oral suspension)'),
-(56, 36, '125 mg tab (solu.)'),
-(57, 37, '375 mg'),
-(58, 37, '625 mg'),
-(59, 37, '125 mg/31 mg/5 ml, 100 ml (oral suspension)'),
-(60, 37, '500 mg/100 mg (injection)'),
-(61, 37, '1000 mg/200 mg (injection)'),
-(62, 38, '1 g (for injection)'),
-(63, 38, '250 mg (for injection)'),
-(64, 39, '250 mg'),
-(65, 39, '500 mg'),
-(66, 39, '200 mg/ 5 ml, 15 ml (suspension)'),
-(67, 40, '250 mg'),
-(68, 40, '125 mg (dispersible tab.)'),
-(69, 40, '125 mg/5 ml, 100 ml (Syr.)'),
-(70, 41, '500 mg'),
-(71, 41, '750 mg (injection)'),
-(72, 41, '125 mg/5 ml in 70 (oral suspension)'),
-(73, 42, '250 mg'),
-(74, 42, '500 mg'),
-(75, 42, '200 mg in 100 ml (IV)'),
-(76, 43, '250 mg'),
-(77, 43, '500 mg'),
-(78, 43, '125 mg/5 ml, 100 ml (oral suspension)'),
-(79, 43, '500 mg (vial)'),
-(80, 44, '150 mg'),
-(81, 44, '300 mg'),
-(82, 44, '300 mg/2 ml (injection)'),
-(83, 45, '250 mg'),
-(84, 45, '125 mg/5 ml, 100 ml (oral suspension)'),
-(85, 46, '250 mg'),
-(86, 46, '500 mg'),
-(87, 46, '125 mg/5 ml, 100 ml (Syrup)'),
-(88, 46, '500 mg (Injection)'),
-(89, 47, '80 mg/ 2 ml (IV)'),
-(90, 48, '500 mg/500 mg (IV)'),
-(91, 49, '500 mg'),
-(92, 49, '500 mg in 100 ml (injection)'),
-(93, 50, '600 mg'),
-(94, 50, '2 mg in 300 ml (injection)'),
-(95, 51, '4.5 g (injection)'),
-(96, 51, '500 mg (injection)'),
-(97, 52, '1 g (injection)'),
-(98, 52, '2 g (injection)'),
-(99, 53, '3 g/ 200 mg (injection)'),
-(100, 54, ''),
-(101, 55, ''),
-(102, 56, ''),
-(103, 57, '');
+(1, 1, '500 mg IV'),
+(2, 2, '250 mg Oral'),
+(3, 2, '500 mg Oral'),
+(4, 2, '125 mg/5 ml Syrup'),
+(5, 2, '125 mg Oral'),
+(6, 3, '0.51 g IV'),
+(7, 3, '1.2 g IV'),
+(8, 3, '375 mg Oral'),
+(9, 3, '625 mg Oral'),
+(10, 3, '125 mg/31 mg/5 ml, 100 ml Syrup'),
+(11, 4, '1 g IV'),
+(12, 4, '250 mg IV'),
+(13, 5, '250 mg Oral'),
+(14, 5, '500 mg Oral'),
+(15, 5, '200 mg/5 ml, 15 ml Syrup'),
+(16, 6, '1.2 million units IV'),
+(17, 7, '1 million units IV'),
+(18, 8, '250 mg Oral'),
+(19, 8, '125 mg (dispersible tab.) Oral'),
+(20, 8, '125 mg/5 ml Syrup'),
+(21, 9, '1 g IV'),
+(22, 10, '200 mg Oral'),
+(23, 11, '1 g IV'),
+(24, 11, '500 mg IV'),
+(25, 12, '1 g IV'),
+(26, 13, '1 g IV'),
+(27, 14, '500 mg Oral'),
+(28, 14, '125 mg/5 ml Syrup'),
+(29, 14, '500 mg Oral'),
+(30, 14, '750 mg IV'),
+(31, 22, '250 mg Oral'),
+(32, 22, '500 mg Oral'),
+(33, 22, '125 mg/5 ml, 100 ml Syrup'),
+(34, 22, '500 mg IV'),
+(35, 23, '80 mg/2 ml IV'),
+(36, 24, '500 mg/500 mg IV'),
+(37, 25, '500 mg Oral'),
+(38, 25, '500 mg IV'),
+(39, 26, '600 mg Oral'),
+(40, 26, '600 mg IV'),
+(41, 27, '1 g IV'),
+(42, 28, '500 mg IV'),
+(43, 28, '400 mg Oral'),
+(44, 28, '200 mg Oral'),
+(45, 29, '50 mg Oral'),
+(46, 30, '400 mg Oral'),
+(47, 31, '200 mg Oral'),
+(48, 32, '250 mg Oral'),
+(49, 33, '4.5 g IV'),
+(50, 34, '2 g IV'),
+(51, 35, '400 mg IV'),
+(52, 36, '3 g IV'),
+(53, 37, '500 mg IV'),
+(54, 38, '1 g IV'),
+(55, 39, ''),
+(56, 40, ''),
+(57, 41, ''),
+(58, 42, ''),
+(59, 43, '250 mg  oral'),
+(60, 43, '500 mg  oral'),
+(61, 43, '200 mg  iv'),
+(62, 44, '250 mg  oral'),
+(63, 44, '500 mg  oral'),
+(64, 44, '125 mg/5 ml, 100 ml  Syrup'),
+(65, 44, '500 mg   Iv'),
+(66, 45, '150 mg  oral'),
+(67, 45, '300 mg  oral'),
+(68, 45, '300 mg  Iv'),
+(69, 46, '50 mg  oral'),
+(70, 46, '100 mg  oral'),
+(71, 47, '480 mg  oral'),
+(72, 47, '50 mg  Syrup'),
+(73, 48, '100 mg  oral'),
+(74, 49, '250 mg  oral'),
+(75, 49, '125 mg/5 ml, 100 ml (oral suspension)  Syrup');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `password_reset`
+--
+
+CREATE TABLE `password_reset` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `expire_time` int(11) NOT NULL,
+  `role` enum('user','admin') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `password_reset`
+--
+
+INSERT INTO `password_reset` (`id`, `user_id`, `token`, `expire_time`, `role`) VALUES
+(3, 43, '0f744d12a3df92db5f38f05cf071b111676994b093a24816c6629539685ed94e7c7e5b71063f594ec1c83999264e5d58c89f', 1740762901, 'user');
 
 -- --------------------------------------------------------
 
@@ -210,26 +232,19 @@ CREATE TABLE `releases` (
   `dosage` varchar(100) DEFAULT NULL,
   `item_count` int(11) NOT NULL,
   `ward_name` varchar(100) NOT NULL,
-  `release_time` datetime NOT NULL
+  `release_time` datetime NOT NULL,
+  `type` enum('msd','lp') NOT NULL,
+  `ant_type` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `releases`
 --
 
-INSERT INTO `releases` (`id`, `antibiotic_name`, `dosage`, `item_count`, `ward_name`, `release_time`) VALUES
-(28, 'Vancomycin_IV', '500mg', 10, '1 & 2 (Pediatric)', '2025-02-14 17:37:32'),
-(29, 'Tigecycline', '500 mg (injection)', 20, '3 & 5 (Surgical prof.)', '2025-02-14 18:18:53'),
-(30, 'Phenoxymethylpenicillin', '250mg', 20, '1 & 2 (Pediatric)', '2025-02-14 18:20:53'),
-(31, 'Phenoxymethylpenicillin', '250mg', 10, '1 & 2 (Pediatric)', '2025-02-14 18:26:55'),
-(32, 'Phenoxymethylpenicillin', '250mg', 1, '1 & 2 (Pediatric)', '2025-02-14 18:27:23'),
-(33, 'Vancomycin_IV', '500mg', 10, 'E & F (Theater)', '2025-02-14 19:34:03'),
-(34, 'Vancomycin_IV', '500mg', 3, '14 & 15 ( Medicos )', '2025-02-15 05:55:28'),
-(35, 'Vancomycin_IV', '500mg', 10, '25 & 27 ( Skin )', '2025-02-15 06:09:18'),
-(36, 'Ticarcillin/ Clavulan', '3 g/ 200 mg (injection)', 10, 'Neonate ICU', '2025-02-17 17:56:50'),
-(37, 'Gentamicin', '80 mg/ 2 ml (IV)', 80, '8 & 10 (Surgical)', '2025-02-17 17:58:36'),
-(38, 'Amoxicillin/clavulanic-acid (Coamoxiclav)', '375 mg', 140, '24 & 26 ( Neuro/Dental )', '2025-02-17 18:00:31'),
-(39, 'Imipenem/cilastatin', '500 mg/500 mg (IV)', 150, '46 & 47 (GU)', '2025-02-17 18:06:22');
+INSERT INTO `releases` (`id`, `antibiotic_name`, `dosage`, `item_count`, `ward_name`, `release_time`, `type`, `ant_type`) VALUES
+(1, 'Amikacin', '500 mg IV', 100, '3 - Surgical Prof - Female', '2025-03-08 13:05:21', 'msd', 'oral'),
+(2, 'Co-Trimoxazole', '600 mg Oral', 100, '1 & 2 - Pediatrics - Combined', '2025-03-08 13:42:14', 'msd', 'oral'),
+(3, 'Vancomycin', '1 g IV', 12, '5 - Surgical Prof - Male', '2025-03-08 13:42:49', 'msd', 'oral');
 
 -- --------------------------------------------------------
 
@@ -245,16 +260,18 @@ CREATE TABLE `users` (
   `mobile` varchar(15) NOT NULL,
   `password` varchar(255) NOT NULL,
   `status` enum('pending','approved','disabled') DEFAULT 'pending',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `profile_picture` varchar(255) DEFAULT 'default.jpg'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`) VALUES
-(43, '200202202615', 'malitha', 'malithatishamal2002@gmail.com', '713223952', '$2y$10$kfHNLivdLEwJ13NoA2PmaODOHZdeTzXm3lIL8DC./TCVJDUPjnuDK', 'approved', '2025-02-10 18:08:22'),
-(45, '200202226299', 'user test', 'user@gmail.com', '712222222', '$2y$10$VsfVH9VG3RWyLRBulY6Tr.MKVEMzlUI16kzHTB22LySBaaLuoqJDW', 'approved', '2025-02-15 22:37:20');
+INSERT INTO `users` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`, `profile_picture`) VALUES
+(43, '200202202615', 'malitha', 'malithatishamal2002@gmail.com', '713223952', '$2y$10$kfHNLivdLEwJ13NoA2PmaODOHZdeTzXm3lIL8DC./TCVJDUPjnuDK', 'approved', '2025-02-10 18:08:22', 'default.jpg'),
+(45, '200202226299', 'user test', 'user@gmail.com', '712222222', '$2y$10$VsfVH9VG3RWyLRBulY6Tr.MKVEMzlUI16kzHTB22LySBaaLuoqJDW', 'approved', '2025-02-15 22:37:20', 'default.jpg'),
+(46, '200202222625', 'test', 'demo3@gmail.com', '771000000', '$2y$10$IIjq.h0RCLc2ytCT.MhdpuRFxjhmDFKBeJUzh62/dgZMVbtzi6WgO', 'pending', '2025-03-06 15:26:52', 'default.jpg');
 
 -- --------------------------------------------------------
 
@@ -265,6 +282,8 @@ INSERT INTO `users` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status
 CREATE TABLE `ward` (
   `id` int(11) NOT NULL,
   `ward_name` varchar(100) NOT NULL,
+  `team` varchar(255) NOT NULL,
+  `managed_by` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -273,57 +292,65 @@ CREATE TABLE `ward` (
 -- Dumping data for table `ward`
 --
 
-INSERT INTO `ward` (`id`, `ward_name`, `description`, `created_at`) VALUES
-(1, '1 & 2 (Pediatric)', '', '2025-02-14 15:58:12'),
-(2, '3 & 5 (Surgical prof.)', '', '2025-02-14 15:59:06'),
-(3, '4 & 6 (Surgical)', '', '2025-02-14 15:59:36'),
-(4, '7 & 9 (Surgical)', '', '2025-02-14 15:59:51'),
-(5, '8 & 10 (Surgical)', '', '2025-02-14 15:59:59'),
-(6, '11 & 12 ( Prof )', '', '2025-02-14 18:17:00'),
-(7, '14 & 15 ( Medicos )', '', '2025-02-14 18:17:42'),
-(8, '16 & 17', '', '2025-02-14 18:17:58'),
-(9, '18 & 23 (Psychiatric)', '', '2025-02-14 18:18:23'),
-(10, '19 & 21 (Medical)', '', '2025-02-14 18:18:54'),
-(11, '20 & 22 (Orthopedic)', '', '2025-02-14 18:20:16'),
-(12, '24 & 26 ( Neuro/Dental )', '', '2025-02-14 18:20:38'),
-(13, '25 & 27 ( Skin )', '', '2025-02-14 18:20:54'),
-(14, '28 & 29 ( Cancer )', '', '2025-02-14 18:21:14'),
-(15, '30 & 31 ( ENT )', '', '2025-02-14 18:21:32'),
-(16, '32 & 33 (Eye)', '', '2025-02-14 18:21:50'),
-(17, '34 & 35 (Medical)', '', '2025-02-14 18:22:13'),
-(18, '36 (Pediatric)', '', '2025-02-14 18:22:27'),
-(19, '37 & 38 (Neuro surgical)', '', '2025-02-14 18:22:43'),
-(20, '39 & 40 (Cardiology)', '', '2025-02-14 18:22:59'),
-(21, '41, 42 & 43 (Maliban rehabilitation)', '', '2025-02-14 18:23:14'),
-(22, '44 & 45 (Cardiothoracic)', '', '2025-02-14 18:23:30'),
-(23, '46 & 47 (GU)', '', '2025-02-14 18:23:47'),
-(24, '48 & 49 (Onco. surgical)', '', '2025-02-14 18:24:04'),
-(25, '50 (Pedi. Onco)', '', '2025-02-14 18:24:20'),
-(26, '51 & 52 (Ped. Surgery and GI)', '', '2025-02-14 18:24:39'),
-(27, '53, 54 & 55 (Eye and Rheumatology)', '', '2025-02-14 18:24:53'),
-(28, '56 & 57 (Onco)', '', '2025-02-14 18:25:13'),
-(29, '58, 59 & 60 (ETC, emergency ward)', '', '2025-02-14 18:25:28'),
-(30, '61 & 62 (Bikku)', '', '2025-02-14 18:25:41'),
-(31, '65 (Palliative)', '', '2025-02-14 18:25:54'),
-(32, '67 (stroke)', '', '2025-02-14 18:26:07'),
-(33, '68 & 69 (Respiratory)', '', '2025-02-14 18:26:20'),
-(34, '68 & 69 (Respiratory)', '', '2025-02-14 18:26:33'),
-(35, '72 (vascular)', '', '2025-02-14 18:26:50'),
-(36, 'Neonate ICU', '', '2025-02-14 18:27:04'),
-(37, 'ETC ICU', '', '2025-02-14 18:27:15'),
-(38, 'Main ICU', '', '2025-02-14 18:27:23'),
-(39, 'Ped. ICU', '', '2025-02-14 18:27:31'),
-(40, 'CTC ICU', '', '2025-02-14 18:27:38'),
-(41, 'Onco ICU', '', '2025-02-14 18:27:46'),
-(42, 'NSU ICU', '', '2025-02-14 18:27:55'),
-(43, 'OT ENF (Theater)', '', '2025-02-14 18:28:20'),
-(44, 'ETC (Theater)', '', '2025-02-14 18:28:54'),
-(45, 'A & B (Theater)', '', '2025-02-14 18:29:18'),
-(46, 'C & D (Theater)', '', '2025-02-14 18:29:34'),
-(47, 'E & F (Theater)', '', '2025-02-14 18:29:43'),
-(48, 'Onco (Theater)', '', '2025-02-14 18:30:08'),
-(49, 'OT CT (Theater)', '', '2025-02-14 18:30:42'),
-(54, '70,71,73 & 74 (Nephrology)', '', '2025-02-15 11:07:50');
+INSERT INTO `ward` (`id`, `ward_name`, `team`, `managed_by`, `description`, `created_at`) VALUES
+(1, '1 & 2 - Pediatrics - Combined', 'Team 1', 'Dr. Jayantha', '', '2025-03-08 12:03:36'),
+(3, '3 - Surgical Prof - Female', 'Team 2', '', '', '2025-03-08 12:03:36'),
+(4, '4 - Surgery - Male', 'Team 3', 'Dr. Nalitha Wijesundara', '', '2025-03-08 12:03:36'),
+(5, '5 - Surgical Prof - Male', 'Team 2', '', '', '2025-03-08 12:03:36'),
+(6, '6 - Surgery - Combined', 'Team 4', 'Dr. Sudheera Herath', '', '2025-03-08 12:03:36'),
+(7, '7 - Surgical Prof - Female', 'Team 2', '', '', '2025-03-08 12:03:36'),
+(8, '8 - Neuro-Surgery - Female', 'Team 5', 'Dr. Yohan Koralage, Dr. Nishantha Gunasekara', '', '2025-03-08 12:03:36'),
+(9, '9 - Surgery - Combined', 'Team 8', 'Dr. Seewali Thilakarathna', '', '2025-03-08 12:03:36'),
+(10, '10 - Surgery', 'Team 6', 'Dr. Lelwala', '', '2025-03-08 12:03:36'),
+(11, '11 - Medicine Prof - Female', 'Team 9', '', '', '2025-03-08 12:03:36'),
+(12, '12 - Medicine Prof - Male', 'Team 9', '', '', '2025-03-08 12:03:36'),
+(14, '14 - Medicine - Male', 'Team 10', 'Dr. P.A Jayasinghe', '', '2025-03-08 12:03:36'),
+(15, '15 - Medicine - Female', 'Team 10', '', '', '2025-03-08 12:03:36'),
+(16, '16 - Medicine - Male', 'Team 11', 'Dr. Uluwatta', '', '2025-03-08 12:03:36'),
+(17, '17 - Medicine - Female', 'Team 11', '', '', '2025-03-08 12:03:36'),
+(18, '18 - Psychiatry - Male', 'Team 12', 'Dr. Rubi Ruben', '', '2025-03-08 12:03:36'),
+(19, '19 - Medicine - Male', 'Team 13', 'Dr. Arosha Abeywickrama', '', '2025-03-08 12:03:36'),
+(20, '20 - Orthopedic - Female', 'Team 14', 'Dr. Harsha Mendis, Dr. Jayasekara', '', '2025-03-08 12:03:36'),
+(21, '21 - Medicine - Female', 'Team 13', '', '', '2025-03-08 12:03:36'),
+(22, '22 - Orthopedic - Male', 'Team 14', '', '', '2025-03-08 12:03:36'),
+(23, '23 - Psychiatry - Female', 'Team 12', '', '', '2025-03-08 12:03:36'),
+(24, '24 - Neurology - Combined', 'Team 15', 'Dr. Mohidin', '', '2025-03-08 12:03:36'),
+(25, '25 - Dermatology - Female', 'Team 17', 'Dr. Kapila, Dr. Binari', '', '2025-03-08 12:03:36'),
+(26, '26 - Oro-Maxillary Facial - Combined', 'Team 16', '', '', '2025-03-08 12:03:36'),
+(27, '27 - Dermatology - Male', 'Team 17', '', '', '2025-03-08 12:03:36'),
+(28, '28 - Oncology - Male', 'Team 18', 'Dr. Jayamini Horadugoda', '', '2025-03-08 12:03:36'),
+(29, '29 - Oncology - Female', 'Team 18', '', '', '2025-03-08 12:03:36'),
+(30, '30 - ENT - Male', 'Team 19', 'Dr. Welendawa, Dr. Wickramasinghe', '', '2025-03-08 12:03:36'),
+(31, '31 - ENT - Female', 'Team 19', '', '', '2025-03-08 12:03:36'),
+(32, '32 - Ophthalmology - Female', 'Team 20', 'Dr. Hemamali, Dr. Lalitha', '', '2025-03-08 12:03:36'),
+(33, '33 - Ophthalmology - Male', 'Team 20', '', '', '2025-03-08 12:03:36'),
+(34, '34 - Medicine - Male', 'Team 21', 'Dr. Krishantha Jayasekara', '', '2025-03-08 12:03:36'),
+(35, '35 - Medicine - Female', 'Team 21', '', '', '2025-03-08 12:03:36'),
+(36, '36 - Pediatrics - Combined', 'Team 22', 'Dr. Upeksha Liyanage, Dr. Jagath', '', '2025-03-08 12:03:36'),
+(37, '37 - Neuro-Surgery - Male', 'Team 5', 'Dr. Yohan Koralage, Dr. Nishantha Gunasekara', '', '2025-03-08 12:03:36'),
+(39, '39 & 40 - Cardiology', 'Team 23', 'Dr. Sadhanandan', '', '2025-03-08 12:03:36'),
+(41, '41, 42 & 43 - Maliban Rehabilitation', 'Team 24', '', '', '2025-03-08 12:03:36'),
+(44, '44 - Cardio-Thoracic - Female', 'Team 25', 'Dr. Namal', '', '2025-03-08 12:03:36'),
+(45, '45 - Cardio-Thoracic - Male', 'Team 25', '', '', '2025-03-08 12:03:36'),
+(46, '46 & 47 - GU Surgery - Male', 'Team 26', 'Dr. Sathis, Dr. Dimantha', '', '2025-03-08 12:03:36'),
+(48, '48 - Onco-Surgery - Female', 'Team 27', 'Dr. Mahaliyana', '', '2025-03-08 12:03:36'),
+(49, '49 - Onco-Surgery - Male', 'Team 27', '', '', '2025-03-08 12:03:36'),
+(50, '50 - Pediatric Oncology - Combined', 'Team 28', '', '', '2025-03-08 12:03:36'),
+(51, '51 & 52 - Pediatric Surgery', 'Team 29', 'Dr. Janath, Dr. Kasthuri', '', '2025-03-08 12:03:36'),
+(53, '53 - Ophthalmology - Male', 'Team 31', 'Dr. Dharmadasa', '', '2025-03-08 12:03:36'),
+(54, '54 - Ophthalmology - Female', 'Team 31', '', '', '2025-03-08 12:03:36'),
+(55, '55 - Rheumatology - Combined', 'Team 32', 'Dr. S.P Dissanayake, Dr. Kalum Deshapriya', '', '2025-03-08 12:03:36'),
+(58, '58 - Emergency/ETC - Male', 'Team 33', '', '', '2025-03-08 12:03:36'),
+(59, '59 - Emergency/ETC - Female', 'Team 33', '', '', '2025-03-08 12:03:36'),
+(60, '60 - ETC Pead - Combined', 'Team 34', '', '', '2025-03-08 12:03:36'),
+(61, '61 & 62 - Bhikku', 'Team 35', '', '', '2025-03-08 12:03:36'),
+(65, '65 - Palliative', 'Team 36', 'Dr. Mahaliyana', '', '2025-03-08 12:03:36'),
+(67, '67 - Stroke', 'Team 37', 'Dr. Mohondan', '', '2025-03-08 12:03:36'),
+(68, '68 & 69 - Respiratory', 'Team 38', '', '', '2025-03-08 12:03:36'),
+(70, '70 - Nephrology', 'Team 39', '', '', '2025-03-08 12:03:36'),
+(71, '71 - Nephrology - Male', 'Team 39', '', '', '2025-03-08 12:03:36'),
+(72, '72 - Vascular Surgery - Combined', 'Team 40', '', '', '2025-03-08 12:03:36'),
+(73, '73 - Nephrology - Female', 'Team 39', '', '', '2025-03-08 12:03:36');
 
 --
 -- Indexes for dumped tables
@@ -350,6 +377,13 @@ ALTER TABLE `antibiotics`
 ALTER TABLE `dosages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `antibiotic_id` (`antibiotic_id`);
+
+--
+-- Indexes for table `password_reset`
+--
+ALTER TABLE `password_reset`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `releases`
@@ -385,31 +419,37 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `antibiotics`
 --
 ALTER TABLE `antibiotics`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `dosages`
 --
 ALTER TABLE `dosages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+
+--
+-- AUTO_INCREMENT for table `password_reset`
+--
+ALTER TABLE `password_reset`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `releases`
 --
 ALTER TABLE `releases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `ward`
 --
 ALTER TABLE `ward`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- Constraints for dumped tables
@@ -420,6 +460,12 @@ ALTER TABLE `ward`
 --
 ALTER TABLE `dosages`
   ADD CONSTRAINT `dosages_ibfk_1` FOREIGN KEY (`antibiotic_id`) REFERENCES `antibiotics` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `password_reset`
+--
+ALTER TABLE `password_reset`
+  ADD CONSTRAINT `password_reset_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -18,12 +18,29 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Get selected month, year, ward, type, and ant_type
-$selectedMonth = $_POST['month_select'] ?? date('m');
-$selectedYear = $_POST['year_select'] ?? date('Y');
+// Determine which filter method is being used
+$filterType = $_POST['filter_type'] ?? 'date'; // Default to date range
+
+// Get date range values
+$startDate = $_POST['start_date'] ?? date('Y-m-01'); // Default to first day of current month
+$endDate = $_POST['end_date'] ?? date('Y-m-t');     // Default to last day of current month
+
+// Get month range values
+$startMonth = $_POST['start_month'] ?? date('m');
+$startYear = $_POST['start_year'] ?? date('Y');
+$endMonth = $_POST['end_month'] ?? date('m');
+$endYear = $_POST['end_year'] ?? date('Y');
+
+// Calculate date ranges for month selection if that filter is used
+if ($filterType == 'month') {
+    $startDate = date('Y-m-01', strtotime("$startYear-$startMonth-01"));
+    $endDate = date('Y-m-t', strtotime("$endYear-$endMonth-01"));
+}
+
+// Get other filters
 $selectedWard = $_POST['ward_select'] ?? '';
-$selectedType = $_POST['type_select'] ?? ''; // Added for MSD/LP
-$selectedAntType = $_POST['ant_type_select'] ?? ''; // Added for Antibiotic Type (ant_type)
+$selectedType = $_POST['type_select'] ?? '';
+$selectedAntType = $_POST['ant_type_select'] ?? '';
 
 // Fetch all wards from the database
 $wardQuery = "SELECT DISTINCT ward_name FROM releases ORDER BY ward_name";
@@ -31,11 +48,11 @@ $wardStmt = $conn->prepare($wardQuery);
 $wardStmt->execute();
 $wardResult = $wardStmt->get_result();
 
-// Query for antibiotic usage filtered by selected month, year, ward, type, and ant_type
+// Query for antibiotic usage filtered by date range, ward, type, and ant_type
 $query = "
     SELECT ward_name, antibiotic_name, dosage, type, ant_type, SUM(item_count) AS usage_count
     FROM releases
-    WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
+    WHERE release_time BETWEEN ? AND ?
     AND (ward_name = ? OR ? = '')
     AND (type = ? OR ? = '')
     AND (ant_type = ? OR ? = '')
@@ -43,7 +60,7 @@ $query = "
     ORDER BY ward_name, antibiotic_name ASC, usage_count DESC
 ";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("iissssss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard, $selectedType, $selectedType, $selectedAntType, $selectedAntType);
+$stmt->bind_param("ssssssss", $startDate, $endDate, $selectedWard, $selectedWard, $selectedType, $selectedType, $selectedAntType, $selectedAntType);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -51,12 +68,12 @@ $result = $stmt->get_result();
 $wardUsageQuery = "
     SELECT ward_name, SUM(item_count) AS ward_total
     FROM releases
-    WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
+    WHERE release_time BETWEEN ? AND ?
     AND (ward_name = ? OR ? = '')
     GROUP BY ward_name
 ";
 $wardUsageStmt = $conn->prepare($wardUsageQuery);
-$wardUsageStmt->bind_param("iiss", $selectedMonth, $selectedYear, $selectedWard, $selectedWard);
+$wardUsageStmt->bind_param("ssss", $startDate, $endDate, $selectedWard, $selectedWard);
 $wardUsageStmt->execute();
 $wardUsageResult = $wardUsageStmt->get_result();
 
@@ -92,8 +109,18 @@ $wardUsageStmt->close();
         #piechart { width: 50%; height: 400px; margin: auto; }
         @media print { .no-print { display: none; } }
         @media only screen and (min-width: 768px) {
-            .select-bar {display: flex;}
+            .select-bar {display: flex; flex-wrap: wrap;}
         } 
+        .form-group {
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+        #dateRangeFilters, #monthRangeFilters {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
     </style>
     <script> function printPage() { window.print(); } </script>
 </head>
@@ -122,22 +149,42 @@ $wardUsageStmt->close();
                             <h5 class="card-title">Antibiotic Release Details</h5>
 
                             <form method="POST">
-                                <div class="form-row mb-3 select-bar">
-                                     <div class="col-sm-3">
-                                        <label for="year_select" class="col-form-label">Select Year:</label>
-                                        <select name="year_select" id="year_select" class="form-select">
-                                            <?php
-                                            $currentYear = date('Y');
-                                            for ($i = 2020; $i <= $currentYear; $i++) {
-                                                echo "<option value='$i'" . ($i == $selectedYear ? ' selected' : '') . ">$i</option>";
-                                            }
-                                            ?>
-                                        </select>
+                                <div class="form-row mb-3">
+                                    <div class="form-group col-md-6 ">
+                                        <label>Choose Filter Type:</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="filter_type" id="filterDate" value="date" <?php echo ($filterType == 'date') ? 'checked' : ''; ?> onchange="toggleFilterType()">
+                                            <label class="form-check-label" for="filterDate">
+                                                Date Range
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="filter_type" id="filterMonth" value="month" <?php echo ($filterType == 'month') ? 'checked' : ''; ?> onchange="toggleFilterType()">
+                                            <label class="form-check-label" for="filterMonth">
+                                                Month Range
+                                            </label>
+                                        </div>
                                     </div>
-                                  
-                                    <div class="col-sm-3">
-                                        <label for="month_select" class="col-form-label">Select Month:</label>
-                                        <select name="month_select" id="month_select" class="form-select">
+                                </div>
+
+                                <!-- Date Range Filters -->
+                                <div id="dateRangeFilters" class="form-row mb-3 select-bar" <?php echo ($filterType == 'date') ? '' : 'style="display: none;"'; ?>>
+                                    <div class="form-group col-md-3">
+                                        <label for="start_date" class="col-form-label">Start Date:</label>
+                                        <input type="date" name="start_date" id="start_date" class="form-control" value="<?php echo $startDate; ?>">
+                                    </div>
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label for="end_date" class="col-form-label">End Date:</label>
+                                        <input type="date" name="end_date" id="end_date" class="form-control" value="<?php echo $endDate; ?>">
+                                    </div>
+                                </div>
+
+                                <!-- Month Range Filters -->
+                                <div id="monthRangeFilters" class="form-row mb-3 select-bar" <?php echo ($filterType == 'month') ? '' : 'style="display: none;"'; ?>>
+                                    <div class="form-group col-md-3">
+                                        <label for="start_month" class="col-form-label">Start Month:</label>
+                                        <select name="start_month" id="start_month" class="form-select">
                                             <?php
                                             $months = [
                                                 '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
@@ -145,17 +192,54 @@ $wardUsageStmt->close();
                                                 '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
                                             ];
                                             foreach ($months as $monthNum => $monthName) {
-                                                echo "<option value='$monthNum'" . ($monthNum == $selectedMonth ? ' selected' : '') . ">$monthName</option>";
+                                                echo "<option value='$monthNum'" . ($monthNum == $startMonth ? ' selected' : '') . ">$monthName</option>";
                                             }
                                             ?>
                                         </select>
                                     </div>
-                                  
-                                    <div class="col-sm-3">
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label for="start_year" class="col-form-label">Start Year:</label>
+                                        <select name="start_year" id="start_year" class="form-select">
+                                            <?php
+                                            $currentYear = date('Y');
+                                            for ($i = 2020; $i <= $currentYear; $i++) {
+                                                echo "<option value='$i'" . ($i == $startYear ? ' selected' : '') . ">$i</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label for="end_month" class="col-form-label">End Month:</label>
+                                        <select name="end_month" id="end_month" class="form-select">
+                                            <?php
+                                            foreach ($months as $monthNum => $monthName) {
+                                                echo "<option value='$monthNum'" . ($monthNum == $endMonth ? ' selected' : '') . ">$monthName</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label for="end_year" class="col-form-label">End Year:</label>
+                                        <select name="end_year" id="end_year" class="form-select">
+                                            <?php
+                                            for ($i = 2020; $i <= $currentYear; $i++) {
+                                                echo "<option value='$i'" . ($i == $endYear ? ' selected' : '') . ">$i</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row mb-3 select-bar">
+                                    <div class="form-group col-md-3">
                                         <label for="ward_select" class="col-form-label">Select Ward:</label>
                                         <select name="ward_select" id="ward_select" class="form-select">
                                             <option value="">All Wards</option>
                                             <?php
+                                            $wardResult->data_seek(0); // Reset result pointer
                                             while ($wardRow = $wardResult->fetch_assoc()) {
                                                 $wardName = $wardRow['ward_name'];
                                                 echo "<option value='$wardName'" . ($wardName == $selectedWard ? ' selected' : '') . ">$wardName</option>";
@@ -165,31 +249,34 @@ $wardUsageStmt->close();
                                     </div>
                                   
                                     <!-- Added MSD/LP Filter -->
-                                    <div class="col-sm-3">
+                                    <div class="form-group col-md-3">
                                         <label for="type_select" class="col-form-label">Select Stock:</label>
                                         <select name="type_select" id="type_select" class="form-select">
                                             <option value="">All Types</option>
                                             <option value="msd" <?php echo ($selectedType == 'msd') ? 'selected' : ''; ?>>MSD</option>
                                             <option value="lp" <?php echo ($selectedType == 'lp') ? 'selected' : ''; ?>>LP</option>
                                         </select>
-                                  </div>
-                                </div>
-                                <div class="col-sm-3">
-                                   <label for="route_select" class="col-form-label">Select Route:</label>
-                                   <select name="ant_type_select" id="ant_type_select" class="form-select">
-                                    <option value="">All Types</option>
-                                    <option value="oral" <?php echo ($selectedAntType == 'oral') ? 'selected' : ''; ?>>Oral</option>
-                                    <option value="intravenous" <?php echo ($selectedAntType == 'intravenous') ? 'selected' : ''; ?>>Intravenous</option>
-                                    <option value="topical" <?php echo ($selectedAntType == 'topical') ? 'selected' : ''; ?>>Topical</option>
-                                    <option value="other" <?php echo ($selectedAntType == 'other') ? 'selected' : ''; ?>>Other</option>
-                                </select>
+                                    </div>
+                                  
+                                    <div class="form-group col-md-3">
+                                       <label for="route_select" class="col-form-label">Select Route:</label>
+                                       <select name="ant_type_select" id="ant_type_select" class="form-select">
+                                        <option value="">All Types</option>
+                                        <option value="oral" <?php echo ($selectedAntType == 'oral') ? 'selected' : ''; ?>>Oral</option>
+                                        <option value="intravenous" <?php echo ($selectedAntType == 'intravenous') ? 'selected' : ''; ?>>Intravenous</option>
+                                        <option value="topical" <?php echo ($selectedAntType == 'topical') ? 'selected' : ''; ?>>Topical</option>
+                                        <option value="other" <?php echo ($selectedAntType == 'other') ? 'selected' : ''; ?>>Other</option>
+                                    </select>
+                                    </div>
                                 </div>
 
-                                <div class="col-sm-7">
-                                    <button type="submit" class="btn btn-primary mt-4">Filter</button>
-                                    <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
-                                    <button class="btn btn-success mt-4 ml-2" onclick="exportTableToExcel()">Export to Excel</button>
-                                    <button class="btn btn-warning mt-4 ml-2" onclick="exportTableToPDF()">Export to PDF</button>
+                                <div class="form-row">
+                                    <div class="form-group col-md-12">
+                                        <button type="submit" class="btn btn-primary mt-2">Filter</button>
+                                        <button type="button" class="btn btn-danger mt-2 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
+                                        <button type="button" class="btn btn-success mt-2 ml-2" onclick="exportTableToExcel()">Export to Excel</button>
+                                        <button type="button" class="btn btn-warning mt-2 ml-2" onclick="exportTableToPDF()">Export to PDF</button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -236,7 +323,7 @@ $wardUsageStmt->close();
                                         $rowNumber++;
                                     }
                                 } else {
-                                    echo "<tr><td colspan='6' class='text-center'>No data available for the selected month, year, ward, and type</td></tr>";
+                                    echo "<tr><td colspan='6' class='text-center'>No data available for the selected period, ward, and type</td></tr>";
                                 }
                                 ?>
                             </tbody>
@@ -250,6 +337,28 @@ $wardUsageStmt->close();
     <?php include_once("../includes/js-links-inc.php") ?>
     <?php include_once("../includes/footer.php") ?>
     <script type="text/javascript">
+        // Toggle between date range and month range filters
+        function toggleFilterType() {
+            const dateFilterSelected = document.getElementById('filterDate').checked;
+            document.getElementById('dateRangeFilters').style.display = dateFilterSelected ? 'flex' : 'none';
+            document.getElementById('monthRangeFilters').style.display = !dateFilterSelected ? 'flex' : 'none';
+        }
+
+        // Set default dates if not already set
+        document.addEventListener("DOMContentLoaded", function() {
+            if (document.getElementById("start_date").value === "") {
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                document.getElementById("start_date").value = firstDay.toISOString().split('T')[0];
+            }
+            
+            if (document.getElementById("end_date").value === "") {
+                const today = new Date();
+                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                document.getElementById("end_date").value = lastDay.toISOString().split('T')[0];
+            }
+        });
+        
         function exportTableToExcel() {
             // Get the table element
             let table = document.querySelector(".datatable");
@@ -261,10 +370,22 @@ $wardUsageStmt->close();
             // Add the worksheet to the workbook
             XLSX.utils.book_append_sheet(workbook, worksheet, "Antibiotic_Usage");
 
+            // Generate filename with date info
+            let dateInfo = "";
+            if (document.getElementById('filterDate').checked) {
+                dateInfo = document.getElementById('start_date').value + "_to_" + document.getElementById('end_date').value;
+            } else {
+                const startMonthSelect = document.getElementById('start_month');
+                const startMonthText = startMonthSelect.options[startMonthSelect.selectedIndex].text;
+                const endMonthSelect = document.getElementById('end_month');
+                const endMonthText = endMonthSelect.options[endMonthSelect.selectedIndex].text;
+                dateInfo = startMonthText + document.getElementById('start_year').value + "_to_" + 
+                          endMonthText + document.getElementById('end_year').value;
+            }
+            
             // Save the file
-            XLSX.writeFile(workbook, "Antibiotic_Usage_Report.xlsx");
+            XLSX.writeFile(workbook, "Antibiotic_Usage_" + dateInfo + ".xlsx");
         }
-
     </script>
     <script>
         function exportTableToPDF() {
@@ -275,6 +396,22 @@ $wardUsageStmt->close();
             doc.setFont("helvetica", "bold");
             doc.setFontSize(16);
             doc.text("Antibiotic Usage Report", 105, 10, { align: "center" });
+
+            // Date range info
+            let dateInfo = "";
+            if (document.getElementById('filterDate').checked) {
+                dateInfo = "Period: " + document.getElementById('start_date').value + " to " + document.getElementById('end_date').value;
+            } else {
+                const startMonthSelect = document.getElementById('start_month');
+                const startMonthText = startMonthSelect.options[startMonthSelect.selectedIndex].text;
+                const endMonthSelect = document.getElementById('end_month');
+                const endMonthText = endMonthSelect.options[endMonthSelect.selectedIndex].text;
+                dateInfo = "Period: " + startMonthText + " " + document.getElementById('start_year').value + " to " + 
+                          endMonthText + " " + document.getElementById('end_year').value;
+            }
+            
+            doc.setFontSize(12);
+            doc.text(dateInfo, 105, 20, { align: "center" });
 
             // Get table data
             let table = document.querySelector(".datatable");
@@ -298,15 +435,28 @@ $wardUsageStmt->close();
             doc.autoTable({
                 head: [headers],
                 body: data,
-                startY: 20,
+                startY: 30,
                 theme: "striped",
                 styles: { fontSize: 10 },
                 headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: "bold" },
                 alternateRowStyles: { fillColor: [240, 240, 240] },
             });
 
+            // Generate filename with date info
+            let filenameDateInfo = "";
+            if (document.getElementById('filterDate').checked) {
+                filenameDateInfo = document.getElementById('start_date').value + "_to_" + document.getElementById('end_date').value;
+            } else {
+                const startMonthSelect = document.getElementById('start_month');
+                const startMonthText = startMonthSelect.options[startMonthSelect.selectedIndex].text;
+                const endMonthSelect = document.getElementById('end_month');
+                const endMonthText = endMonthSelect.options[endMonthSelect.selectedIndex].text;
+                filenameDateInfo = startMonthText + document.getElementById('start_year').value + "_to_" + 
+                          endMonthText + document.getElementById('end_year').value;
+            }
+
             // Save PDF
-            doc.save("Antibiotic_Usage_Report.pdf");
+            doc.save("Antibiotic_Usage_" + filenameDateInfo + ".pdf");
         }
     </script>
 </body>

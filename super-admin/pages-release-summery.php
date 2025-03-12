@@ -10,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic, mobile,profile_picture FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -18,74 +18,43 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Get selected month, year, day, and week
-$selectedMonth = $_POST['month_select'] ?? date('m');
+// Get selected month range, year, start date, and end date
 $selectedYear = $_POST['year_select'] ?? date('Y');
-$selectedDay = $_POST['day_select'] ?? null;
-$selectedWeek = $_POST['week_select'] ?? null;
+$startMonth = $_POST['start_month_select'] ?? 1;  // Default to January
+$endMonth = $_POST['end_month_select'] ?? 12;    // Default to December
+$startDate = $_POST['start_date'] ?? date('Y-m-01'); // Default to the first day of the current month
+$endDate = $_POST['end_date'] ?? date('Y-m-t');     // Default to the last day of the current month
 
-// Calculate start and end days for each week of the selected month
-$startOfMonth = "$selectedYear-$selectedMonth-01";
-$daysInMonth = cal_days_in_month(CAL_GREGORIAN, $selectedMonth, $selectedYear);
-$weeks = [];
-for ($i = 1; $i <= $daysInMonth; $i++) {
-    $date = date('Y-m-d', strtotime("$startOfMonth +$i days"));
-    $week = date('W', strtotime($date)); // Get the week number
-    if (!in_array($week, $weeks)) {
-        $weeks[] = $week;
-    }
-}
-
-// Query for table data (Day-wise or Week-wise)
-if ($selectedDay) {
-    $query = "
-        SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count, DAY(release_time) AS day
-        FROM releases
-        WHERE MONTH(release_time) = ? AND YEAR(release_time) = ? AND DAY(release_time) = ?
-        GROUP BY antibiotic_name, dosage, day
-        ORDER BY usage_count DESC
-    ";
-} elseif ($selectedWeek) {
-    $startDate = date('Y-m-d', strtotime("{$selectedYear}-W{$selectedWeek}-1")); // Start of the selected week
-    $endDate = date('Y-m-d', strtotime("{$selectedYear}-W{$selectedWeek}-7")); // End of the selected week
-    $query = "
-        SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count, WEEK(release_time, 1) AS week
-        FROM releases
-        WHERE YEAR(release_time) = ? AND WEEK(release_time, 1) = ?
-        GROUP BY antibiotic_name, dosage, week
-        ORDER BY usage_count DESC
-    ";
-} else {
-    $query = "
-        SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count
-        FROM releases
-        WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?
-        GROUP BY antibiotic_name, dosage
-        ORDER BY usage_count DESC
-    ";
-}
+// Query for table data (between selected months of the year, excluding syrups)
+$query = "
+    SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count
+    FROM releases
+    WHERE release_time BETWEEN ? AND ?
+    AND YEAR(release_time) = ?
+    AND MONTH(release_time) BETWEEN ? AND ?
+    AND antibiotic_name NOT LIKE '%syrup%'   -- Excluding syrups
+    GROUP BY antibiotic_name, dosage
+    ORDER BY usage_count DESC
+";
 
 $stmt = $conn->prepare($query);
-if ($selectedDay) {
-    $stmt->bind_param("iii", $selectedMonth, $selectedYear, $selectedDay);
-} elseif ($selectedWeek) {
-    $stmt->bind_param("ii", $selectedYear, $selectedWeek);
-} else {
-    $stmt->bind_param("ii", $selectedMonth, $selectedYear);
-}
+$stmt->bind_param("ssiii", $startDate, $endDate, $selectedYear, $startMonth, $endMonth);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Query for pie chart data
+// Query for pie chart data (between selected months of the year, excluding syrups)
 $pieChartQuery = "
     SELECT antibiotic_name, SUM(item_count) AS usage_count
     FROM releases
-    WHERE YEAR(release_time) = ? AND MONTH(release_time) = ?
+    WHERE release_time BETWEEN ? AND ?
+    AND YEAR(release_time) = ?
+    AND MONTH(release_time) BETWEEN ? AND ?
+    AND antibiotic_name NOT LIKE '%syrup%'   -- Excluding syrups
     GROUP BY antibiotic_name
     ORDER BY usage_count DESC
 ";
 $pieStmt = $conn->prepare($pieChartQuery);
-$pieStmt->bind_param("ii", $selectedYear, $selectedMonth);
+$pieStmt->bind_param("ssiii", $startDate, $endDate, $selectedYear, $startMonth, $endMonth);
 $pieStmt->execute();
 $pieChartResult = $pieStmt->get_result();
 ?>
@@ -123,27 +92,9 @@ $pieChartResult = $pieStmt->get_result();
             ]);
 
             var options = {
-                title: 'Antibiotic Usage Distribution (<?php echo date('F Y', strtotime("$selectedYear-$selectedMonth-01")); ?>)',
+                title: 'Antibiotic Usage Distribution (<?php echo date('F Y', strtotime("$selectedYear-$startMonth-01")); ?> - <?php echo date('F Y', strtotime("$selectedYear-$endMonth-01")); ?>)',
                 pieHole: 0.4, // Converts to a donut chart
-                colors: [
-                    '#FF5733', '#33FF57', '#5733FF', '#FF33A1', '#33A1FF', '#A1FF33', '#FFC300', '#DAF7A6',
-                    '#C70039', '#900C3F', '#581845', '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', '#E74C3C',
-                    '#F39C12', '#D35400', '#27AE60', '#16A085', '#2980B9', '#8E44AD', '#2C3E50', '#F1C40F',
-                    '#E67E22', '#ECF0F1', '#95A5A6', '#7F8C8D', '#DFFF00', '#FFBF00', '#FF7F50', '#DE3163',
-                    '#9FE2BF', '#40E0D0', '#6495ED', '#CCCCFF', '#800000', '#FF4500', '#2E8B57', '#8B4513',
-                    '#808000', '#00CED1', '#20B2AA', '#5F9EA0', '#4B0082', '#4682B4', '#D2691E', '#8A2BE2',
-                    '#6B8E23', '#FF1493', '#00BFFF', '#DC143C', '#FFD700', '#ADFF2F', '#F0E68C', '#90EE90',
-                    '#FF6347', '#EE82EE', '#D8BFD8', '#00FFFF', '#FF00FF', '#8B0000', '#B22222', '#228B22',
-                    '#32CD32', '#F0F8FF', '#FAFAD2', '#FFFF00', '#FF1493', '#800080', '#FF6347', '#00FF7F',
-                    '#C71585', '#FFD700', '#9ACD32', '#32CD32', '#FF4500', '#98FB98', '#D3D3D3', '#808080',
-                    '#E0FFFF', '#C0C0C0', '#ADD8E6', '#B0E0E6', '#A52A2A', '#F5F5DC', '#F0F0F0', '#DCDCDC',
-                    '#F4A300', '#C9E4CA', '#DFFF00', '#4B0082', '#A52A2A', '#D2691E', '#C71585', '#DDA0DD',
-                    '#FF7F50', '#DC143C', '#B0C4DE', '#F08080', '#FF8C00', '#B22222', '#FF4500', '#3CB371',
-                    '#9B30FF', '#FF6347', '#98FB98', '#2F4F4F', '#8B008B', '#556B2F', '#2F4F4F', '#4B0082',
-                    '#00FFFF', '#7FFFD4', '#8A2BE2', '#BC8F8F', '#F0FFF0', '#DAA520', '#CD5C5C', '#FFFACD',
-                    '#D3D3D3', '#B8860B', '#A9A9A9', '#ADFF2F', '#A52A2A', '#D2691E', '#8B0000', '#E9967A',
-                    '#CD5C5C', '#00008B', '#008B8B', '#BDB76B', '#8B4513', '#D2B48C', '#9ACD32', '#8B008B'
-                ],
+                colors: ['#FF5733', '#33FF57', '#5733FF', '#FF33A1', '#33A1FF'],
                 fontSize: 14,
                 legend: { position: 'right', textStyle: { fontSize: 14 } },
                 chartArea: { width: '85%', height: '75%' }
@@ -163,12 +114,13 @@ $pieChartResult = $pieStmt->get_result();
 
     <style>
         #piechart { width: 95%; height: 400px; margin: auto; }
+        .dataTables_filter { text-align: right; }
+        .custom-search-box { margin-bottom: 15px; }
         @media print { .no-print { display: none; } }
         @media only screen and (min-width: 768px) {
             .select-bar {display: flex;}
         }
     </style>
-    <script> function printPage() { window.print(); } </script>
 </head>
 
 <body>
@@ -209,91 +161,121 @@ $pieChartResult = $pieStmt->get_result();
                                     </div>
 
                                     <div class="col-sm-3">
-                                        <label for="month_select" class="col-form-label">Select Month:</label>
-                                        <select name="month_select" id="month_select" class="form-select">
+                                        <label for="start_month_select" class="col-form-label">Select Start Month:</label>
+                                        <select name="start_month_select" id="start_month_select" class="form-select">
                                             <?php
                                             $months = [
-                                                '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
-                                                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
-                                                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
+                                                1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June',
+                                                7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
                                             ];
                                             foreach ($months as $monthNum => $monthName) {
-                                                echo "<option value='$monthNum'" . ($monthNum == $selectedMonth ? ' selected' : '') . ">$monthName</option>";
+                                                echo "<option value='$monthNum'" . ($monthNum == $startMonth ? ' selected' : '') . ">$monthName</option>";
                                             }
                                             ?>
                                         </select>
                                     </div>
 
                                     <div class="col-sm-3">
-                                        <label for="day_select" class="col-form-label">Select Day:</label>
-                                        <select name="day_select" id="day_select" class="form-select">
-                                            <option value="">--Select Day--</option>
-                                            <?php for ($i = 1; $i <= 31; $i++) { ?>
-                                                <option value="<?php echo $i ?>" <?php echo ($i == $selectedDay ? 'selected' : ''); ?>><?php echo $i ?></option>
-                                            <?php } ?>
+                                        <label for="end_month_select" class="col-form-label">Select End Month:</label>
+                                        <select name="end_month_select" id="end_month_select" class="form-select">
+                                            <?php
+                                            foreach ($months as $monthNum => $monthName) {
+                                                echo "<option value='$monthNum'" . ($monthNum == $endMonth ? ' selected' : '') . ">$monthName</option>";
+                                            }
+                                            ?>
                                         </select>
+                                    </div>
+                                </div>
+                                <!-- Additional date range selection -->
+                                <div class="d-flex">
+                                    <div class="col-sm-3">
+                                        <label for="start_date" class="col-form-label">Select Start Date:</label>
+                                        <input type="date" name="start_date" id="start_date" class="form-control" value="<?php echo $_POST['start_date'] ?? ''; ?>">
                                     </div>
 
                                     <div class="col-sm-3">
-                                        <label for="week_select" class="col-form-label">Select Week:</label>
-                                        <select name="week_select" id="week_select" class="form-select">
-                                            <option value="">--Select Week--</option>
-                                            <?php foreach ($weeks as $week) { ?>
-                                                <option value="<?php echo $week ?>" <?php echo ($week == $selectedWeek ? 'selected' : ''); ?>>Week <?php echo $week ?></option>
-                                            <?php } ?>
-                                        </select>
+                                        <label for="end_date" class="col-form-label">Select End Date:</label>
+                                        <input type="date" name="end_date" id="end_date" class="form-control" value="<?php echo $_POST['end_date'] ?? ''; ?>">
                                     </div>
                                 </div>
 
                                 <div class="col-sm-5">
                                     <button type="submit" class="btn btn-primary mt-4">Filter</button>
-                                    <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
+                                    <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="window.print()">Print Report</button>
                                     <button class="btn btn-success mt-4 ml-2 no-print" onclick="downloadExcel()">Download Excel</button>
                                 </div>
                             </form>
 
                             <div id="piechart" style="float: left;"></div>
+
                         </div>
 
                         <!-- DataTable -->
                         <div style="padding: 15px;">
-
                             <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th>#</th>
                                         <th>Antibiotic Name</th>
                                         <th>Dosage</th>
-                                        <th>Usage Count</th>
-                                        <th>Percentage (%)</th>
+                                        <th>Total Usage</th>
+                                        <th>Units</th>
+                                        <th>Percentage</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tableBody">
+                                <tbody class="text-center">
                                     <?php 
-                                    // Get total usage count to calculate percentages
-                                    $totalQuery = "SELECT SUM(item_count) AS total_usage FROM releases WHERE YEAR(release_time) = '$selectedYear' AND MONTH(release_time) = '$selectedMonth'";
-                                    if ($selectedDay) {
-                                        $totalQuery .= " AND DAY(release_time) = '$selectedDay'";
-                                    } elseif ($selectedWeek) {
-                                        $totalQuery .= " AND WEEK(release_time, 1) = '$selectedWeek'";
-                                    }
-                                    $totalResult = $conn->query($totalQuery);
-                                    $totalRow = $totalResult->fetch_assoc();
-                                    $totalUsage = $totalRow['total_usage'] ?? 1;
+                                    $count = 1;
+                                    $totalUsage = 0;
+                                    $totalGrams = 0;
+                                    $totalUnits = 0;
+                                    
+                                    while ($row = $result->fetch_assoc()) {
+                                        $dosage = strtolower($row['dosage']);
+                                        $itemCount = $row['usage_count'];
+                                        $usageInGrams = 0;
 
-                                    if ($result->num_rows > 0) {
-                                        $rowNumber = 1;
-                                        while ($row = $result->fetch_assoc()) {
-                                            $percentage = round(($row['usage_count'] / $totalUsage) * 100, 2);
-                                            echo "<tr>";
-                                            echo "<td class='text-center'>{$rowNumber}</td>";
-                                            echo "<td class='text-center'>{$row['antibiotic_name']}</td>";
-                                            echo "<td class='text-center'>{$row['dosage']}</td>";
-                                            echo "<td class='text-center'>{$row['usage_count']}</td>";
-                                            echo "<td class='text-center'>{$percentage}%</td>";
-                                            echo "</tr>";
-                                            $rowNumber++;
+                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+                                            $mgValue = (int)$matches[1];
+                                            $usageInGrams = ($mgValue / 1000) * $itemCount; 
+                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+                                            $gValue = (float)$matches[1];
+                                            $usageInGrams = $gValue * $itemCount;
                                         }
+
+                                        $usageInUnits = $usageInGrams; // 1g = 1 unit
+                                        $totalUnits += $usageInUnits; // Update total units
+                                    }
+
+                                    $result->data_seek(0); // Reset the result pointer to start
+
+                                    while ($row = $result->fetch_assoc()) {
+                                        $antibioticName = $row['antibiotic_name'];
+                                        $dosage = strtolower($row['dosage']);
+                                        $itemCount = $row['usage_count'];
+                                        $usageInGrams = 0;
+
+                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+                                            $mgValue = (int)$matches[1];
+                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
+                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+                                            $gValue = (float)$matches[1];
+                                            $usageInGrams = $gValue * $itemCount;
+                                        }
+
+                                        $usageInUnits = $usageInGrams;
+                                        $percentageUsage = ($totalUnits > 0) ? ($usageInUnits / $totalUnits) * 100 : 0;
+                                    ?>
+                                    <tr>
+                                        <td><?php echo $count; ?></td>
+                                        <td><?php echo $antibioticName; ?></td>
+                                        <td><?php echo $dosage; ?></td>
+                                        <td><?php echo number_format($itemCount); ?></td>
+                                        <td><?php echo number_format($usageInUnits, 2); ?>g</td>
+                                        <td><?php echo number_format($percentageUsage, 2); ?>%</td>
+                                    </tr>
+                                    <?php
+                                        $count++;
                                     }
                                     ?>
                                 </tbody>
@@ -309,25 +291,9 @@ $pieChartResult = $pieStmt->get_result();
     <?php include_once("../includes/js-links-inc.php") ?>
 
     <script>
-        function exportTableToPDF() {
-            const { jsPDF } = window.jspdf;
-            let doc = new jsPDF();
-
-            // Title
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text("Antibiotic Usage Report", 105, 10, { align: "center" });
-
-            // Get table data
-            const table = document.querySelector(".datatable");
-            doc.autoTable({ html: table, startY: 20 });
-
-            // Save the PDF
-            doc.save("antibiotic_usage_report.pdf");
-        }
-    </script>
-    <script type="text/javascript">
-        
+        $(document).ready(function () {
+            $('.datatable').DataTable();
+        });
     </script>
 </body>
 </html>
