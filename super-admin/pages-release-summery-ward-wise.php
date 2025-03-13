@@ -150,14 +150,16 @@ $wardUsageStmt->close();
 
                             <form method="POST">
                                 <div class="form-row mb-3">
-                                    <div class="form-group col-md-6 ">
+                                    <div class="form-group col-md-6 d-flex">
                                         <label>Choose Filter Type:</label>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="filter_type" id="filterDate" value="date" <?php echo ($filterType == 'date') ? 'checked' : ''; ?> onchange="toggleFilterType()">
                                             <label class="form-check-label" for="filterDate">
                                                 Date Range
                                             </label>
                                         </div>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="filter_type" id="filterMonth" value="month" <?php echo ($filterType == 'month') ? 'checked' : ''; ?> onchange="toggleFilterType()">
                                             <label class="form-check-label" for="filterMonth">
@@ -287,10 +289,10 @@ $wardUsageStmt->close();
                             <thead class="align-middle text-center">
                                 <tr>
                                     <th>#</th>
-                                    <th>Ward Name</th>
                                     <th>Antibiotic Name</th>
                                     <th>Dosage</th>
-                                    <th>Usage Count</th>
+                                    <th>Count</th>
+                                    <th>Units</th>
                                     <th>Percentage (%)</th>
                                 </tr>
                             </thead>
@@ -299,27 +301,70 @@ $wardUsageStmt->close();
                                 if ($result->num_rows > 0) {
                                     $rowNumber = 1;
                                     $previousWard = "";
+                                    $totalUnits = 0;
+                                    $wardUsage = []; // Store per-ward total units
+
+                                    // First pass: Calculate total units
                                     while ($row = $result->fetch_assoc()) {
                                         $wardName = $row['ward_name'];
-                                        $totalUsageInWard = $wardUsage[$wardName];
-                                        $percentage = round(($row['usage_count'] / $totalUsageInWard) * 100, 2);
-                                        
+                                        $dosage = strtolower($row['dosage']);
+                                        $itemCount = $row['usage_count'];
+                                        $usageInGrams = 0;
+
+                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+                                            $mgValue = (int)$matches[1];
+                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
+                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+                                            $gValue = (float)$matches[1];
+                                            $usageInGrams = $gValue * $itemCount;
+                                        }
+
+                                        $usageInUnits = $usageInGrams; // 1g = 1 unit
+                                        $totalUnits += $usageInUnits;
+
+                                        // Store per-ward usage
+                                        if (!isset($wardUsage[$wardName])) {
+                                            $wardUsage[$wardName] = 0;
+                                        }
+                                        $wardUsage[$wardName] += $usageInUnits;
+                                    }
+
+                                    $result->data_seek(0); // Reset result pointer for display loop
+
+                                    // Second pass: Display data
+                                    while ($row = $result->fetch_assoc()) {
+                                        $wardName = $row['ward_name'];
+                                        $antibioticName = $row['antibiotic_name'];
+                                        $dosage = strtolower($row['dosage']);
+                                        $itemCount = $row['usage_count'];
+                                        $usageInGrams = 0;
+
+                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+                                            $mgValue = (int)$matches[1];
+                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
+                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+                                            $gValue = (float)$matches[1];
+                                            $usageInGrams = $gValue * $itemCount;
+                                        }
+
+                                        $usageInUnits = $usageInGrams;
+                                        $percentageUsage = ($totalUnits > 0) ? ($usageInUnits / $totalUnits) * 100 : 0;
+
                                         // Group by ward name
                                         if ($wardName != $previousWard) {
-                                            // Insert a row for the ward name (row with colspan)
                                             echo "<tr><td colspan='6' class='text-center card-title' style='background-color: #f8f9fa; font-weight: bold;'>$wardName</td></tr>";
                                             $previousWard = $wardName;
                                         }
-
-                                        // Regular data row
-                                        echo "<tr>";
-                                        echo "<td class='text-center'>{$rowNumber}</td>";
-                                        echo "<td class='text-center'>{$row['ward_name']}</td>";
-                                        echo "<td class='text-center'>{$row['antibiotic_name']}</td>";
-                                        echo "<td class='text-center'>{$row['dosage']}</td>";
-                                        echo "<td class='text-center'>{$row['usage_count']}</td>";
-                                        echo "<td class='text-center'>{$percentage}%</td>";
-                                        echo "</tr>";
+                                ?>
+                                        <tr>
+                                            <td class='text-center'><?php echo $rowNumber; ?></td>
+                                            <td class='text-center'><?php echo $antibioticName; ?></td>
+                                            <td class='text-center'><?php echo $dosage; ?></td>
+                                            <td class='text-center'><?php echo number_format($itemCount); ?></td>
+                                            <td class='text-center'><?php echo number_format($usageInUnits, 2); ?>g</td>
+                                            <td class='text-center'><?php echo number_format($percentageUsage, 2); ?>%</td>
+                                        </tr>
+                                <?php 
                                         $rowNumber++;
                                     }
                                 } else {
@@ -327,6 +372,7 @@ $wardUsageStmt->close();
                                 }
                                 ?>
                             </tbody>
+
                         </table>
                         </div>
                     </div>
