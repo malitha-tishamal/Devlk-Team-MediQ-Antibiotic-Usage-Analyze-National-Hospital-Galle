@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 09, 2025 at 04:38 PM
+-- Generation Time: Mar 14, 2025 at 06:58 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -244,7 +244,8 @@ CREATE TABLE `releases` (
 INSERT INTO `releases` (`id`, `antibiotic_name`, `dosage`, `item_count`, `ward_name`, `release_time`, `type`, `ant_type`) VALUES
 (1, 'Amikacin', '500 mg IV', 100, '3 - Surgical Prof - Female', '2025-03-08 13:05:21', 'msd', 'oral'),
 (2, 'Co-Trimoxazole', '600 mg Oral', 100, '1 & 2 - Pediatrics - Combined', '2025-03-08 13:42:14', 'msd', 'oral'),
-(3, 'Vancomycin', '1 g IV', 12, '5 - Surgical Prof - Male', '2025-03-08 13:42:49', 'msd', 'oral');
+(3, 'Vancomycin', '1 g IV', 12, '5 - Surgical Prof - Male', '2025-03-08 13:42:49', 'msd', 'oral'),
+(4, 'MDT-PB Pediatric', 'No dosage available', 10, '1 & 2 - Pediatrics - Combined', '2025-03-11 13:34:34', 'lp', 'intravenous');
 
 -- --------------------------------------------------------
 
@@ -437,7 +438,7 @@ ALTER TABLE `password_reset`
 -- AUTO_INCREMENT for table `releases`
 --
 ALTER TABLE `releases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users`
