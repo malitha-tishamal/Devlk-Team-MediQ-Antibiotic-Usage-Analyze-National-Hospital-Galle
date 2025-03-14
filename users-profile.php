@@ -69,14 +69,8 @@ $stmt->close();
                 if (popupAlert) {
                     popupAlert.style.display = 'none';
                 }
-            }, 10000);
+            }, 1000);
 
-            // If success message, redirect to index.php after 10 seconds
-            <?php if ($_SESSION['status'] == 'success'): ?>
-                setTimeout(function() {
-                    window.location.href = 'index.php'; // Redirect after 10 seconds
-                }, 10000); // Delay 10 seconds before redirecting
-            <?php endif; ?>
         </script>
 
         <?php
@@ -224,13 +218,13 @@ $stmt->close();
                         // Hide the alert after 10 seconds
                         setTimeout(function() {
                             popupAlert.fadeOut();
-                        }, 10000);
+                        }, 1000);
 
                         // If success, redirect after message disappears
                         if (response.status === "success") {
                             setTimeout(function() {
                                 window.location.href = "users-profile.php"; // Change this to your target redirect URL
-                            }, 10000); // Same 10 seconds delay before redirect
+                            }, 1000); // Same 10 seconds delay before redirect
                         }
                     },
                     error: function(xhr, status, error) {
