@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/db-conn.php'; 
+require_once 'includes/db-conn.php'; 
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
@@ -27,7 +27,7 @@ if (isset($_POST['submit'])) {
             // Move the uploaded file to the desired directory
             if (move_uploaded_file($fileTmpPath, $destPath)) {
                 // Update the database with the new profile picture
-                $sql = "UPDATE admins SET profile_picture = ? WHERE id = ?";
+                $sql = "UPDATE users SET profile_picture = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("si", $newFileName, $user_id);
                 if ($stmt->execute()) {
