@@ -1,6 +1,9 @@
 <?php
 session_start(); // Start session to store messages
 
+// Set the default timezone to Sri Lanka Standard Time (SLST)
+date_default_timezone_set('Asia/Colombo');
+
 // Include the database connection
 require_once "includes/db-conn.php";
 
@@ -13,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dosage = isset($_POST['dosage']) && trim($_POST['dosage']) !== '' ? trim($_POST['dosage']) : null;
     $itemCount = isset($_POST['item_count']) ? intval($_POST['item_count']) : null;
     $ward = isset($_POST['ward']) ? trim($_POST['ward']) : null;
-    $releaseTime = isset($_POST['date']) && !empty($_POST['date']) ? $_POST['date'] : date('Y-m-d H:i:s'); // Use selected date or current timestamp
+    // Use selected date or current timestamp (based on the timezone set)
+    $releaseTime = isset($_POST['date']) && !empty($_POST['date']) ? $_POST['date'] : date('Y-m-d H:i:s'); 
     $type = isset($_POST['type']) ? trim($_POST['type']) : null;
     $ant_type = isset($_POST['ant_type']) ? trim($_POST['ant_type']) : null;
 

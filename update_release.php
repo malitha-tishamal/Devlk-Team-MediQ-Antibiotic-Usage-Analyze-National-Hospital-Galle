@@ -1,6 +1,9 @@
 <?php
 session_start(); // Start session to store messages
 
+// Set the default timezone to Sri Lanka Standard Time (SLST)
+date_default_timezone_set('Asia/Colombo');
+
 // Include the database connection
 require_once "includes/db-conn.php";
 
