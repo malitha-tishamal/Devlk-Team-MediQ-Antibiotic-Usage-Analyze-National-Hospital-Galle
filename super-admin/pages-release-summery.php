@@ -18,12 +18,25 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Get selected month range, year, start date, and end date
+// Get filter type
+$filterType = $_POST['filter_type'] ?? 'month';
+
+// Get selected year and month range (for month filter)
 $selectedYear = $_POST['year_select'] ?? date('Y');
 $startMonth = $_POST['start_month_select'] ?? 1;  // Default to January
 $endMonth = $_POST['end_month_select'] ?? 12;    // Default to December
+
+// Get specific date range (for date filter)
 $startDate = $_POST['start_date'] ?? date('Y-m-01'); // Default to the first day of the current month
 $endDate = $_POST['end_date'] ?? date('Y-m-t');     // Default to the last day of the current month
+
+// Set date range based on filter type
+if ($filterType === 'month') {
+    $startDate = "$selectedYear-$startMonth-01";
+    $endDate = date('Y-m-t', strtotime("$selectedYear-$endMonth-01"));
+}
+
+// Now your existing queries can use $startDate and $endDate as before
 
 // Query for table data (between selected months of the year, excluding syrups)
 $query = "
@@ -32,7 +45,6 @@ $query = "
     WHERE release_time BETWEEN ? AND ?
     AND YEAR(release_time) = ?
     AND MONTH(release_time) BETWEEN ? AND ?
-    AND antibiotic_name NOT LIKE '%syrup%'   -- Excluding syrups
     GROUP BY antibiotic_name, dosage
     ORDER BY usage_count DESC
 ";
@@ -49,7 +61,6 @@ $pieChartQuery = "
     WHERE release_time BETWEEN ? AND ?
     AND YEAR(release_time) = ?
     AND MONTH(release_time) BETWEEN ? AND ?
-    AND antibiotic_name NOT LIKE '%syrup%'   -- Excluding syrups
     GROUP BY antibiotic_name
     ORDER BY usage_count DESC
 ";
@@ -147,7 +158,20 @@ $pieChartResult = $pieStmt->get_result();
                             <h5 class="card-title">Antibiotic Release Details</h5>
 
                             <form method="POST">
-                                <div class="form-row mb-3 select-bar">
+                                <!-- Add a toggle for selecting filter type -->
+                                <div class="form-group mb-3">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="filter_type" id="filter_month" value="month" checked>
+                                        <label class="form-check-label" for="filter_month">Filter by Month Range</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="filter_type" id="filter_date" value="date">
+                                        <label class="form-check-label" for="filter_date">Filter by Date Range</label>
+                                    </div>
+                                </div>
+
+                                <!-- Month range selection (shown by default) -->
+                                <div id="month_range_filters" class="form-row mb-3 select-bar">
                                     <div class="col-sm-3">
                                         <label for="year_select" class="col-form-label">Select Year:</label>
                                         <select name="year_select" id="year_select" class="form-select">
@@ -186,8 +210,9 @@ $pieChartResult = $pieStmt->get_result();
                                         </select>
                                     </div>
                                 </div>
-                                <!-- Additional date range selection -->
-                                <div class="d-flex">
+
+                                <!-- Date range selection (hidden by default) -->
+                                <div id="date_range_filters" class="form-row mb-3 select-bar" style="display: none;">
                                     <div class="col-sm-3">
                                         <label for="start_date" class="col-form-label">Select Start Date:</label>
                                         <input type="date" name="start_date" id="start_date" class="form-control" value="<?php echo $_POST['start_date'] ?? ''; ?>">
@@ -201,8 +226,8 @@ $pieChartResult = $pieStmt->get_result();
 
                                 <div class="col-sm-5">
                                     <button type="submit" class="btn btn-primary mt-4">Filter</button>
-                                    <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="window.print()">Print Report</button>
-                                    <button class="btn btn-success mt-4 ml-2 no-print" onclick="downloadExcel()">Download Excel</button>
+                                    <button type="button" class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="window.print()">Print Report</button>
+                                    <button type="button" class="btn btn-success mt-4 ml-2 no-print" onclick="downloadExcel()">Download Excel</button>
                                 </div>
                             </form>
 
@@ -295,5 +320,19 @@ $pieChartResult = $pieStmt->get_result();
             $('.datatable').DataTable();
         });
     </script>
+    <script>
+    $(document).ready(function() {
+        // Toggle between filter types
+        $('input[name="filter_type"]').change(function() {
+            if ($(this).val() === 'month') {
+                $('#month_range_filters').show();
+                $('#date_range_filters').hide();
+            } else {
+                $('#month_range_filters').hide();
+                $('#date_range_filters').show();
+            }
+        });
+    });
+</script>
 </body>
 </html>
