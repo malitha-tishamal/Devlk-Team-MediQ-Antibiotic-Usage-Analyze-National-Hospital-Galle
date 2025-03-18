@@ -10,292 +10,381 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic,mobile,profile_picture FROM admins WHERE id = ?";
-$stmt = $conn->prepare($sql);
+$sql2 = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
+$stmt = $conn->prepare($sql2);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
-?>
 
+// Fetch antibiotic usage by ward using your provided query
+$sql = "
+    SELECT '1 (Pediatrics)' AS ward_group, antibiotic_name, dosage, SUM(item_count) AS total_items, type 
+    FROM releases 
+    WHERE ward_name = '1 & 2 - Pediatrics - Combined'
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '3+5 (Surgical Prof)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('3 - Surgical Prof - Female', '5 - Surgical Prof - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '4+7 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('4 - Surgery - Male', '7 - Surgical Prof - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '6 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('6 - Surgery - Combined')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '8+37 (Neuro-Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('8 - Neuro-Surgery - Female', '37 - Neuro-Surgery - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '9 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('9 - Surgery - Combined')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '10 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('10 - Surgery')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '38 (Neuro-Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name = '38 (Neuro-Surgery)'
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '11+12 (Medicine Prof)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('11 - Medicine Prof - Female', '12 - Medicine Prof - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '14+15 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('14 - Medicine - Male', '15 - Medicine - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '16+17 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('16 - Medicine - Male', '17 - Medicine - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '18+23 (Psychiatry)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('18 - Psychiatry - Male', '23 - Psychiatry - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '19+21 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('19 - Medicine - Male', '21 - Medicine - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '20+22 (Orthopedic)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('20 - Orthopedic - Female', '22 - Orthopedic - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '30+31 (ENT)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('30 - ENT - Male', '31 - ENT - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '24 (Neurology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('24 - Neurology - Combined')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '26 (Oro-Maxillary Facial)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('26 - Oro-Maxillary Facial - Combined')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '36 (Pediatrics)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name = '36 (Pediatrics) - Combined'
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '25+27 (Dermatology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('25 - Dermatology - Female', '27 - Dermatology - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '28+29 (Oncology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('28 - Oncology - Male', '29 - Oncology - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '30+31 (ENT)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('30 - ENT - Male', '31 - ENT - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '32+33 (Opthalmology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('32 - Ophthalmology - Female', '33 - Ophthalmology - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '34+35 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('34 - Medicine - Male', '35 - Medicine - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '36 (Pediatrics)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('36 - Pediatrics - Combined')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '39+40 (Cardiology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('39 & 40 - Cardiology')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '41+42+43 (Maliban Rehabilitation)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('41, 42 & 43 - Maliban Rehabilitation')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '44+45 (Cardio-Thoracic)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('44 - Cardio-Thoracic - Female', '45 - Cardio-Thoracic - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '46+47 (GU Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('46 & 47 - GU Surgery - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '48+49 (Onco- Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('48 - Onco-Surgery - Female', 'Ward 59', '49 - Onco-Surgery - Male')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '50 (Pediatric Oncology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name = '50 - Pediatric Oncology - Combined'
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '51+52 (Pediatric Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('51 & 52 - Pediatric Surgery')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '53+54 (Opthalmology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('53 - Ophthalmology - Male', '54 - Ophthalmology - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '55 (Rheumatology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('55 - Rheumatology - Combined')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '58+59 (Emergency/ETC)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('58 - Emergency/ETC - Male', '59 - Emergency/ETC - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '60 (ETC Pead)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('60 - ETC Pead - Combined')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '61+62 (Bhikku)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('61 & 62 - Bhikku')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '65 (Palliative)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('65 - Palliative')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '67 (Stroke)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('67 - Stroke')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '68+69 (Respiratory)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('68 & 69 - Respiratory')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '70+71+73+74 (Nephrology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name IN ('70 - Nephrology', '71 - Nephrology - Male', '73 - Nephrology - Female')
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT '72 (Vascular Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name = '72 - Vascular Surgery - Combined'
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT 'All ICU', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name LIKE '%ICU%'
+    GROUP BY antibiotic_name, dosage, type
+    UNION ALL
+    SELECT 'All Theater', antibiotic_name, dosage, SUM(item_count) AS total_items, type
+    FROM releases 
+    WHERE ward_name LIKE '%Theater%'
+    GROUP BY antibiotic_name, dosage, type
+    -- Add more wards as necessary
+";
+$result2 = $conn->query($sql);
+
+// Start HTML output
+?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Users Profile - MediQ</title>
-    <meta content="" name="description">
-    <meta content="" name="keywords">
-    <?php include_once ("../includes/css-links-inc.php"); ?>
-    <style>
-        /* Styling for the popup */
-        .popup-message {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px;
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
-            border-radius: 5px;
-            display: none; /* Hidden by default */
-            z-index: 9999;
-        }
-
-        .error-popup {
-            background-color: #dc3545;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antibiotic Usage Monitor</title>
+    <!-- DataTable CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <?php include_once("../includes/css-links-inc.php"); ?>
+    <!-- jQuery -->
+    <script type="text/javascript" charset="utf-8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTable JS -->
+    <script type="text/javascript" charset="utf-8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 </head>
-
 <body>
 
-    <!-- Displaying the message from the session -->
-    <?php if (isset($_SESSION['status'])): ?>
-        <div class="popup-message <?php echo ($_SESSION['status'] == 'success') ? '' : 'error-popup'; ?>" id="popup-alert">
-            <?php echo $_SESSION['message']; ?>
-        </div>
-
-        <script>
-            // Display the popup message
-            document.getElementById('popup-alert').style.display = 'block';
-
-            // Automatically hide the popup after 10 seconds
-            setTimeout(function() {
-                const popupAlert = document.getElementById('popup-alert');
-                if (popupAlert) {
-                    popupAlert.style.display = 'none';
-                }
-            }, 1000);
-
-            // If success message, redirect to index.php after 10 seconds
-            <?php if ($_SESSION['status'] == 'success'): ?>
-                setTimeout(function() {
-                    window.location.href = 'test.php'; // Redirect after 10 seconds
-                }, 1000); // Delay 10 seconds before redirecting
-            <?php endif; ?>
-        </script>
-
-        <?php
-        // Clear session variables after showing the message
-        unset($_SESSION['status']);
-        unset($_SESSION['message']);
-        ?>
-    <?php endif; ?>
-
-    <?php include_once ("../includes/header.php") ?>
-    <?php include_once ("../includes/sadmin-sidebar.php") ?>
-
-    <main id="main" class="main">
+<main id="main" class="main">
         <div class="pagetitle">
-            <h1>Profile</h1>
+            <h1>Usage Details Ward Wise</h1>
             <nav>
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-                    <li class="breadcrumb-item active">Profile</li>
+                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                    <li class="breadcrumb-item">Pages</li>
+                    <li class="breadcrumb-item active">Antibiotic Usage Details</li>
                 </ol>
             </nav>
         </div>
 
-        <section class="section profile">
+        <section class="section">
             <div class="row">
-                <div class="">
+                <div class="col-lg-12">
                     <div class="card">
-                        <div class="card-body pt-3">
-                            <ul class="nav nav-tabs nav-tabs-bordered">
-                                <li class="nav-item">
-                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile-overview">Overview</button>
-                                </li>
-                                <li class="nav-item">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#profile-change-password">Change Password</button>
-                                </li>
-                            </ul>
+                        <div class="card-body">
+                            <h5 class="card-title">Antibiotic Usage Details</h5>
+                            <?php include_once("../includes/header.php") ?>
+                            <?php include_once("../includes/sadmin-sidebar.php") ?>
 
-                            <div class="tab-content">
-                                <div class="tab-pane fade show active profile-overview pt-3" id="profile-overview">
-                                   <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Profile Picture</div>
-                                        <div class="col-lg-9 col-md-8">
-                                            <?php
+                            
 
-                                          
+                            <table id="antibioticUsageTable" class="display table">
+                                <thead class="align-middle text-center">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Antibiotic Name</th>
+                                        <th>Dosage</th>
+                                        <th>Count</th>
+                                        <th>Units</th>
+                                        <th>Percentage (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                <?php 
+                                if ($result2->num_rows > 0) {
+                                    $rowNumber = 1;
+                                    $previousWard = "";
+                                    $totalUnits = 0;
+                                    $wardUsage = []; // Store per-ward total units
 
-                                            // Check if profile picture exists, otherwise use default
-                                            $profilePic = isset($user['profile_picture']) && !empty($user['profile_picture']) ? $user['profile_picture'] : 'default.jpg';
+                                    // First pass: Calculate total units
+                                    while ($row = $result2->fetch_assoc()) {
+                                        $wardName = $row['ward_group'];
+                                        $dosage = strtolower($row['dosage']);
+                                        $itemCount = $row['total_items'];
+                                        $usageInGrams = 0;
 
-                                            // Display profile picture with timestamp to force refresh
-                                            echo "<img src='uploads/$profilePic?" . time() . "' alt='Profile Picture' class='img-thumbnail mb-1' style='width: 100px; height: 100px; border-radius:50%;'>";
-                                            ?>
-                                            
-                                            <form action="update-profile-picture.php" method="POST" enctype="multipart/form-data">
-                                                <div class="d-flex">
-                                                    <input type="file" name="profile_picture" class="form-control form-control-sm w-25" accept="image/*" required>
-                                                    &nbsp;&nbsp;
-                                                    <input type="submit" name="submit" value="Upload Picture" class="btn btn-primary btn-sm">
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
+                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+                                            $mgValue = (int)$matches[1];
+                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
+                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+                                            $gValue = (float)$matches[1];
+                                            $usageInGrams = $gValue * $itemCount;
+                                        }
 
+                                        $usageInUnits = $usageInGrams; // 1g = 1 unit
+                                        $totalUnits += $usageInUnits;
 
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Full Name</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['name']); ?></div>
-                                    </div>
+                                        // Store per-ward usage
+                                        if (!isset($wardUsage[$wardName])) {
+                                            $wardUsage[$wardName] = 0;
+                                        }
+                                        $wardUsage[$wardName] += $usageInUnits;
+                                    }
 
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Email</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['email']); ?></div>
-                                    </div>
+                                    $result2->data_seek(0); // Reset result pointer for display loop
 
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">NIC</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['nic']); ?></div>
-                                    </div>
+                                    // Second pass: Display data
+                                    while ($row = $result2->fetch_assoc()) {
+                                        $wardName = $row['ward_group'];
+                                        $antibioticName = $row['antibiotic_name'];
+                                        $dosage = strtolower($row['dosage']);
+                                        $itemCount = $row['total_items'];
+                                        $usageInGrams = 0;
 
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Mobile Number</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['mobile']); ?></div>
-                                    </div>
-                                </div>
+                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+                                            $mgValue = (int)$matches[1];
+                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
+                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+                                            $gValue = (float)$matches[1];
+                                            $usageInGrams = $gValue * $itemCount;
+                                        }
 
-                                <!-- Change Password Form -->
-                                <div class="tab-pane fade pt-2" id="profile-change-password">
-                                    <form action="change-password.php" method="POST" class="needs-validation" novalidate>
-                                        <div class="row mb-3">
-                                            <label for="currentPassword" class="col-md-4 col-lg-3 col-form-label">Current Password</label>
-                                            <div class="col-md-8 col-lg-9">
-                                                <div class="input-group">
-                                                    <input type="password" class="form-control" id="myPassword" name="current_password" required>
-                                                    <span class="input-group-text" id="inputGroupPrepend">
-                                                        <i class="password-toggle-icon1 bx bxs-show" onclick="togglePasswordVisibility('myPassword', 'password-toggle-icon1')"></i>
-                                                    </span>
-                                                    <div class="invalid-feedback">Please enter your current password.</div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        $usageInUnits = $usageInGrams;
+                                        $percentageUsage = ($totalUnits > 0) ? ($usageInUnits / $totalUnits) * 100 : 0;
 
-                                        <div class="row mb-3">
-                                            <label for="newPassword" class="col-md-4 col-lg-3 col-form-label">New Password</label>
-                                            <div class="col-md-8 col-lg-9">
-                                                <div class="input-group">
-                                                    <input type="password" class="form-control" id="newPassword" name="new_password" required>
-                                                    <span class="input-group-text" id="inputGroupPrepend">
-                                                        <i class="password-toggle-icon2 bx bxs-show" onclick="togglePasswordVisibility('newPassword', 'password-toggle-icon2')"></i>
-                                                    </span>
-                                                    <div class="invalid-feedback">Please enter your new password.</div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        // Group by ward name
+                                        if ($wardName != $previousWard) {
+                                            // Ward heading row
+                                            echo "<tr><td colspan='6' class='text-center card-title' style='background-color: #f8f9fa; font-weight: bold;'>$wardName</td></tr>";
+                                            $previousWard = $wardName;
+                                        }
+                                ?>
+                                        <tr>
+                                            <td class='text-center'><?php echo $rowNumber; ?></td>
+                                            <td class='text-center'><?php echo $antibioticName; ?></td>
+                                            <td class='text-center'><?php echo $dosage; ?></td>
+                                            <td class='text-center'><?php echo number_format($itemCount); ?></td>
+                                            <td class='text-center'><?php echo number_format($usageInUnits, 2); ?>g</td>
+                                            <td class='text-center'><?php echo number_format($percentageUsage, 2); ?>%</td>
+                                        </tr>
+                                <?php 
+                                        $rowNumber++;
+                                    }
 
-                                        <div class="row mb-3">
-                                            <label for="confirmPassword" class="col-md-4 col-lg-3 col-form-label">Confirm New Password</label>
-                                            <div class="col-md-8 col-lg-9">
-                                                <div class="input-group">
-                                                    <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
-                                                    <span class="input-group-text" id="inputGroupPrepend">
-                                                        <i class="password-toggle-icon3 bx bxs-show" onclick="togglePasswordVisibility('confirmPassword', 'password-toggle-icon3')"></i>
-                                                    </span>
-                                                    <div class="invalid-feedback">Please confirm your new password.</div>
-                                                </div>
-                                                <div style="color:red; font-size:14px;" id="confirmNewPasswordErrorMessage"></div>
-                                            </div>
-                                        </div>
+                                    // Display total usage per ward and the overall total at the end
+                                    //echo "<tr><td colspan='6' class='text-center' style='font-weight: bold;'>Total Units: " . number_format($totalUnits, 2) . "g</td></tr>";
 
-                                        <div class="text-center">
-                                            <input type="submit" class="btn btn-primary" name="submit" value="Change Password">
-                                        </div>
-                                    </form>
-                                </div>
+                                    // Display each ward's total usage
+                                    //foreach ($wardUsage as $ward => $wardTotal) {
+                                      //  echo "<tr><td colspan='6' class='text-center' style='background-color: #e9ecef;'>$ward - Total Usage: " . number_format($wardTotal, 2) . "g</td></tr>";
+                                   // }
+                                } else {
+                                    echo "<tr><td colspan='6' class='text-center'>No data available for the selected period, ward, and type</td></tr>";
+                                }
+                                ?>
+                            </tbody>
 
-                            </div> 
-                        </div> 
-                    </div> 
-                </div> 
-            </div> 
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
-    <?php include_once ("../includes/footer2.php") ?>
-    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-    <?php include_once ("../includes/js-links-inc.php") ?>
-    <script>
-        $(document).ready(function() {
-            // On form submit
-            $("#signup-form").submit(function(event) {
-                event.preventDefault(); // Prevent form submission
-
-                $.ajax({
-                    url: "test.php", // Send form data to register.php
-                    type: "POST",
-                    data: $(this).serialize(), // Serialize the form data
-                    dataType: "json", // Expect JSON response
-                    success: function(response) {
-                        let popupAlert = $("#popup-alert");
-
-                        // Set the message class and text based on the response status
-                        if (response.status === "success") {
-                            popupAlert.removeClass("alert-error").addClass("alert-success").html(response.message);
-                        } else {
-                            popupAlert.removeClass("alert-success").addClass("alert-error").html(response.message);
-                        }
-
-                        // Show the alert
-                        popupAlert.show();
-
-                        // Hide the alert after 10 seconds
-                        setTimeout(function() {
-                            popupAlert.fadeOut();
-                        }, 1000);
-
-                        // If success, redirect after message disappears
-                        if (response.status === "success") {
-                            setTimeout(function() {
-                                window.location.href = "user-profile.php"; // Change this to your target redirect URL
-                            }, 1000); // Same 10 seconds delay before redirect
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert("AJAX Error: " + xhr.responseText); // Handle AJAX error
-                    }
-                });
-            });
-        });
-    </script>
-    <script>
-    $(document).ready(function() {
-        $('#profilePicForm').submit(function(event) {
-            event.preventDefault();  // Prevent default form submission
-
-            var formData = new FormData(this);  // Create a new FormData object to handle the file upload
-            
-            $.ajax({
-                url: 'update-profile-picture.php',  // The PHP script that will handle the upload
-                type: 'POST',
-                data: formData,
-                contentType: false,  // Let jQuery figure out the content type for the FormData
-                processData: false,  // Prevent jQuery from trying to convert the form data
-                success: function(response) {
-                    // Handle the success response (should return the new profile picture filename)
-                    if (response.status === "success") {
-                        // Update the profile picture in real time
-                        $('#profilePic').attr('src', '../uploads/' + response.newProfilePic);
-                        $('#message').html('<div class="alert alert-success">Profile picture updated successfully!</div>');
-                    } else {
-                        $('#message').html('<div class="alert alert-danger">Error: ' + response.message + '</div>');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $('#message').html('<div class="alert alert-danger">AJAX Error: ' + xhr.responseText + '</div>');
-                }
-            });
-        });
-    });
-    </script>
-
-
+<?php include_once("../includes/js-links-inc.php") ?>
+    <?php include_once("../includes/footer.php") ?>
 </body>
 </html>

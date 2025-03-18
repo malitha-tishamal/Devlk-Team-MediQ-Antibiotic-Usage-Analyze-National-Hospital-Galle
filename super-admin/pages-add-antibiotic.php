@@ -52,6 +52,9 @@ $stmt->close();
         .error-popup {
             background-color: #dc3545;
         }
+        .gramint {
+            margin-right: 8px;
+        }
     </style>
     
 </head>
@@ -108,6 +111,33 @@ $stmt->close();
             </nav>
         </div>
 
+        <section class="section">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                    <div class="p-3">
+                        <h5 class="text-danger">Gram to Milligram Converter</h5>
+                        <div class="d-flex">
+                            <input type="number" class="gramint form-control w-50" id="gramInput" placeholder="Enter grams">
+                            <p class="output form-control w-50" id="mgresult">Output: </p>
+                        </div>
+
+                        <script>
+                            document.getElementById("gramInput").addEventListener("keyup", function() {
+                                let grams = parseFloat(this.value);
+                                if (!isNaN(grams) && grams >= 0) {
+                                    let mg = grams * 1000;
+                                    document.getElementById("mgresult").textContent = grams + "g (" + mg + "mg)";
+                                } else {
+                                    document.getElementById("mgresult").textContent = "Output: ";
+                                }
+                            });
+                        </script>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </section>
         <section class="section">
             <div class="row">
                 <div class="col-lg-12">
