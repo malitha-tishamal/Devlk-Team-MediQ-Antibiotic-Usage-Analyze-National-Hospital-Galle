@@ -41,6 +41,11 @@
                         <i class="bi bi-circle"></i> <span>Ward Wise</span>
                     </a>
                 </li>
+                <li>
+                    <a href="../super-admin/pages-usage-combined.php">
+                        <i class="bi bi-circle"></i> <span>Ward Wise Combined</span>
+                    </a>
+                </li>
             </ul>
         </li>
 

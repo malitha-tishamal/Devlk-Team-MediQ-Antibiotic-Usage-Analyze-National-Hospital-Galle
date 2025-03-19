@@ -18,225 +18,87 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Fetch antibiotic usage by ward using your provided query
+$year = isset($_GET['year']) ? $_GET['year'] : date('Y');
+$startMonth = isset($_GET['start_month']) ? $_GET['start_month'] : "01";
+$endMonth = isset($_GET['end_month']) ? $_GET['end_month'] : date('m');
+
+$startDate = "$year-$startMonth-01"; // Default: first day of start month
+$endDate = "$year-$endMonth-31";  // Default: last possible day of end month
+
+// If custom dates are provided, override month range
+if (!empty($_GET['start_date']) && !empty($_GET['end_date'])) {
+    $startDate = $_GET['start_date'];
+    $endDate = $_GET['end_date'];
+}
+
+
+
+
+
+// Fetch antibiotic usage by ward using your provided query with month filter
 $sql = "
-    SELECT '1 (Pediatrics)' AS ward_group, antibiotic_name, dosage, SUM(item_count) AS total_items, type 
-    FROM releases 
-    WHERE ward_name = '1 & 2 - Pediatrics - Combined'
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '3+5 (Surgical Prof)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('3 - Surgical Prof - Female', '5 - Surgical Prof - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '4+7 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('4 - Surgery - Male', '7 - Surgical Prof - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '6 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('6 - Surgery - Combined')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '8+37 (Neuro-Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('8 - Neuro-Surgery - Female', '37 - Neuro-Surgery - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '9 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('9 - Surgery - Combined')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '10 (Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('10 - Surgery')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '38 (Neuro-Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name = '38 (Neuro-Surgery)'
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '11+12 (Medicine Prof)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('11 - Medicine Prof - Female', '12 - Medicine Prof - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '14+15 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('14 - Medicine - Male', '15 - Medicine - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '16+17 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('16 - Medicine - Male', '17 - Medicine - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '18+23 (Psychiatry)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('18 - Psychiatry - Male', '23 - Psychiatry - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '19+21 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('19 - Medicine - Male', '21 - Medicine - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '20+22 (Orthopedic)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('20 - Orthopedic - Female', '22 - Orthopedic - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '30+31 (ENT)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('30 - ENT - Male', '31 - ENT - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '24 (Neurology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('24 - Neurology - Combined')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '26 (Oro-Maxillary Facial)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('26 - Oro-Maxillary Facial - Combined')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '36 (Pediatrics)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name = '36 (Pediatrics) - Combined'
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '25+27 (Dermatology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('25 - Dermatology - Female', '27 - Dermatology - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '28+29 (Oncology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('28 - Oncology - Male', '29 - Oncology - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '30+31 (ENT)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('30 - ENT - Male', '31 - ENT - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '32+33 (Opthalmology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('32 - Ophthalmology - Female', '33 - Ophthalmology - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '34+35 (Medicine)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('34 - Medicine - Male', '35 - Medicine - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '36 (Pediatrics)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('36 - Pediatrics - Combined')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '39+40 (Cardiology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('39 & 40 - Cardiology')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '41+42+43 (Maliban Rehabilitation)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('41, 42 & 43 - Maliban Rehabilitation')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '44+45 (Cardio-Thoracic)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('44 - Cardio-Thoracic - Female', '45 - Cardio-Thoracic - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '46+47 (GU Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('46 & 47 - GU Surgery - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '48+49 (Onco- Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('48 - Onco-Surgery - Female', 'Ward 59', '49 - Onco-Surgery - Male')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '50 (Pediatric Oncology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name = '50 - Pediatric Oncology - Combined'
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '51+52 (Pediatric Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('51 & 52 - Pediatric Surgery')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '53+54 (Opthalmology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('53 - Ophthalmology - Male', '54 - Ophthalmology - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '55 (Rheumatology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('55 - Rheumatology - Combined')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '58+59 (Emergency/ETC)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('58 - Emergency/ETC - Male', '59 - Emergency/ETC - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '60 (ETC Pead)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('60 - ETC Pead - Combined')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '61+62 (Bhikku)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('61 & 62 - Bhikku')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '65 (Palliative)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('65 - Palliative')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '67 (Stroke)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('67 - Stroke')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '68+69 (Respiratory)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('68 & 69 - Respiratory')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '70+71+73+74 (Nephrology)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name IN ('70 - Nephrology', '71 - Nephrology - Male', '73 - Nephrology - Female')
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT '72 (Vascular Surgery)', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name = '72 - Vascular Surgery - Combined'
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT 'All ICU', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name LIKE '%ICU%'
-    GROUP BY antibiotic_name, dosage, type
-    UNION ALL
-    SELECT 'All Theater', antibiotic_name, dosage, SUM(item_count) AS total_items, type
-    FROM releases 
-    WHERE ward_name LIKE '%Theater%'
-    GROUP BY antibiotic_name, dosage, type
-    -- Add more wards as necessary
+    SELECT 
+    CASE 
+        WHEN ward_name = '1 & 2 - Pediatrics - Combined' THEN '1 (Pediatrics)'
+        WHEN ward_name IN ('3 - Surgical Prof - Female', '5 - Surgical Prof - Male') THEN '3+5 (Surgical Prof)'
+        WHEN ward_name IN ('4 - Surgery - Male', '7 - Surgical Prof - Female') THEN '4+7 (Surgery)'
+        WHEN ward_name = '6 - Surgery - Combined' THEN '6 (Surgery)'
+        WHEN ward_name IN ('8 - Neuro-Surgery - Female', '37 - Neuro-Surgery - Male') THEN '8+37 (Neuro-Surgery)'
+        WHEN ward_name = '9 - Surgery - Combined' THEN '9 (Surgery)'
+        WHEN ward_name = '10 - Surgery' THEN '10 (Surgery)'
+        WHEN ward_name = '38 (Neuro-Surgery)' THEN '38 (Neuro-Surgery)'
+        WHEN ward_name IN ('11 - Medicine Prof - Female', '12 - Medicine Prof - Male') THEN '11+12 (Medicine Prof)'
+        WHEN ward_name IN ('14 - Medicine - Male', '15 - Medicine - Female') THEN '14+15 (Medicine)'
+        WHEN ward_name IN ('16 - Medicine - Male', '17 - Medicine - Female') THEN '16+17 (Medicine)'
+        WHEN ward_name IN ('18 - Psychiatry - Male', '23 - Psychiatry - Female') THEN '18+23 (Psychiatry)'
+        WHEN ward_name IN ('19 - Medicine - Male', '21 - Medicine - Female') THEN '19+21 (Medicine)'
+        WHEN ward_name IN ('20 - Orthopedic - Female', '22 - Orthopedic - Male') THEN '20+22 (Orthopedic)'
+        WHEN ward_name IN ('30 - ENT - Male', '31 - ENT - Female') THEN '30+31 (ENT)'
+        WHEN ward_name = '24 - Neurology - Combined' THEN '24 (Neurology)'
+        WHEN ward_name = '26 - Oro-Maxillary Facial - Combined' THEN '26 (Oro-Maxillary Facial)'
+        WHEN ward_name = '36 (Pediatrics) - Combined' THEN '36 (Pediatrics)'
+        WHEN ward_name IN ('25 - Dermatology - Female', '27 - Dermatology - Male') THEN '25+27 (Dermatology)'
+        WHEN ward_name IN ('28 - Oncology - Male', '29 - Oncology - Female') THEN '28+29 (Oncology)'
+        WHEN ward_name IN ('32 - Ophthalmology - Female', '33 - Ophthalmology - Male') THEN '32+33 (Ophthalmology)'
+        WHEN ward_name IN ('34 - Medicine - Male', '35 - Medicine - Female') THEN '34+35 (Medicine)'
+        WHEN ward_name IN ('39 & 40 - Cardiology') THEN '39+40 (Cardiology)'
+        WHEN ward_name IN ('41, 42 & 43 - Maliban Rehabilitation') THEN '41+42+43 (Maliban Rehabilitation)'
+        WHEN ward_name IN ('44 - Cardio-Thoracic - Female', '45 - Cardio-Thoracic - Male') THEN '44+45 (Cardio-Thoracic)'
+        WHEN ward_name IN ('46 & 47 - GU Surgery - Male') THEN '46+47 (GU Surgery)'
+        WHEN ward_name IN ('48 - Onco-Surgery - Female', 'Ward 59', '49 - Onco-Surgery - Male') THEN '48+49 (Onco-Surgery)'
+        WHEN ward_name = '50 - Pediatric Oncology - Combined' THEN '50 (Pediatric Oncology)'
+        WHEN ward_name IN ('51 & 52 - Pediatric Surgery') THEN '51+52 (Pediatric Surgery)'
+        WHEN ward_name IN ('53 - Ophthalmology - Male', '54 - Ophthalmology - Female') THEN '53+54 (Ophthalmology)'
+        WHEN ward_name = '55 - Rheumatology - Combined' THEN '55 (Rheumatology)'
+        WHEN ward_name IN ('58 - Emergency/ETC - Male', '59 - Emergency/ETC - Female') THEN '58+59 (Emergency/ETC)'
+        WHEN ward_name = '60 - ETC Pead - Combined' THEN '60 (ETC Pead)'
+        WHEN ward_name IN ('61 & 62 - Bhikku') THEN '61+62 (Bhikku)'
+        WHEN ward_name = '65 - Palliative' THEN '65 (Palliative)'
+        WHEN ward_name = '67 - Stroke' THEN '67 (Stroke)'
+        WHEN ward_name IN ('68 & 69 - Respiratory') THEN '68+69 (Respiratory)'
+        WHEN ward_name IN ('70 - Nephrology', '71 - Nephrology - Male', '73 - Nephrology - Female') THEN '70+71+73+74 (Nephrology)'
+        WHEN ward_name = '72 - Vascular Surgery - Combined' THEN '72 (Vascular Surgery)'
+        WHEN ward_name LIKE '%ICU%' THEN 'All ICU'
+        WHEN ward_name LIKE '%Theater%' THEN 'All Theater'
+        ELSE ward_name 
+    END AS ward_group,
+    antibiotic_name,
+    dosage,
+    SUM(item_count) AS total_items
+FROM releases
+WHERE release_time BETWEEN ? AND ?
+
+GROUP BY ward_group, antibiotic_name, dosage;
 ";
-$result2 = $conn->query($sql);
+
+
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ss", $startDate, $endDate);
+
+$stmt->execute();
+$result2 = $stmt->get_result();
+$stmt->close()
 
 // Start HTML output
 ?>
@@ -274,10 +136,103 @@ $result2 = $conn->query($sql);
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Antibiotic Usage Details</h5>
+
+                            <form method="get" action="">
+    <div class="form-group mb-3">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="filter_type" id="filter_by_month" value="month" <?= (!isset($_GET['filter_type']) || $_GET['filter_type'] == 'month') ? 'checked' : '' ?>>
+            <label class="form-check-label" for="filter_by_month">Filter by Month Range</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="filter_type" id="filter_by_date" value="date" <?= (isset($_GET['filter_type']) && $_GET['filter_type'] == 'date') ? 'checked' : '' ?>>
+            <label class="form-check-label" for="filter_by_date">Filter by Custom Date Range</label>
+        </div>
+    </div>
+
+    <div id="month_range_filters" class="<?= (isset($_GET['filter_type']) && $_GET['filter_type'] == 'date') ? 'd-none' : '' ?>">
+        <div class="form-group d-flex align-items-center gap-2 mb-3">
+            <label for="year">Select Year</label>
+            <select id="year" name="year" class="form-control w-25">
+                <?php
+                $currentYear = date('Y');
+                for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
+                    $selected = (isset($_GET['year']) && $_GET['year'] == $y) ? "selected" : "";
+                    echo "<option value='$y' $selected>$y</option>";
+                }
+                ?>
+            </select>
+
+            <label for="start_month">Start Month</label>
+            <select id="start_month" name="start_month" class="form-control w-25">
+                <?php
+                $months = [
+                    '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
+                    '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
+                    '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
+                ];
+                $selectedStartMonth = isset($_GET['start_month']) ? $_GET['start_month'] : "01";
+                foreach ($months as $num => $name) {
+                    $selected = ($num == $selectedStartMonth) ? "selected" : "";
+                    echo "<option value='$num' $selected>$name</option>";
+                }
+                ?>
+            </select>
+
+            <label for="end_month">End Month</label>
+            <select id="end_month" name="end_month" class="form-control w-25">
+                <?php
+                $selectedEndMonth = isset($_GET['end_month']) ? $_GET['end_month'] : date('m');
+                foreach ($months as $num => $name) {
+                    $selected = ($num == $selectedEndMonth) ? "selected" : "";
+                    echo "<option value='$num' $selected>$name</option>";
+                }
+                ?>
+            </select>
+        </div>
+    </div>
+
+    <div id="date_range_filters" class="<?= (!isset($_GET['filter_type']) || $_GET['filter_type'] == 'month') ? 'd-none' : '' ?>">
+        <div class="form-group d-flex align-items-center gap-2 mb-3">
+            <label for="start_date">Start Date</label>
+            <input type="date" id="start_date" name="start_date" class="form-control w-25" value="<?= isset($_GET['start_date']) ? $_GET['start_date'] : '' ?>">
+
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date" class="form-control w-25" value="<?= isset($_GET['end_date']) ? $_GET['end_date'] : '' ?>">
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Filter</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get radio buttons and filter divs
+    const filterByMonth = document.getElementById('filter_by_month');
+    const filterByDate = document.getElementById('filter_by_date');
+    const monthRangeFilters = document.getElementById('month_range_filters');
+    const dateRangeFilters = document.getElementById('date_range_filters');
+    
+    // Add event listeners
+    filterByMonth.addEventListener('change', function() {
+        if (this.checked) {
+            monthRangeFilters.classList.remove('d-none');
+            dateRangeFilters.classList.add('d-none');
+        }
+    });
+    
+    filterByDate.addEventListener('change', function() {
+        if (this.checked) {
+            monthRangeFilters.classList.add('d-none');
+            dateRangeFilters.classList.remove('d-none');
+        }
+    });
+});
+</script>
+
+
+
                             <?php include_once("../includes/header.php") ?>
                             <?php include_once("../includes/sadmin-sidebar.php") ?>
-
-                            
 
                             <table id="antibioticUsageTable" class="display table">
                                 <thead class="align-middle text-center">
