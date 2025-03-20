@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 14, 2025 at 06:58 AM
+-- Generation Time: Mar 17, 2025 at 10:57 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,7 +44,7 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`, `profile_picture`) VALUES
-(1, '200202202615', 'Malitha', 'malithatishamal@gmail.com', '785530992', '$2y$10$e3yU/.35yCf9ZbkWhUHm8u9IkKvyaO3ZuO/0K2ALLHa/JRWR.5asm', 'approved', '2025-02-10 12:21:20', '67c28f96e5acd-malitha3.jpg'),
+(1, '200202202615', 'Malitha', 'malithatishamal@gmail.com', '785530992', '$2y$10$e3yU/.35yCf9ZbkWhUHm8u9IkKvyaO3ZuO/0K2ALLHa/JRWR.5asm', 'approved', '2025-02-10 12:21:20', '67d3cb0c84369-453627665_1689679218445135_3860109769014762294_n.jpg'),
 (8, '200202226777', 'admin user', 'admin@gmail.com', '710000000', '$2y$10$FWwvXaoYAFTWI0hrO0RpAOV6eN3qN0PX2nGQy9h/qCsDwNiDutcgm', 'approved', '2025-02-15 22:38:05', 'default.jpg');
 
 -- --------------------------------------------------------
@@ -128,12 +128,12 @@ INSERT INTO `dosages` (`id`, `antibiotic_id`, `dosage`) VALUES
 (3, 2, '500 mg Oral'),
 (4, 2, '125 mg/5 ml Syrup'),
 (5, 2, '125 mg Oral'),
-(6, 3, '0.51 g IV'),
-(7, 3, '1.2 g IV'),
+(6, 3, '0.51g (510mg) IV'),
+(7, 3, '1.2g (1200mg) IV'),
 (8, 3, '375 mg Oral'),
 (9, 3, '625 mg Oral'),
 (10, 3, '125 mg/31 mg/5 ml, 100 ml Syrup'),
-(11, 4, '1 g IV'),
+(11, 4, '1g (1000mg) IV'),
 (12, 4, '250 mg IV'),
 (13, 5, '250 mg Oral'),
 (14, 5, '500 mg Oral'),
@@ -143,12 +143,12 @@ INSERT INTO `dosages` (`id`, `antibiotic_id`, `dosage`) VALUES
 (18, 8, '250 mg Oral'),
 (19, 8, '125 mg (dispersible tab.) Oral'),
 (20, 8, '125 mg/5 ml Syrup'),
-(21, 9, '1 g IV'),
+(21, 9, '1g (1000mg) IV'),
 (22, 10, '200 mg Oral'),
-(23, 11, '1 g IV'),
+(23, 11, '1g (1000mg) IV'),
 (24, 11, '500 mg IV'),
-(25, 12, '1 g IV'),
-(26, 13, '1 g IV'),
+(25, 12, '1g (1000mg) IV'),
+(26, 13, '1g (1000mg) IV'),
 (27, 14, '500 mg Oral'),
 (28, 14, '125 mg/5 ml Syrup'),
 (29, 14, '500 mg Oral'),
@@ -163,7 +163,7 @@ INSERT INTO `dosages` (`id`, `antibiotic_id`, `dosage`) VALUES
 (38, 25, '500 mg IV'),
 (39, 26, '600 mg Oral'),
 (40, 26, '600 mg IV'),
-(41, 27, '1 g IV'),
+(41, 27, '1g (1000mg) IV'),
 (42, 28, '500 mg IV'),
 (43, 28, '400 mg Oral'),
 (44, 28, '200 mg Oral'),
@@ -171,12 +171,12 @@ INSERT INTO `dosages` (`id`, `antibiotic_id`, `dosage`) VALUES
 (46, 30, '400 mg Oral'),
 (47, 31, '200 mg Oral'),
 (48, 32, '250 mg Oral'),
-(49, 33, '4.5 g IV'),
-(50, 34, '2 g IV'),
+(49, 33, '4.5g (4500mg) IV'),
+(50, 34, '2g (2000mg) IV'),
 (51, 35, '400 mg IV'),
-(52, 36, '3 g IV'),
+(52, 36, '3g (3000mg) IV'),
 (53, 37, '500 mg IV'),
-(54, 38, '1 g IV'),
+(54, 38, '1g (1000mg) IV'),
 (55, 39, ''),
 (56, 40, ''),
 (57, 41, ''),
@@ -245,7 +245,11 @@ INSERT INTO `releases` (`id`, `antibiotic_name`, `dosage`, `item_count`, `ward_n
 (1, 'Amikacin', '500 mg IV', 100, '3 - Surgical Prof - Female', '2025-03-08 13:05:21', 'msd', 'oral'),
 (2, 'Co-Trimoxazole', '600 mg Oral', 100, '1 & 2 - Pediatrics - Combined', '2025-03-08 13:42:14', 'msd', 'oral'),
 (3, 'Vancomycin', '1 g IV', 12, '5 - Surgical Prof - Male', '2025-03-08 13:42:49', 'msd', 'oral'),
-(4, 'MDT-PB Pediatric', 'No dosage available', 10, '1 & 2 - Pediatrics - Combined', '2025-03-11 13:34:34', 'lp', 'intravenous');
+(4, 'MDT-PB Pediatric', 'No dosage available', 10, '1 & 2 - Pediatrics - Combined', '2025-03-11 13:34:34', 'lp', 'intravenous'),
+(5, 'Vancomycin', '1 g IV', 100, '1 & 2 - Pediatrics - Combined', '2025-03-14 11:21:40', 'msd', 'oral'),
+(6, 'Vancomycin', '1 g IV', 10, '1 & 2 - Pediatrics - Combined', '2025-03-16 06:16:49', 'msd', 'intravenous'),
+(7, 'Ceftriaxone', '1 g IV', 10, '12 - Medicine Prof - Male', '2025-03-16 13:01:21', 'lp', 'intravenous'),
+(8, 'Erythromycin', '250 mg  oral', 70, '37 - Neuro-Surgery - Male', '2025-03-15 00:00:00', 'msd', 'topical');
 
 -- --------------------------------------------------------
 
@@ -270,7 +274,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`, `profile_picture`) VALUES
-(43, '200202202615', 'malitha', 'malithatishamal2002@gmail.com', '713223952', '$2y$10$kfHNLivdLEwJ13NoA2PmaODOHZdeTzXm3lIL8DC./TCVJDUPjnuDK', 'approved', '2025-02-10 18:08:22', 'default.jpg'),
+(43, '200202202615', 'malitha', 'malithatishamal2002@gmail.com', '713223952', '$2y$10$kfHNLivdLEwJ13NoA2PmaODOHZdeTzXm3lIL8DC./TCVJDUPjnuDK', 'approved', '2025-02-10 18:08:22', '67d6c54e28cc6-msi-red-dragon-and-black-background-wallpaper-1280x1024_32.jpg'),
 (45, '200202226299', 'user test', 'user@gmail.com', '712222222', '$2y$10$VsfVH9VG3RWyLRBulY6Tr.MKVEMzlUI16kzHTB22LySBaaLuoqJDW', 'approved', '2025-02-15 22:37:20', 'default.jpg'),
 (46, '200202222625', 'test', 'demo3@gmail.com', '771000000', '$2y$10$IIjq.h0RCLc2ytCT.MhdpuRFxjhmDFKBeJUzh62/dgZMVbtzi6WgO', 'pending', '2025-03-06 15:26:52', 'default.jpg');
 
@@ -438,7 +442,7 @@ ALTER TABLE `password_reset`
 -- AUTO_INCREMENT for table `releases`
 --
 ALTER TABLE `releases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `users`
