@@ -9,7 +9,7 @@
         // Check if it's localhost or production
         if ($host == 'localhost') {
             // Localhost path with project folder
-            return $protocol . $host . '/mediq/';
+            return $protocol . $host . '/Devlk-Team-MediQ-New/';
         } else {
             // Production base URL
             return $protocol . $host . '/';
