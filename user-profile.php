@@ -137,24 +137,47 @@ $stmt->close();
                                             </form>
                                         </div>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Full Name</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['name']); ?></div>
-                                    </div>
+                                    <div class="container">
+                                        <form action="update-profile.php" method="POST">
+                                            <!-- Full Name -->
+                                            <div class="row">
+                                                <div class="col-lg-3 col-md-4 label">Full Name</div>
+                                                <div class="col-lg-9 col-md-8">
+                                                    <input type="text" name="name" class="form-control w-75" value="<?php echo htmlspecialchars($user['name']); ?>" required>
+                                                </div>
+                                            </div>
 
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Email</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['email']); ?></div>
-                                    </div>
+                                            <!-- Email -->
+                                            <div class="row mt-3">
+                                                <div class="col-lg-3 col-md-4 label">Email</div>
+                                                <div class="col-lg-9 col-md-8">
+                                                    <input type="email" name="email" class="form-control w-75" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+                                                </div>
+                                            </div>
 
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">NIC</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['nic']); ?></div>
-                                    </div>
+                                            <!-- NIC -->
+                                            <div class="row mt-3">
+                                                <div class="col-lg-3 col-md-4 label">NIC</div>
+                                                <div class="col-lg-9 col-md-8">
+                                                    <input type="text" name="nic" class="form-control w-75" value="<?php echo htmlspecialchars($user['nic']); ?>" required>
+                                                </div>
+                                            </div>
 
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Mobile Number</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo htmlspecialchars($user['mobile']); ?></div>
+                                            <!-- Mobile Number -->
+                                            <div class="row mt-3">
+                                                <div class="col-lg-3 col-md-4 label">Mobile Number</div>
+                                                <div class="col-lg-9 col-md-8">
+                                                    <input type="text" name="mobile" class="form-control w-75" value="<?php echo htmlspecialchars($user['mobile']); ?>" required>
+                                                </div>
+                                            </div>
+
+                                            <!-- Submit Button -->
+                                            <div class="row mt-4">
+                                                <div class="col-lg-12 text-center">
+                                                    <input type="submit" name="submit" value="Update Profile Data" class="btn btn-primary btn-sm">
+                                                </div>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
 
