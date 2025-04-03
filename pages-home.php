@@ -42,7 +42,7 @@ $chartResult = $chartStmt->get_result();
     <?php include_once("includes/css-links-inc.php"); ?>
 
     <!-- Google Charts -->
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="..\assets\js\charts\loader.js"></script>
     <script type="text/javascript">
         google.charts.load('current', { 'packages': ['corechart', 'line', 'bar'] });
         google.charts.setOnLoadCallback(drawCharts);
