@@ -29,10 +29,10 @@
     <section class="team-section container">
         <h1 class="mb-5 text-primary fw-bold">Our Team</h1>
         <div class="row g-4 justify-content-center">
-            <!-- Team Member 1-->
-            <div class="col-md-3">
+             <!-- Team Member 1-->
+            <!--div class="col-md-3">
                 <div class="team-card text-center">
-                    <img src="../assets\images\Developers\supun.jpg" alt="Team Member">
+                    <img src="assets\images\Developers\supun.jpg" alt="Team Member">
                     <h4 class="fw-bold">Supun Charuka</h4>
                     <p>Full Stack Developer</p>
                     <div class="team-icons">
@@ -43,14 +43,16 @@
                         <a href="#" target="_blank"><i class="bi bi-envelope"></i></a>
                     </div>
                 </div>
-            </div>
+            </div-->
 
             <!-- Team Member 2 -->
             <div class="col-md-3">
                 <div class="team-card text-center">
-                    <img src="../assets\images\Developers\malitha3.jpg" alt="Team Member">
-                    <h4 class="fw-bold">Malitha Tishmal</h4>
-                    <p>Full Stack Developer</p>
+                    <img src="assets\images\Developers\malitha3.jpg" alt="Team Member">
+                    <h5 class="fw-bold">Malitha Tishmal</h5>
+                    <p><b>Full Stack Developer</b>
+                        <br>Quality Assuarance
+                        <br>System Administrator</p>
                     <div class="team-icons">
                         <a href="https://malitha-tishamal.github.io/blog" target="_blank"><i class="bi bi-globe"></i></a>
                         <a href="https://github.com/malitha-tishamal" target="_blank"><i class="bi bi-github"></i></a>
@@ -58,31 +60,37 @@
                         <a href="https://www.facebook.com/malitha.tishamal" target="_blank"><i class="bi bi-facebook"></i></a>
                         <a href="mailto:malithatishamal@gmail.com" ><i class="bi bi-envelope"></i></a>
                     </div>
+                    <span class="text-center text-danger"><b>&nbsp;</b></span>
                 </div>
             </div>
 
-            <!-- Team Member 3 -->
             <div class="col-md-3">
                 <div class="team-card text-center">
-                    <img src="../assets\images\Developers\sandeepa.jpg" alt="Team Member">
-                    <h4 class="fw-bold">Malith Sandeepa</h4>
-                    <p>Frontend Developer</p>
+                    <img src="assets\images\Developers\tharindu.jpg" alt="Team Member">
+                    <h5 class="fw-bold">Tharindu Sampath</h5>
+                    <p><b>Frontend Developer</b>
+                        <br>System Administrator<br>
+                        &nbsp;</p>
                     <div class="team-icons">
                         <a href="#" target="_blank"><i class="bi bi-globe"></i></a>
-                        <a href="https://github.com/KVMSANDEEPA" target="_blank"><i class="bi bi-github"></i></a>
-                        <a href="www.linkedin.com/in/malith-sandeepa" target="_blank"><i class="bi bi-linkedin"></i></a>
-                        <a href="https://www.facebook.com/profile.php?id=100071177107363" target="_blank"><i class="bi bi-facebook"></i></a>
-                        <a href="mailto:malithsandeepa1081@gmail.com" ><i class="bi bi-envelope"></i></a>
+                        <a href="https://github.com/VgTharindu" target="_blank"><i class="bi bi-github"></i></a>
+                        <a href="https://www.linkedin.com/in/vg-tharindu-0b0158272?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" target="_blank"><i class="bi bi-facebook"></i></a>
+                        <a href="mailto:vgtharindu165@gmail.com" ><i class="bi bi-envelope"></i></a>
                     </div>
+                    <span class="text-center text-danger"><b>&nbsp;</b></span>
                 </div>
             </div>
 
             <!-- Team Member 4 -->
             <div class="col-md-3">
                 <div class="team-card text-center">
-                    <img src="../assets\images\Developers\nishara.jpg" alt="Team Member">
-                    <h4 class="fw-bold">Nishara de Silva</h4>
-                    <p>Frontend Developer</p>
+                    <img src="assets\images\Developers\nishara.jpg" alt="Team Member">
+                    <h5 class="fw-bold">Nishara de Silva</h5>
+                    <p><b>Frontend Developer</b>
+                        <br>Technical Writer
+                        <br>
+                        &nbsp;</p>
                     <div class="team-icons">
                         <a href="#" target="_blank"><i class="bi bi-globe"></i></a>
                         <a href="https://github.com/Tharu003" target="_blank"><i class="bi bi-github"></i></a>
@@ -90,6 +98,27 @@
                         <a href="#" target="_blank"><i class="bi bi-facebook"></i></a>
                         <a href="mailto:tharushinishara2003@gmail.com" ><i class="bi bi-envelope"></i></a>
                     </div>
+                    <span class="text-center text-danger"><b>&nbsp;</b></span>
+                </div>
+            </div>
+
+            <!-- Team Member 3 -->
+            <div class="col-md-3" style="opacity: 0.6;">
+                <div class="team-card text-center">
+                    <img src="assets\images\Developers\sandeepa.jpg" alt="Team Member">
+                    <h5 class="fw-bold">Malith Sandeepa</h5>
+                    <p><b>Frontend Developer</b>
+                        <br>&nbsp;
+                        <br>
+                        &nbsp;</p>
+                    <div class="team-icons">
+                        <a href="#" target="_blank"><i class="bi bi-globe"></i></a>
+                        <a href="https://github.com/KVMSANDEEPA" target="_blank"><i class="bi bi-github"></i></a>
+                        <a href="www.linkedin.com/in/malith-sandeepa" target="_blank"><i class="bi bi-linkedin"></i></a>
+                        <a href="https://www.facebook.com/profile.php?id=100071177107363" target="_blank"><i class="bi bi-facebook"></i></a>
+                        <a href="mailto:malithsandeepa1081@gmail.com" ><i class="bi bi-envelope"></i></a>
+                    </div>
+                     <span class="text-center text-danger"><b>Not Active</b></span>
                 </div>
             </div>
         </div>
