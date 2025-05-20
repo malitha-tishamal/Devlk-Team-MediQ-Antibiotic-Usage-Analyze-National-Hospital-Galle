@@ -19,7 +19,7 @@ $user = $result->fetch_assoc();
 $stmt->close();
 
 // Fetch users from the database
-$sql = "SELECT id, nic, name, email, mobile, status FROM admins";
+$sql = "SELECT * FROM admins";
 $result = $conn->query($sql);
 ?>
 
@@ -66,6 +66,7 @@ $result = $conn->query($sql);
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th class="text-center">#</th>
+                                        <th>Profile Picture</th>
                                         <th class="text-center ">Name</th>
                                         <th class="text-center">Email</th>
                                         <th class="text-center">ID-No</th>
@@ -86,6 +87,7 @@ $result = $conn->query($sql);
                                         while ($row = $result->fetch_assoc()) {
                                             echo "<tr>";
                                             echo "<td>" . $row['id'] . "</td>";
+                                            echo "<td><img src='uploads/" . htmlspecialchars($row["profile_picture"]) . "' alt='Profile' width='50'></td>";
                                             echo "<td>" . $row['name'] . "</td>";
                                             echo "<td>" . $row['email'] . "</td>";
                                             echo "<td>" . $row['nic'] . "</td>";

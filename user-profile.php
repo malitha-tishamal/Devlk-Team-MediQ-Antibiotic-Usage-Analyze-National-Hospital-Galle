@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT name, email, nic,mobile,profile_picture FROM users WHERE id = ?";
+$sql = "SELECT * FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -71,12 +71,6 @@ $stmt->close();
                 }
             }, 10000);
 
-            // If success message, redirect to index.php after 10 seconds
-            <?php if ($_SESSION['status'] == 'success'): ?>
-                setTimeout(function() {
-                    window.location.href = 'index.php'; // Redirect after 10 seconds
-                }, 10000); // Delay 10 seconds before redirecting
-            <?php endif; ?>
         </script>
 
         <?php
@@ -137,7 +131,25 @@ $stmt->close();
                                             </form>
                                         </div>
                                     </div>
+
                                     <div class="container">
+                                        <?php
+                                        // Generate system_name if it's empty and update DB
+                                        if (empty($user['system_name'])) {
+                                            $namePart = explode(' ', trim($user['name']))[0];
+                                            $nicPart = substr(preg_replace('/\D/', '', $user['nic']), -3);
+                                            $generatedSystemName = strtolower($namePart . $nicPart);
+
+                                            // Save the generated system name to DB
+                                            $stmt = $conn->prepare("UPDATE users SET system_name = ? WHERE id = ?");
+                                            $stmt->bind_param("si", $generatedSystemName, $user['id']);
+                                            $stmt->execute();
+                                            $stmt->close();
+
+                                            $user['system_name'] = $generatedSystemName; // Update the local variable too
+                                        }
+                                        ?>
+
                                         <form action="update-profile.php" method="POST">
                                             <!-- Full Name -->
                                             <div class="row">
@@ -171,6 +183,16 @@ $stmt->close();
                                                 </div>
                                             </div>
 
+                                            <!-- System Name -->
+                                            <div class="row mt-3">
+                                                <div class="col-lg-3 col-md-4 label">System Name</div>
+                                                <div class="col-lg-9 col-md-8">
+                                                    <input type="text" name="system_name" class="form-control w-75" 
+                                                           value="<?php echo htmlspecialchars($user['system_name']); ?>" required>
+                                                </div>
+                                            </div>
+
+
                                             <!-- Submit Button -->
                                             <div class="row mt-4">
                                                 <div class="col-lg-12 text-center">
@@ -178,7 +200,9 @@ $stmt->close();
                                                 </div>
                                             </div>
                                         </form>
+
                                     </div>
+
                                 </div>
 
                                 <!-- Change Password Form -->

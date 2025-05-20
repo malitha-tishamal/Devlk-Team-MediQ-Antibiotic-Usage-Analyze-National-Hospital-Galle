@@ -1,8 +1,8 @@
 <?php
-    $servername = "mysql-malitha.alwaysdata.net";
-    $username = "malitha";
-    $password = "Ybb@K2ab#2t7#_q";
-    $dbname = "malitha_mediq";
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "mediq_db2";
     
     // Create connection
     $conn = new mysqli($servername, $username, $password, $dbname);

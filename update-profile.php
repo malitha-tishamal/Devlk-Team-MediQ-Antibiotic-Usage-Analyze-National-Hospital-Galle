@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = trim($_POST['email']);
     $nic = trim($_POST['nic']);
     $mobile = trim($_POST['mobile']);
-    
+    $system_name = trim($_POST['system_name']);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $_SESSION['status'] = 'error';
@@ -25,11 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    // Update user details in the database
-    $sql = "UPDATE users SET name = ?, email = ?, nic = ?, mobile = ? WHERE id = ?";
+    // Update user details in the database including system_name
+    $sql = "UPDATE users SET name = ?, email = ?, nic = ?, mobile = ?, system_name = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param("ssssi", $name, $email, $nic, $mobile, $user_id);
+        $stmt->bind_param("sssssi", $name, $email, $nic, $mobile, $system_name, $user_id);
         if ($stmt->execute()) {
             $_SESSION['status'] = 'success';
             $_SESSION['message'] = 'Profile updated successfully!';
