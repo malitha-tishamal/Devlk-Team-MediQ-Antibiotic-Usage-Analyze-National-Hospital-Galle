@@ -17,6 +17,13 @@ $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
+
+// Fetch active book numbers for dropdown
+$bookOptions = [];
+$bookQuery = $conn->query("SELECT id, book_number FROM book_transactions WHERE status = 'active' ORDER BY book_number ASC");
+while ($row = $bookQuery->fetch_assoc()) {
+    $bookOptions[] = $row;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -158,6 +165,61 @@ $stmt->close();
                                     </div>
 
                                     <div class="mb-3">
+                                        <label class="form-label">Select Date & Time:</label><br>
+
+                                        <input type="radio" name="datetime_option" id="useCurrent" value="current" checked>
+                                        <label for="useCurrent">Use current system date & time</label><br>
+
+                                        <input type="radio" name="datetime_option" id="useManual" value="manual">
+                                        <label for="useManual">Enter manually</label>
+
+                                        <!-- Hidden field for current datetime -->
+                                        <input type="hidden" name="current_datetime" id="currentDateTime">
+
+                                        <!-- Manual input (hidden by default) -->
+                                        <input type="datetime-local" name="manual_datetime" id="manualDateTime" class="form-control w-25 mt-2" style="display: none;">
+                                    </div>
+                                    <script>
+                                        // Set current datetime in hidden input
+                                        function setCurrentDateTime() {
+                                            const now = new Date();
+                                            const formatted = now.toISOString().slice(0, 16); // "yyyy-MM-ddThh:mm"
+                                            document.getElementById("currentDateTime").value = formatted;
+                                        }
+
+                                        // Toggle manual datetime input
+                                        document.getElementById("useCurrent").addEventListener("change", function () {
+                                            document.getElementById("manualDateTime").style.display = "none";
+                                        });
+
+                                        document.getElementById("useManual").addEventListener("change", function () {
+                                            document.getElementById("manualDateTime").style.display = "block";
+                                        });
+
+                                        // Initialize current datetime on page load
+                                        window.addEventListener("DOMContentLoaded", setCurrentDateTime);
+                                    </script>
+
+                                    <!-- Book Number Select -->
+                                    <div class="mb-3">
+                                        <label for="book_number_select" class="form-label">Select Book Number (Active Only):</label>
+                                        <select name="book_number_select" id="book_number_select" class="form-select w-50">
+                                            <option value="">-- Select Book Number --</option>
+                                            <?php foreach ($bookOptions as $book): ?>
+                                                <option value="<?= $book['book_number'] ?>"><?= htmlspecialchars($book['book_number']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+
+                                    <!-- Page Number Input -->
+                                    <div class="mb-3">
+                                        <label for="page_number_manual" class="form-label">Enter Page Number:</label>
+                                        <input type="text" name="page_number_manual" id="page_number_manual" class="form-control w-50" placeholder="Enter page number here">
+                                    </div>
+
+
+
+                                    <div class="mb-3">
                                         <label for="itemCount" class="form-label">Item Count:</label>
                                         <input type="number" id="itemCount" name="item_count" class="form-control w-50" placeholder="Enter item count" required>
                                     </div>
@@ -185,7 +247,7 @@ $stmt->close();
 
                                     <button type="submit" class="btn btn-success mt-3">Update Database</button>
                                     <button type="reset" class="btn btn-danger mt-3">Clear</button>
-                                    <button class="btn btn-primary mt-3" onclick="window.location.href='pages-release-antibiotic-odd.php'">Click to Update Previous Details</button>
+                                    
 
                                 </form>
                             </div>

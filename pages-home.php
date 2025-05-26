@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Fetch user details
+// Fetch user info
 $user_id = $_SESSION['user_id'];
 $sql = "SELECT * FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
@@ -18,18 +18,38 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Query for Line and Bar chart data (Only current & last two months)
-$chartQuery = "
-    SELECT MONTH(release_time) AS month, YEAR(release_time) AS year, SUM(item_count) AS usage_count
-    FROM releases
-    WHERE release_time >= DATE_FORMAT(NOW() - INTERVAL 2 MONTH, '%Y-%m-01') 
-    GROUP BY YEAR(release_time), MONTH(release_time)
-    ORDER BY year DESC, month DESC
-";
+// Get current year and month for default filter
+$current_year = date('Y');
+$current_month = date('m');
 
-$chartStmt = $conn->prepare($chartQuery);
-$chartStmt->execute();
-$chartResult = $chartStmt->get_result();
+// Get filter parameters from request
+$selected_year = isset($_GET['year']) ? $_GET['year'] : $current_year;
+$selected_month = isset($_GET['month']) ? $_GET['month'] : $current_month;
+
+// Prepare WHERE clauses for filtering (using correct datetime columns)
+$release_where = "WHERE YEAR(release_time) = ? AND MONTH(release_time) = ?";
+$return_where = "WHERE YEAR(return_time) = ? AND MONTH(return_time) = ?";
+
+// Fetch release counts grouped by antibiotic_name and dosage with filtering
+$release_sql = "SELECT antibiotic_name, dosage, SUM(item_count) as total FROM releases $release_where GROUP BY antibiotic_name, dosage ORDER BY total DESC";
+$release_stmt = $conn->prepare($release_sql);
+$release_stmt->bind_param("ii", $selected_year, $selected_month);
+$release_stmt->execute();
+$release_result = $release_stmt->get_result();
+
+// Fetch return counts grouped by antibiotic_name and dosage with filtering
+$return_sql = "SELECT antibiotic_name, dosage, SUM(item_count) as total FROM returns $return_where GROUP BY antibiotic_name, dosage ORDER BY total DESC";
+$return_stmt = $conn->prepare($return_sql);
+$return_stmt->bind_param("ii", $selected_year, $selected_month);
+$return_stmt->execute();
+$return_result = $return_stmt->get_result();
+
+// Get distinct years for dropdown (from both tables)
+$years_sql = "(SELECT DISTINCT YEAR(release_time) as year FROM releases) 
+              UNION 
+              (SELECT DISTINCT YEAR(return_time) as year FROM returns) 
+              ORDER BY year DESC";
+$years_result = $conn->query($years_sql);
 ?>
 
 <!DOCTYPE html>
@@ -37,120 +57,227 @@ $chartResult = $chartStmt->get_result();
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Home - MediQ</title>
-
+    <title>Dashboard - Antibiotic Charts</title>
     <?php include_once("includes/css-links-inc.php"); ?>
 
     <!-- Google Charts -->
-    <script type="text/javascript" src="..\assets\js\charts\loader.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
-        google.charts.load('current', { 'packages': ['corechart', 'line', 'bar'] });
+        google.charts.load('current', { packages: ['corechart'] });
         google.charts.setOnLoadCallback(drawCharts);
 
         function drawCharts() {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Month');
-            data.addColumn('number', 'Usage Count');
+            // Release Chart
+            var releaseData = new google.visualization.DataTable();
+            releaseData.addColumn('string', 'Antibiotic (Dosage)');
+            releaseData.addColumn('number', 'Releases');
+            releaseData.addRows([
+                <?php
+                $release_result->data_seek(0);
+                while ($row = $release_result->fetch_assoc()) {
+                    $label = htmlspecialchars($row['antibiotic_name']) . " (" . htmlspecialchars($row['dosage']) . ")";
+                    echo "['" . addslashes($label) . "', " . $row['total'] . "],";
+                }
+                ?>
+            ]);
 
-            <?php 
-            $chartData = [];
-            while ($row = $chartResult->fetch_assoc()) {
-                $month = date('F', strtotime("{$row['year']}-{$row['month']}-01"));
-                $chartData[] = "['$month', {$row['usage_count']}]";
-            }
-            echo "data.addRows([" . implode(",", $chartData) . "]);";
-            ?>
-
-            // Line Chart options
-            var lineOptions = {
-                title: 'Antibiotic Usage (Last 3 Months)',
-                curveType: 'function',
-                legend: { position: 'bottom' },
-                hAxis: { title: 'Month' },
-                vAxis: { title: 'Usage Count' }
+            var releaseOptions = {
+                title: 'Antibiotic Releases - <?php echo date('F Y', mktime(0, 0, 0, $selected_month, 1, $selected_year)); ?>',
+                height: Math.max(600, releaseData.getNumberOfRows() * 40),
+                width: '100%',
+                chartArea: {width: '70%', height: '90%'},
+                bar: {groupWidth: '90%'},
+                legend: {position: 'none'},
+                hAxis: {
+                    title: 'Total Releases',
+                    minValue: 0
+                },
+                colors: ['#4285F4'],
+                animation: {
+                    duration: 1000,
+                    easing: 'out',
+                    startup: true
+                }
             };
 
-            // Bar Chart options
-            var barOptions = {
-                title: 'Antibiotic Usage (Last 3 Months)',
-                chartArea: { width: '50%' },
-                hAxis: { title: 'Usage Count', minValue: 0 },
-                vAxis: { title: 'Month' }
+            var releaseChart = new google.visualization.BarChart(document.getElementById('release_chart_div'));
+            releaseChart.draw(releaseData, releaseOptions);
+
+            // Return Chart
+            var returnData = new google.visualization.DataTable();
+            returnData.addColumn('string', 'Antibiotic (Dosage)');
+            returnData.addColumn('number', 'Returns');
+            returnData.addRows([
+                <?php
+                $return_result->data_seek(0);
+                while ($row = $return_result->fetch_assoc()) {
+                    $label = htmlspecialchars($row['antibiotic_name']) . " (" . htmlspecialchars($row['dosage']) . ")";
+                    echo "['" . addslashes($label) . "', " . $row['total'] . "],";
+                }
+                ?>
+            ]);
+
+            var returnOptions = {
+                title: 'Antibiotic Returns - <?php echo date('F Y', mktime(0, 0, 0, $selected_month, 1, $selected_year)); ?>',
+                height: Math.max(600, returnData.getNumberOfRows() * 40),
+                width: '100%',
+                chartArea: {width: '70%', height: '90%'},
+                bar: {groupWidth: '90%'},
+                legend: {position: 'none'},
+                hAxis: {
+                    title: 'Total Returns',
+                    minValue: 0
+                },
+                colors: ['#DB4437'],
+                animation: {
+                    duration: 1000,
+                    easing: 'out',
+                    startup: true
+                }
             };
 
-            // Draw the charts
-            var lineChart = new google.visualization.LineChart(document.getElementById('linechart'));
-            lineChart.draw(data, lineOptions);
-
-            var barChart = new google.visualization.BarChart(document.getElementById('barchart'));
-            barChart.draw(data, barOptions);
+            var returnChart = new google.visualization.BarChart(document.getElementById('return_chart_div'));
+            returnChart.draw(returnData, returnOptions);
+            
+            // Add window resize event listener
+            window.addEventListener('resize', function() {
+                releaseChart.draw(releaseData, releaseOptions);
+                returnChart.draw(returnData, returnOptions);
+            });
         }
     </script>
 
     <style>
-        #linechart, #barchart { width: 100%; height: 400px; margin: auto; }
+        .chart-container {
+            width: 100%;
+            margin: 30px auto;
+            overflow-x: auto;
+            max-height: 1000px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+        }
+        
+        .filter-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        select, button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: white;
+        }
+        
+        button {
+            background: #4285F4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3367D6;
+        }
+        
+        label {
+            font-weight: 500;
+        }
     </style>
-    <style>
-        #piechart { width: 50%; height: 400px; margin: auto; }
-        @media print { .no-print { display: none; } }
-    </style>
-    <script> function printPage() { window.print(); } </script>
 </head>
 <body>
-
-    <?php include_once("includes/header.php") ?>
-    <?php include_once("includes/user-sidebar.php") ?>
+    <?php include_once("includes/header.php"); ?>
+    <?php include_once("includes/user-sidebar.php"); ?>
 
     <main id="main" class="main">
         <div class="pagetitle">
-            <h1>Home</h1>
+            <h1>Antibiotic Usage Analytics</h1>
             <nav>
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="">Home</a></li>
+                    <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+                    <li class="breadcrumb-item active">Analytics</li>
                 </ol>
             </nav>
-        </div><!-- End Page Title -->
+        </div>
 
-        <section class="section">
+        <section class="section dashboard">
             <div class="row">
                 <div class="col-lg-12">
-                    <div class="card">
-                        <div>
-                            <h6 class="card-title text-center">Welcome, <?php echo htmlspecialchars($user['name']); ?>. This is an Antibiotic Usage Summary for the last 3 months.</h6>
+                    <div class="card p-4">
+                        <h5 class="text-center">Welcome, <?php echo htmlspecialchars($user['name']); ?>. Analyze antibiotic usage patterns.</h5>
+                        
+                        <!-- Filter Section -->
+                        <div class="filter-container">
+                            <form method="get" action="">
+                                <div class="filter-row">
+                                    <div class="filter-group">
+                                        <label for="year">Year:</label>
+                                        <select name="year" id="year">
+                                            <?php while ($year_row = $years_result->fetch_assoc()): ?>
+                                                <option value="<?php echo $year_row['year']; ?>" <?php echo $year_row['year'] == $selected_year ? 'selected' : ''; ?>>
+                                                    <?php echo $year_row['year']; ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="filter-group">
+                                        <label for="month">Month:</label>
+                                        <select name="month" id="month">
+                                            <?php for ($m = 1; $m <= 12; $m++): ?>
+                                                <option value="<?php echo sprintf('%02d', $m); ?>" <?php echo $m == $selected_month ? 'selected' : ''; ?>>
+                                                    <?php echo date('F', mktime(0, 0, 0, $m, 1)); ?>
+                                                </option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <button type="submit">Apply Filters</button>
+                                    <button type="button" onclick="window.location.href='antibiotic-charts.php'">Reset</button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="card-body d-flex flex-column flex-md-row">
-                            <div class="col-lg-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Antibiotic Usage (Line Chart)</h5>
-                                        <div id="linechart"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Antibiotic Usage (Bar Chart)</h5>
-                                        <div id="barchart"></div>
-                                    </div>
-                                </div>
-                                 <div class="col-sm-5">
-                                    <button class="btn btn-danger mt-4 ml-2 print-btn no-print" onclick="printPage()">Print Report</button>
-                                </div>
-                            </div>
+                        
+                        <!-- Charts -->
+                        <div class="chart-container">
+                            <div id="release_chart_div"></div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div id="return_chart_div"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-    </main><!-- End #main -->
+    </main>
 
-    <?php include_once("includes/footer.php") ?>
-
-    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-    <?php include_once("includes/js-links-inc.php") ?>
-
+    <?php include_once("includes/footer.php"); ?>
+    <?php include_once("includes/js-links-inc.php"); ?>
 </body>
 </html>
+
+<?php 
+$release_stmt->close();
+$return_stmt->close();
+$conn->close(); 
+?>

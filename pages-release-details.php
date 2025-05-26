@@ -20,7 +20,7 @@ $stmt->close();
 
 // Handle date filter
 $filter_date = isset($_POST['filter_date']) ? $_POST['filter_date'] : date('Y-m-d');
-$sql = "SELECT id, antibiotic_name, dosage, item_count, ward_name, type, ant_type, release_time FROM releases WHERE DATE(release_time) = ?";
+$sql = "SELECT * FROM releases WHERE DATE(release_time) = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $filter_date);
 $stmt->execute();
@@ -65,7 +65,7 @@ $result = $stmt->get_result();
                             <!-- Date Filter Form -->
                             <form method="POST" class="mb-3">
                                 <div class="d-flex">
-                                    <label for="filter_date">Select Date:</label>
+                                    <label for="filter_date">Select Date: &nbsp;&nbsp;&nbsp;</label>
                                     <input type="date" name="filter_date" id="filter_date" value="<?php echo htmlspecialchars($filter_date); ?>" class="form-control w-25">
                                     &nbsp;&nbsp;
                                     <button type="submit" class="btn btn-primary">Filter</button>
@@ -83,7 +83,10 @@ $result = $stmt->get_result();
                                         <th class="text-center">Ward Name</th>
                                         <th class="text-center">Stock Type</th>
                                         <th class="text-center">Route Type</th>
+                                        <th class="text-center">Book Number</th>
+                                        <th class="text-center">Page Number</th>
                                         <th class="text-center">Release Time</th>
+                                        <th class="text-center">User</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -98,7 +101,10 @@ $result = $stmt->get_result();
                                             echo "<td class='text-center'>" . htmlspecialchars($row['ward_name']) . "</td>";
                                             echo "<td class='text-center'>" . htmlspecialchars($row['type']) . "</td>";
                                             echo "<td class='text-center'>" . htmlspecialchars($row['ant_type']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['book_number']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['page_number']) . "</td>";
                                             echo "<td class='text-center'>" . htmlspecialchars($row['release_time']) . "</td>";
+                                            echo "<td class='text-center'>" . htmlspecialchars($row['system_name']) . "</td>";
                                             echo "</tr>";
                                         }
                                     } else {

@@ -21,9 +21,21 @@
                         <i class="bi bi-circle"></i><span>Dispensing Antibiotics</span>
                     </a>
                 </li>
+
+                <li>
+                    <a href="pages-return-antibiotic.php">
+                        <i class="bi bi-circle"></i><span>Return Antibiotics</span>
+                    </a>
+                </li>
                 <li>
                     <a href="pages-release-details.php">
                         <i class="bi bi-circle"></i><span>Dispensing Details</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="pages-return-details.php">
+                        <i class="bi bi-circle"></i><span>Return Details</span>
                     </a>
                 </li>
                 <li>
@@ -32,6 +44,12 @@
                     </a>
                 </li>
             </ul>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="book-transactions.php">
+                <i class="bi bi-book"></i> <span>Books Numbers</span>
+            </a>
         </li>
 
         <li class="nav-item">

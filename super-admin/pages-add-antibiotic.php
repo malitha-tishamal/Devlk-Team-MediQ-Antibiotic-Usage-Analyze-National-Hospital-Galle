@@ -153,20 +153,76 @@ $stmt->close();
                                         <input type="text" class="form-control" id="antibioticName" name="antibiotic_name" placeholder="eg: Amoxicillin" required>
                                     </div>
 
-                                    <div class="col-md-2 mb-2">
-                                        <label for="dosage" class="form-label">Dosage</label>
-                                        <input type="text" class="form-control" id="dosage" name="dosage[]" placeholder="eg: 10mg">
+                                    <!-- First Dosage and STV pair -->
+                                    <div id="dosageFields" class="mb-3">
+                                        <div class="row align-items-end mb-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Dosage</label>
+                                                <input type="text" class="form-control" name="dosage[]" placeholder="eg: 10mg" >
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">SR Number</label>
+                                                <input type="text" class="form-control" name="stv[]" placeholder="eg: 12345" required>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div id="dosageFields"></div>
-
-                                    <!-- Container for buttons with space between them -->
                                     <div class="d-flex mt-3">
                                         <button type="button" class="btn btn-primary me-3" id="addDosageBtn">Add Another Dosage</button>
                                         <button type="submit" class="btn btn-success me-3">Submit</button>
-                                        <button type="reset" class="btn btn-danger ">Clear</button>
+                                        <button type="reset" class="btn btn-danger">Clear</button>
                                     </div>
                                 </form>
+
+                                <script>
+                                document.getElementById('addDosageBtn').addEventListener('click', function() {
+                                    const dosageFields = document.getElementById('dosageFields');
+
+                                    // New row for Dosage + STV
+                                    const newRow = document.createElement('div');
+                                    newRow.classList.add('row', 'align-items-end', 'mb-2');
+
+                                    // Dosage input
+                                    const dosageCol = document.createElement('div');
+                                    dosageCol.classList.add('col-md-4');
+                                    dosageCol.innerHTML = `
+                                        <label class="form-label">Dosage</label>
+                                        <input type="text" class="form-control" name="dosage[]" placeholder="eg: 10mg" required>
+                                    `;
+
+                                    // STV input
+                                    const stvCol = document.createElement('div');
+                                    stvCol.classList.add('col-md-4');
+                                    stvCol.innerHTML = `
+                                        <label class="form-label">STV Number</label>
+                                        <input type="text" class="form-control" name="stv[]" placeholder="eg: 12345" required>
+                                    `;
+
+                                    // Remove button column
+                                    const removeCol = document.createElement('div');
+                                    removeCol.classList.add('col-md-2');
+                                    const removeButton = document.createElement('button');
+                                    removeButton.type = 'button';
+                                    removeButton.classList.add('btn', 'btn-danger', 'btn-sm');
+                                    removeButton.textContent = 'Remove';
+                                    removeButton.style.width = '100px';
+                                    removeButton.style.height = '38px';
+
+                                    removeButton.addEventListener('click', function() {
+                                        dosageFields.removeChild(newRow);
+                                    });
+
+                                    removeCol.appendChild(removeButton);
+
+                                    // Append all cols to row
+                                    newRow.appendChild(dosageCol);
+                                    newRow.appendChild(stvCol);
+                                    newRow.appendChild(removeCol);
+
+                                    dosageFields.appendChild(newRow);
+                                });
+                                </script>
+
                             </div>
 
                         </div>
@@ -182,58 +238,7 @@ $stmt->close();
 
     <?php include_once("../includes/js-links-inc.php") ?>
     
-    <script>
-    document.getElementById('addDosageBtn').addEventListener('click', function() {
-        const dosageFields = document.getElementById('dosageFields');
-        
-        // Create a new row div to contain the input field and remove button
-        const newRow = document.createElement('div');
-        newRow.classList.add('row', 'mb-6', 'align-items-center'); // Bootstrap row for alignment
-
-        // Create a column div for the dosage input (col-md-2)
-        const newCol = document.createElement('div');
-        newCol.classList.add('col-md-5');
-
-        // Add input field
-        newCol.innerHTML = `
-            <label class="form-label">Dosage</label>
-            <input type="text" class="form-control" name="dosage[]" required placeholder="eg: 10mg">
-        `;
-
-        // Create a remove button with Bootstrap and set fixed width and same height as Add Dosage button
-        const removeButton = document.createElement('button');
-        removeButton.classList.add('btn', 'btn-danger', 'btn-sm', 'mt-2', 'ms-2');
-        removeButton.innerHTML = 'Remove';
-
-        // Set fixed width to 100px and same height as Add Dosage button
-        removeButton.style.width = '100px';  // Custom width of 100px
-        removeButton.style.height = '38px';  // Match height with Add Dosage button
-
-        // Add event listener to remove the dosage field
-        removeButton.addEventListener('click', function () {
-            dosageFields.removeChild(newRow); // Remove the entire row (input + button)
-        });
-
-        // Create a column for the Remove button and ensure alignment
-        const removeCol = document.createElement('div');
-        removeCol.classList.add('col-md-2');
-        removeCol.appendChild(removeButton);  // Append Remove button to column
-
-        // Create a wrapper column for both input and button to keep them aligned properly
-        const wrapperCol = document.createElement('div');
-        wrapperCol.classList.add('col-md-4');
-        
-        // Append dosage input column and remove button column to the wrapper
-        wrapperCol.appendChild(newCol);
-        wrapperCol.appendChild(removeCol);
-
-        // Append both dosage input and remove button to the new row
-        newRow.appendChild(wrapperCol);
-
-        // Append the new row to the dosage fields container
-        dosageFields.appendChild(newRow);
-    });
-</script>
+    
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>

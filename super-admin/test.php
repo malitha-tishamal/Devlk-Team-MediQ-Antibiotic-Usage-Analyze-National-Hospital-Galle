@@ -2,344 +2,187 @@
 session_start();
 require_once '../includes/db-conn.php';
 
-// Redirect if not logged in
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: ../index.php");
+// Fetch user details (optional)
+$user_id = $_SESSION['admin_id'] ?? 0;
+$sql = "SELECT * FROM admins WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result_user = $stmt->get_result();
+$user = $result_user->fetch_assoc();
+$stmt->close();
+
+// Add return book
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_number'])) {
+    $book_number = trim($_POST['book_number']);
+    if (!empty($book_number)) {
+        $stmt = $conn->prepare("INSERT INTO return_books (book_number) VALUES (?)");
+        $stmt->bind_param("s", $book_number);
+        if ($stmt->execute()) {
+            $_SESSION['status'] = 'success';
+            $_SESSION['message'] = "Return book number added.";
+        } else {
+            $_SESSION['status'] = 'error';
+            $_SESSION['message'] = "Error: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+    header("Location: pages-return-books.php");
     exit();
 }
 
-// Fetch user details
-$user_id = $_SESSION['admin_id'];
-$sql2 = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
-$stmt = $conn->prepare($sql2);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-$stmt->close();
+// Edit return book
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_id'], $_POST['edit_book_number'])) {
+    $edit_id = intval($_POST['edit_id']);
+    $edit_book_number = trim($_POST['edit_book_number']);
 
-$year = isset($_GET['year']) ? $_GET['year'] : date('Y');
-$startMonth = isset($_GET['start_month']) ? $_GET['start_month'] : "01";
-$endMonth = isset($_GET['end_month']) ? $_GET['end_month'] : date('m');
-
-$startDate = "$year-$startMonth-01"; // Default: first day of start month
-$endDate = "$year-$endMonth-31";  // Default: last possible day of end month
-
-// If custom dates are provided, override month range
-if (!empty($_GET['start_date']) && !empty($_GET['end_date'])) {
-    $startDate = $_GET['start_date'];
-    $endDate = $_GET['end_date'];
+    if (!empty($edit_book_number)) {
+        $stmt = $conn->prepare("UPDATE return_books SET book_number = ? WHERE id = ?");
+        $stmt->bind_param("si", $edit_book_number, $edit_id);
+        if ($stmt->execute()) {
+            $_SESSION['status'] = 'success';
+            $_SESSION['message'] = "Return book number updated.";
+        } else {
+            $_SESSION['status'] = 'error';
+            $_SESSION['message'] = "Error updating: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+    header("Location: pages-return-books.php");
+    exit();
 }
 
+// Toggle status
+if (isset($_GET['toggle'])) {
+    $id = intval($_GET['toggle']);
+    $conn->query("UPDATE return_books SET status = IF(status='available','disabled','available') WHERE id = $id");
+    header("Location: pages-return-books.php");
+    exit();
+}
 
+// Delete
+if (isset($_GET['delete'])) {
+    $id = intval($_GET['delete']);
+    $conn->query("DELETE FROM return_books WHERE id = $id");
+    header("Location: pages-return-books.php");
+    exit();
+}
 
-
-
-// Fetch antibiotic usage by ward using your provided query with month filter
-$sql = "
-    SELECT 
-    CASE 
-        WHEN ward_name = '1 & 2 - Pediatrics - Combined' THEN '1 (Pediatrics)'
-        WHEN ward_name IN ('3 - Surgical Prof - Female', '5 - Surgical Prof - Male') THEN '3+5 (Surgical Prof)'
-        WHEN ward_name IN ('4 - Surgery - Male', '7 - Surgical Prof - Female') THEN '4+7 (Surgery)'
-        WHEN ward_name = '6 - Surgery - Combined' THEN '6 (Surgery)'
-        WHEN ward_name IN ('8 - Neuro-Surgery - Female', '37 - Neuro-Surgery - Male') THEN '8+37 (Neuro-Surgery)'
-        WHEN ward_name = '9 - Surgery - Combined' THEN '9 (Surgery)'
-        WHEN ward_name = '10 - Surgery' THEN '10 (Surgery)'
-        WHEN ward_name = '38 (Neuro-Surgery)' THEN '38 (Neuro-Surgery)'
-        WHEN ward_name IN ('11 - Medicine Prof - Female', '12 - Medicine Prof - Male') THEN '11+12 (Medicine Prof)'
-        WHEN ward_name IN ('14 - Medicine - Male', '15 - Medicine - Female') THEN '14+15 (Medicine)'
-        WHEN ward_name IN ('16 - Medicine - Male', '17 - Medicine - Female') THEN '16+17 (Medicine)'
-        WHEN ward_name IN ('18 - Psychiatry - Male', '23 - Psychiatry - Female') THEN '18+23 (Psychiatry)'
-        WHEN ward_name IN ('19 - Medicine - Male', '21 - Medicine - Female') THEN '19+21 (Medicine)'
-        WHEN ward_name IN ('20 - Orthopedic - Female', '22 - Orthopedic - Male') THEN '20+22 (Orthopedic)'
-        WHEN ward_name IN ('30 - ENT - Male', '31 - ENT - Female') THEN '30+31 (ENT)'
-        WHEN ward_name = '24 - Neurology - Combined' THEN '24 (Neurology)'
-        WHEN ward_name = '26 - Oro-Maxillary Facial - Combined' THEN '26 (Oro-Maxillary Facial)'
-        WHEN ward_name = '36 (Pediatrics) - Combined' THEN '36 (Pediatrics)'
-        WHEN ward_name IN ('25 - Dermatology - Female', '27 - Dermatology - Male') THEN '25+27 (Dermatology)'
-        WHEN ward_name IN ('28 - Oncology - Male', '29 - Oncology - Female') THEN '28+29 (Oncology)'
-        WHEN ward_name IN ('32 - Ophthalmology - Female', '33 - Ophthalmology - Male') THEN '32+33 (Ophthalmology)'
-        WHEN ward_name IN ('34 - Medicine - Male', '35 - Medicine - Female') THEN '34+35 (Medicine)'
-        WHEN ward_name IN ('39 & 40 - Cardiology') THEN '39+40 (Cardiology)'
-        WHEN ward_name IN ('41, 42 & 43 - Maliban Rehabilitation') THEN '41+42+43 (Maliban Rehabilitation)'
-        WHEN ward_name IN ('44 - Cardio-Thoracic - Female', '45 - Cardio-Thoracic - Male') THEN '44+45 (Cardio-Thoracic)'
-        WHEN ward_name IN ('46 & 47 - GU Surgery - Male') THEN '46+47 (GU Surgery)'
-        WHEN ward_name IN ('48 - Onco-Surgery - Female', 'Ward 59', '49 - Onco-Surgery - Male') THEN '48+49 (Onco-Surgery)'
-        WHEN ward_name = '50 - Pediatric Oncology - Combined' THEN '50 (Pediatric Oncology)'
-        WHEN ward_name IN ('51 & 52 - Pediatric Surgery') THEN '51+52 (Pediatric Surgery)'
-        WHEN ward_name IN ('53 - Ophthalmology - Male', '54 - Ophthalmology - Female') THEN '53+54 (Ophthalmology)'
-        WHEN ward_name = '55 - Rheumatology - Combined' THEN '55 (Rheumatology)'
-        WHEN ward_name IN ('58 - Emergency/ETC - Male', '59 - Emergency/ETC - Female') THEN '58+59 (Emergency/ETC)'
-        WHEN ward_name = '60 - ETC Pead - Combined' THEN '60 (ETC Pead)'
-        WHEN ward_name IN ('61 & 62 - Bhikku') THEN '61+62 (Bhikku)'
-        WHEN ward_name = '65 - Palliative' THEN '65 (Palliative)'
-        WHEN ward_name = '67 - Stroke' THEN '67 (Stroke)'
-        WHEN ward_name IN ('68 & 69 - Respiratory') THEN '68+69 (Respiratory)'
-        WHEN ward_name IN ('70 - Nephrology', '71 - Nephrology - Male', '73 - Nephrology - Female') THEN '70+71+73+74 (Nephrology)'
-        WHEN ward_name = '72 - Vascular Surgery - Combined' THEN '72 (Vascular Surgery)'
-        WHEN ward_name LIKE '%ICU%' THEN 'All ICU'
-        WHEN ward_name LIKE '%Theater%' THEN 'All Theater'
-        ELSE ward_name 
-    END AS ward_group,
-    antibiotic_name,
-    dosage,
-    SUM(item_count) AS total_items
-FROM releases
-WHERE release_time BETWEEN ? AND ?
-
-GROUP BY ward_group, antibiotic_name, dosage;
-";
-
-
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $startDate, $endDate);
-
-$stmt->execute();
-$result2 = $stmt->get_result();
-$stmt->close()
-
-// Start HTML output
+// Fetch all return books
+$result = $conn->query("SELECT * FROM return_books ORDER BY created_at DESC");
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antibiotic Usage Monitor</title>
-    <!-- DataTable CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <title>Return Books</title>
     <?php include_once("../includes/css-links-inc.php"); ?>
-    <!-- jQuery -->
-    <script type="text/javascript" charset="utf-8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- DataTable JS -->
-    <script type="text/javascript" charset="utf-8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 </head>
+
+<?php include_once("../includes/header.php"); ?>
+<?php include_once("../includes/sadmin-sidebar.php"); ?>
+
 <body>
-
 <main id="main" class="main">
-        <div class="pagetitle">
-            <h1>Usage Details Ward Wise</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                    <li class="breadcrumb-item">Pages</li>
-                    <li class="breadcrumb-item active">Antibiotic Usage Details</li>
-                </ol>
-            </nav>
-        </div>
-
-        <section class="section">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Antibiotic Usage Details</h5>
-
-                            <form method="get" action="">
-    <div class="form-group mb-3">
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="filter_type" id="filter_by_month" value="month" <?= (!isset($_GET['filter_type']) || $_GET['filter_type'] == 'month') ? 'checked' : '' ?>>
-            <label class="form-check-label" for="filter_by_month">Filter by Month Range</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="filter_type" id="filter_by_date" value="date" <?= (isset($_GET['filter_type']) && $_GET['filter_type'] == 'date') ? 'checked' : '' ?>>
-            <label class="form-check-label" for="filter_by_date">Filter by Custom Date Range</label>
-        </div>
+    <div class="pagetitle">
+        <h1>Manage Return Books</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item">Pages</li>
+                <li class="breadcrumb-item active">Manage Return Books</li>
+            </ol>
+        </nav>
     </div>
 
-    <div id="month_range_filters" class="<?= (isset($_GET['filter_type']) && $_GET['filter_type'] == 'date') ? 'd-none' : '' ?>">
-        <div class="form-group d-flex align-items-center gap-2 mb-3">
-            <label for="year">Select Year</label>
-            <select id="year" name="year" class="form-control w-25">
-                <?php
-                $currentYear = date('Y');
-                for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
-                    $selected = (isset($_GET['year']) && $_GET['year'] == $y) ? "selected" : "";
-                    echo "<option value='$y' $selected>$y</option>";
-                }
-                ?>
-            </select>
+    <section class="section">
+        <div class="card">
+            <div class="card-body pt-4">
+                <div class="container mt-1">
+                    <h4 class="mb-4">Manage Return Books</h4>
 
-            <label for="start_month">Start Month</label>
-            <select id="start_month" name="start_month" class="form-control w-25">
-                <?php
-                $months = [
-                    '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
-                    '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
-                    '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
-                ];
-                $selectedStartMonth = isset($_GET['start_month']) ? $_GET['start_month'] : "01";
-                foreach ($months as $num => $name) {
-                    $selected = ($num == $selectedStartMonth) ? "selected" : "";
-                    echo "<option value='$num' $selected>$name</option>";
-                }
-                ?>
-            </select>
+                    <form method="POST" class="d-flex mb-4">
+                        <input type="text" name="book_number" class="form-control me-2" placeholder="Enter Book Number" required>
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </form>
 
-            <label for="end_month">End Month</label>
-            <select id="end_month" name="end_month" class="form-control w-25">
-                <?php
-                $selectedEndMonth = isset($_GET['end_month']) ? $_GET['end_month'] : date('m');
-                foreach ($months as $num => $name) {
-                    $selected = ($num == $selectedEndMonth) ? "selected" : "";
-                    echo "<option value='$num' $selected>$name</option>";
-                }
-                ?>
-            </select>
-        </div>
-    </div>
-
-    <div id="date_range_filters" class="<?= (!isset($_GET['filter_type']) || $_GET['filter_type'] == 'month') ? 'd-none' : '' ?>">
-        <div class="form-group d-flex align-items-center gap-2 mb-3">
-            <label for="start_date">Start Date</label>
-            <input type="date" id="start_date" name="start_date" class="form-control w-25" value="<?= isset($_GET['start_date']) ? $_GET['start_date'] : '' ?>">
-
-            <label for="end_date">End Date</label>
-            <input type="date" id="end_date" name="end_date" class="form-control w-25" value="<?= isset($_GET['end_date']) ? $_GET['end_date'] : '' ?>">
-        </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary mt-2">Filter</button>
-</form>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get radio buttons and filter divs
-    const filterByMonth = document.getElementById('filter_by_month');
-    const filterByDate = document.getElementById('filter_by_date');
-    const monthRangeFilters = document.getElementById('month_range_filters');
-    const dateRangeFilters = document.getElementById('date_range_filters');
-    
-    // Add event listeners
-    filterByMonth.addEventListener('change', function() {
-        if (this.checked) {
-            monthRangeFilters.classList.remove('d-none');
-            dateRangeFilters.classList.add('d-none');
-        }
-    });
-    
-    filterByDate.addEventListener('change', function() {
-        if (this.checked) {
-            monthRangeFilters.classList.add('d-none');
-            dateRangeFilters.classList.remove('d-none');
-        }
-    });
-});
-</script>
-
-
-
-                            <?php include_once("../includes/header.php") ?>
-                            <?php include_once("../includes/sadmin-sidebar.php") ?>
-
-                            <table id="antibioticUsageTable" class="display table">
-                                <thead class="align-middle text-center">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Antibiotic Name</th>
-                                        <th>Dosage</th>
-                                        <th>Count</th>
-                                        <th>Units</th>
-                                        <th>Percentage (%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody">
-                                <?php 
-                                if ($result2->num_rows > 0) {
-                                    $rowNumber = 1;
-                                    $previousWard = "";
-                                    $totalUnits = 0;
-                                    $wardUsage = []; // Store per-ward total units
-
-                                    // First pass: Calculate total units
-                                    while ($row = $result2->fetch_assoc()) {
-                                        $wardName = $row['ward_group'];
-                                        $dosage = strtolower($row['dosage']);
-                                        $itemCount = $row['total_items'];
-                                        $usageInGrams = 0;
-
-                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
-                                            $mgValue = (int)$matches[1];
-                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
-                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
-                                            $gValue = (float)$matches[1];
-                                            $usageInGrams = $gValue * $itemCount;
-                                        }
-
-                                        $usageInUnits = $usageInGrams; // 1g = 1 unit
-                                        $totalUnits += $usageInUnits;
-
-                                        // Store per-ward usage
-                                        if (!isset($wardUsage[$wardName])) {
-                                            $wardUsage[$wardName] = 0;
-                                        }
-                                        $wardUsage[$wardName] += $usageInUnits;
-                                    }
-
-                                    $result2->data_seek(0); // Reset result pointer for display loop
-
-                                    // Second pass: Display data
-                                    while ($row = $result2->fetch_assoc()) {
-                                        $wardName = $row['ward_group'];
-                                        $antibioticName = $row['antibiotic_name'];
-                                        $dosage = strtolower($row['dosage']);
-                                        $itemCount = $row['total_items'];
-                                        $usageInGrams = 0;
-
-                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
-                                            $mgValue = (int)$matches[1];
-                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
-                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
-                                            $gValue = (float)$matches[1];
-                                            $usageInGrams = $gValue * $itemCount;
-                                        }
-
-                                        $usageInUnits = $usageInGrams;
-                                        $percentageUsage = ($totalUnits > 0) ? ($usageInUnits / $totalUnits) * 100 : 0;
-
-                                        // Group by ward name
-                                        if ($wardName != $previousWard) {
-                                            // Ward heading row
-                                            echo "<tr><td colspan='6' class='text-center card-title' style='background-color: #f8f9fa; font-weight: bold;'>$wardName</td></tr>";
-                                            $previousWard = $wardName;
-                                        }
-                                ?>
-                                        <tr>
-                                            <td class='text-center'><?php echo $rowNumber; ?></td>
-                                            <td class='text-center'><?php echo $antibioticName; ?></td>
-                                            <td class='text-center'><?php echo $dosage; ?></td>
-                                            <td class='text-center'><?php echo number_format($itemCount); ?></td>
-                                            <td class='text-center'><?php echo number_format($usageInUnits, 2); ?>g</td>
-                                            <td class='text-center'><?php echo number_format($percentageUsage, 2); ?>%</td>
-                                        </tr>
-                                <?php 
-                                        $rowNumber++;
-                                    }
-
-                                    // Display total usage per ward and the overall total at the end
-                                    //echo "<tr><td colspan='6' class='text-center' style='font-weight: bold;'>Total Units: " . number_format($totalUnits, 2) . "g</td></tr>";
-
-                                    // Display each ward's total usage
-                                    //foreach ($wardUsage as $ward => $wardTotal) {
-                                      //  echo "<tr><td colspan='6' class='text-center' style='background-color: #e9ecef;'>$ward - Total Usage: " . number_format($wardTotal, 2) . "g</td></tr>";
-                                   // }
-                                } else {
-                                    echo "<tr><td colspan='6' class='text-center'>No data available for the selected period, ward, and type</td></tr>";
-                                }
-                                ?>
-                            </tbody>
-
-                            </table>
+                    <?php if (isset($_SESSION['status'])): ?>
+                        <div class="alert alert-<?= $_SESSION['status'] === 'success' ? 'success' : 'danger' ?>">
+                            <?= $_SESSION['message'] ?>
                         </div>
-                    </div>
+                        <?php unset($_SESSION['status'], $_SESSION['message']); ?>
+                    <?php endif; ?>
+
+                    <table class="table table-bordered table-striped text-center align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Book Number</th>
+                                <th>Created At</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr class="<?= $row['status'] === 'disabled' ? 'table-danger' : '' ?>">
+                                <td><?= $row['id'] ?></td>
+                                <td><?= htmlspecialchars($row['book_number']) ?></td>
+                                <td><?= $row['created_at'] ?></td>
+                                <td>
+                                    <?php if ($row['status'] === 'available'): ?>
+                                        <span class="badge bg-success">Active</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-danger">Disabled</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <a href="?toggle=<?= $row['id'] ?>" class="btn btn-sm <?= $row['status'] === 'available' ? 'btn-danger' : 'btn-success' ?>">
+                                        <?= $row['status'] === 'available' ? 'Disable' : 'Activate' ?>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">Edit</button>
+                                    <a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this book?')" class="btn btn-sm btn-outline-danger">Delete</a>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
+</main>
 
-<?php include_once("../includes/js-links-inc.php") ?>
-    <?php include_once("../includes/footer.php") ?>
+<!-- Edit Modals -->
+<?php
+$result->data_seek(0);
+while ($row = $result->fetch_assoc()):
+?>
+<div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1" aria-labelledby="editModalLabel<?= $row['id'] ?>" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel<?= $row['id'] ?>">Edit Return Book Number</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="edit_id" value="<?= $row['id'] ?>">
+                <div class="mb-3">
+                    <label class="form-label">Book Number</label>
+                    <input type="text" name="edit_book_number" value="<?= htmlspecialchars($row['book_number']) ?>" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+<?php endwhile; ?>
+
+<?php include_once("../includes/footer.php"); ?>
+<?php include_once("../includes/js-links-inc.php"); ?>
 </body>
 </html>

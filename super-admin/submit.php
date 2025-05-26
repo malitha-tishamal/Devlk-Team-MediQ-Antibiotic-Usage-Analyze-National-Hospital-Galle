@@ -1,57 +1,69 @@
 <?php
-session_start(); // Start session for messages
-require_once "../includes/db-conn.php";  // Include the database connection
+session_start();
+require_once "../includes/db-conn.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $antibiotic_name = trim($_POST['antibiotic_name']);
-    $dosages = $_POST['dosage'];  // Array of dosages
+    $dosages = $_POST['dosage'] ?? [];
+    $stv_numbers = $_POST['stv'] ?? [];
 
-    // Validate input
-    if (empty($antibiotic_name) || empty($dosages)) {
+    if (empty($antibiotic_name) || empty($stv_numbers)) {
         $_SESSION['status'] = 'error';
-        $_SESSION['message'] = 'Please fill in all fields.';
+        $_SESSION['message'] = 'Please enter the antibiotic name and at least one STV number.';
         header("Location: pages-add-antibiotic.php");
         exit();
     }
 
-    // Check if the antibiotic already exists
-    $check_sql = "SELECT id FROM antibiotics WHERE name = ?";
+    //  Check for duplicate STV numbers within the form
+    if (count($stv_numbers) !== count(array_unique($stv_numbers))) {
+        $_SESSION['status'] = 'error';
+        $_SESSION['message'] = 'Duplicate STV numbers entered in the form!';
+        header("Location: pages-add-antibiotic.php");
+        exit();
+    }
+
+    //  Check for STV numbers already in the database
+    $placeholders = implode(',', array_fill(0, count($stv_numbers), '?'));
+    $types = str_repeat('s', count($stv_numbers));
+    $check_sql = "SELECT stv_number FROM dosages WHERE stv_number IN ($placeholders)";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("s", $antibiotic_name);
+    $check_stmt->bind_param($types, ...$stv_numbers);
     $check_stmt->execute();
-    $check_stmt->store_result();
-
-    if ($check_stmt->num_rows > 0) {
+    $result = $check_stmt->get_result();
+    $existing_stvs = [];
+    while ($row = $result->fetch_assoc()) {
+        $existing_stvs[] = $row['stv_number'];
+    }
+    if (!empty($existing_stvs)) {
         $_SESSION['status'] = 'error';
-        $_SESSION['message'] = 'Antibiotic already exists!';
+        $_SESSION['message'] = 'These STV numbers already exist: ' . implode(', ', $existing_stvs);
         header("Location: pages-add-antibiotic.php");
         exit();
     }
-    $check_stmt->close();
 
-    // Insert new antibiotic name
+    // Insert antibiotic
     $sql = "INSERT INTO antibiotics (name) VALUES (?)";
     if ($stmt = $conn->prepare($sql)) {
         $stmt->bind_param("s", $antibiotic_name);
         if ($stmt->execute()) {
-            $antibiotic_id = $stmt->insert_id;  // Get the last inserted ID
+            $antibiotic_id = $stmt->insert_id;
 
-            // Prepare dosage insert statement
-            $dosage_sql = "INSERT INTO dosages (antibiotic_id, dosage) VALUES (?, ?)";
+            $dosage_sql = "INSERT INTO dosages (antibiotic_id, dosage, stv_number) VALUES (?, ?, ?)";
             $dosage_stmt = $conn->prepare($dosage_sql);
 
-            foreach ($dosages as $dosage) {
-                $dosage_stmt->bind_param("is", $antibiotic_id, $dosage);
+            for ($i = 0; $i < count($stv_numbers); $i++) {
+                $dosage = !empty($dosages[$i]) ? trim($dosages[$i]) : 'No dosage available';
+                $stv = trim($stv_numbers[$i]);
+
+                $dosage_stmt->bind_param("iss", $antibiotic_id, $dosage, $stv);
                 $dosage_stmt->execute();
             }
 
             $_SESSION['status'] = 'success';
-            $_SESSION['message'] = 'Antibiotic and dosages added successfully!';
-            header("Location: pages-add-antibiotic.php");
-            exit();
+            $_SESSION['message'] = 'Antibiotic and STV numbers saved successfully!';
         } else {
             $_SESSION['status'] = 'error';
-            $_SESSION['message'] = 'Error: Could not insert antibiotic.';
+            $_SESSION['message'] = 'Failed to insert antibiotic.';
         }
         $stmt->close();
     } else {

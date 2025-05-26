@@ -68,6 +68,18 @@
         </li>
 
         <li class="nav-item">
+            <a class="nav-link collapsed" href="pages-manage-stock.php">
+                <i class="bi bi-backpack4"></i> <span>Stock</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="book-transactions.php">
+                <i class="bi bi-book"></i> <span>Books Numbers</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link collapsed" data-bs-toggle="collapse" href="#users-nav" role="button">
                 <i class="bi bi-people"></i> <span>Users</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>

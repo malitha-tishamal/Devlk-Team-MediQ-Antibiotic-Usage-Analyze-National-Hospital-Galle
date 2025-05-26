@@ -1,34 +1,47 @@
 <?php
-session_start(); // Start session to store messages
-
-// Set the default timezone to Sri Lanka Standard Time (SLST)
+session_start();
 date_default_timezone_set('Asia/Colombo');
-
-// Include the database connection
 require_once "includes/db-conn.php";
-
-// Enable detailed error reporting (for debugging)
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize and validate form inputs
-    $antibioticname = isset($_POST['antibiotic_name']) ? trim($_POST['antibiotic_name']) : null;
-    $dosage = isset($_POST['dosage']) && trim($_POST['dosage']) !== '' ? trim($_POST['dosage']) : null;
-    $itemCount = isset($_POST['item_count']) ? intval($_POST['item_count']) : null;
-    $ward = isset($_POST['ward']) ? trim($_POST['ward']) : null; // New ward input
-    $releaseTime = date('Y-m-d H:i:s'); // Current timestamp
-    $type = isset($_POST['type']) ? trim($_POST['type']) : null; // Get radio button value (msd/lp)
-    $ant_type = isset($_POST['ant_type']) ? trim($_POST['ant_type']) : null;
+    $user_id = $_SESSION['user_id'] ?? null;
 
-    // Validate required fields
-    if (empty($antibioticname) || empty($itemCount) || empty($ward) || empty($type) || empty($ant_type)) {
+    // Step 1: Fetch system_name from users table
+    $systemName = null;
+    if ($user_id) {
+        $stmt = $conn->prepare("SELECT system_name FROM users WHERE id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->bind_result($systemName);
+        $stmt->fetch();
+        $stmt->close();
+    }
+
+    // Step 2: Collect form data
+    $antibioticname = trim($_POST['antibiotic_name'] ?? '');
+    $dosage = trim($_POST['dosage'] ?? '');
+    $itemCount = intval($_POST['item_count'] ?? 0);
+    $ward = trim($_POST['ward'] ?? '');
+    $type = trim($_POST['type'] ?? '');
+    $ant_type = trim($_POST['ant_type'] ?? '');
+    $book_number = trim($_POST['book_number_select'] ?? '');
+    $page_number = trim($_POST['page_number_manual'] ?? '');
+
+    if (isset($_POST['datetime_option']) && $_POST['datetime_option'] === 'manual') {
+        $releaseTime = trim($_POST['manual_datetime'] ?? '');
+    } else {
+        $releaseTime = date('Y-m-d H:i:s');
+    }
+
+    // Validation
+    if (empty($antibioticname) || empty($itemCount) || empty($ward) || empty($type) || empty($ant_type) || empty($releaseTime)) {
         $_SESSION['status'] = 'error';
         $_SESSION['message'] = "Error: Missing required fields!";
         header("Location: pages-release-antibiotic.php");
         exit();
     }
 
-    // Ensure that item count is a valid number
     if ($itemCount <= 0) {
         $_SESSION['status'] = 'error';
         $_SESSION['message'] = "Error: Invalid item count!";
@@ -36,34 +49,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Prepare the SQL query
-    $query = "INSERT INTO releases (antibiotic_name, dosage, item_count, release_time, ward_name, type, ant_type) 
-              VALUES (?, ?, ?, ?, ?, ?, ?)";
-    
-    if ($stmt = $conn->prepare($query)) {
-        // Bind parameters correctly
-        $stmt->bind_param("ssissss", $antibioticname, $dosage, $itemCount, $releaseTime, $ward, $type, $ant_type);
+    // Step 3: Get stv_number using antibiotic name and dosage
+    $stmt = $conn->prepare("SELECT stv_number FROM dosages WHERE antibiotic_id = (SELECT id FROM antibiotics WHERE name = ?) AND dosage = ?");
+    $stmt->bind_param("ss", $antibioticname, $dosage);
+    $stmt->execute();
+    $stmt->bind_result($stv_number);
+    $stmt->fetch();
+    $stmt->close();
 
-        // Execute the query
-        if ($stmt->execute()) {
-            $_SESSION['status'] = 'success';
-            $_SESSION['message'] = "Antibiotic release inserted successfully!";
-        } else {
-            $_SESSION['status'] = 'error';
-            $_SESSION['message'] = "Error inserting antibiotic release: " . $stmt->error;
-        }
-
-        // Close the statement
-        $stmt->close();
-    } else {
+    if (!$stv_number) {
         $_SESSION['status'] = 'error';
-        $_SESSION['message'] = "Error: Failed to prepare SQL query!";
+        $_SESSION['message'] = "Error: Matching stock not found for this antibiotic & dosage.";
+        header("Location: pages-release-antibiotic.php");
+        exit();
     }
 
-    // Close the database connection
-    $conn->close();
+    // Step 4: Check and update stock
+    $stmt = $conn->prepare("SELECT quantity FROM stock WHERE stv_number = ?");
+    $stmt->bind_param("s", $stv_number);
+    $stmt->execute();
+    $stmt->bind_result($current_quantity);
+    $stmt->fetch();
+    $stmt->close();
 
-    // Redirect back to the same page
+    if ($current_quantity < $itemCount) {
+        $_SESSION['status'] = 'error';
+        $_SESSION['message'] = "Error: Not enough stock available.";
+        header("Location: pages-release-antibiotic.php");
+        exit();
+    }
+
+    // Reduce stock
+    $new_quantity = $current_quantity - $itemCount;
+    $stmt = $conn->prepare("UPDATE stock SET quantity = ?, last_updated = NOW() WHERE stv_number = ?");
+    $stmt->bind_param("is", $new_quantity, $stv_number);
+    $stmt->execute();
+    $stmt->close();
+
+    // Step 5: Insert release data
+    $query = "INSERT INTO releases 
+        (antibiotic_name, dosage, item_count, release_time, ward_name, type, ant_type, system_name, book_number, page_number) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ssisssssss", $antibioticname, $dosage, $itemCount, $releaseTime, $ward, $type, $ant_type, $systemName, $book_number, $page_number);
+
+    if ($stmt->execute()) {
+        $_SESSION['status'] = 'success';
+        $_SESSION['message'] = "Antibiotic released and stock updated!";
+    } else {
+        $_SESSION['status'] = 'error';
+        $_SESSION['message'] = "Insert error: " . $stmt->error;
+    }
+
+    $stmt->close();
+    $conn->close();
     header("Location: pages-release-antibiotic.php");
     exit();
 }

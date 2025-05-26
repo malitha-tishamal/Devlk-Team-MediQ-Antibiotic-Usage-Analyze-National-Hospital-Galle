@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 require_once '../includes/db-conn.php';
@@ -11,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic, mobile,profile_picture FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -19,9 +18,8 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $stmt->close();
 
-// Fetch ward details
-// Fetch all antibiotics and their dosages
-$sql = "SELECT a.id, a.name, GROUP_CONCAT(d.dosage SEPARATOR ', ') AS dosages
+// Fetch all antibiotics with dosages and their STV numbers
+$sql = "SELECT a.id, a.name, GROUP_CONCAT(CONCAT(d.dosage, ' (SR: ', d.stv_number, ')') SEPARATOR '|') AS dosages
         FROM antibiotics a
         LEFT JOIN dosages d ON a.id = d.antibiotic_id
         GROUP BY a.id";
@@ -62,12 +60,11 @@ $result = $conn->query($sql);
     <?php include_once("../includes/header.php"); ?>
     <?php include_once("../includes/sadmin-sidebar.php"); ?>
 
-    <!-- Displaying session messages -->
+    <!-- Display session messages -->
     <?php if (isset($_SESSION['status'])): ?>
         <div class="popup-message <?php echo ($_SESSION['status'] == 'success') ? '' : 'error-popup'; ?>" id="popup-alert">
             <?php echo $_SESSION['message']; ?>
         </div>
-
         <script>
             document.getElementById('popup-alert').style.display = 'block';
             setTimeout(() => { document.getElementById('popup-alert').style.display = 'none'; }, 5000);
@@ -75,8 +72,7 @@ $result = $conn->query($sql);
                 setTimeout(() => { window.location.href = 'pages-manage-antibiotic.php'; }, 5000);
             <?php endif; ?>
         </script>
-
-        <?php unset($_SESSION['status']); unset($_SESSION['message']); ?>
+        <?php unset($_SESSION['status'], $_SESSION['message']); ?>
     <?php endif; ?>
 
     <main id="main" class="main">
@@ -100,25 +96,31 @@ $result = $conn->query($sql);
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th>Name</th>
-                                        <th>Dosages</th>
+                                        <th>Dosages & SR Numbers</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php if ($result->num_rows > 0) : ?>
-                                        <?php while ($row = $result->fetch_assoc()) : ?>
+                                    <?php if ($result->num_rows > 0): ?>
+                                        <?php while ($row = $result->fetch_assoc()): ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($row['name']) ?></td>
-                                                <td><?= htmlspecialchars($row['dosages']) ?></td>
-                                                <td class ="text-center">
+                                                <td>
+                                                    <?php
+                                                    $pairs = explode('|', $row['dosages']);
+                                                    foreach ($pairs as $pair) {
+                                                        echo htmlspecialchars($pair) . "<br>";
+                                                    }
+                                                    ?>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="edit-antibiotic.php?id=<?= $row['id'] ?>" class="btn btn-warning btn-sm me-1">Edit</a>
                                                     <a href="delete-antibiotic.php?id=<?= $row['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this antibiotic?')">Delete</a>
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>
-                                    <?php else : ?>
-                                        <tr>
-                                            <td colspan="3">No antibiotics found.</td>
-                                        </tr>
+                                    <?php else: ?>
+                                        <tr><td colspan="3" class="text-center">No antibiotics found.</td></tr>
                                     <?php endif; ?>
                                 </tbody>
                             </table>
@@ -132,9 +134,10 @@ $result = $conn->query($sql);
     </main>
 
     <?php include_once("../includes/footer.php"); ?>
-    <?php include_once("../includes/js-links-inc.php") ?>
+    <?php include_once("../includes/js-links-inc.php"); ?>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
 </body>
 </html>
