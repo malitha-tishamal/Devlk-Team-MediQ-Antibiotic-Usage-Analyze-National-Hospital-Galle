@@ -118,6 +118,19 @@ $stmt->close();
                                 </div>
 
                                 <div class="mb-3">
+                                    <label for="category" class="form-label">Category:</label>
+                                    <select id="category" name="category" class="form-select w-75" required>
+                                        <option value="" disabled selected>Select a category</option>
+                                        <option value="Pediatrics">Pediatrics</option>
+                                        <option value="Medicine">Medicine</option>
+                                        <option value="Surgery">Surgery </option>
+                                        <option value="Medicine Subspecialty">Medicine Subspecialty</option>
+                                        <option value="Surgery Subspecialty">Surgery Subspecialty</option>
+                                    </select>
+                                </div>
+
+
+                                <div class="mb-3">
                                     <label for="description" class="form-label">Description:</label>
                                     <textarea id="description" name="description" class="form-control w-75" placeholder="Any Notice Details"></textarea>
                                 </div>

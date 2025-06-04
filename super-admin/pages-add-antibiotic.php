@@ -153,6 +153,16 @@ $stmt->close();
                                         <input type="text" class="form-control" id="antibioticName" name="antibiotic_name" placeholder="eg: Amoxicillin" required>
                                     </div>
 
+                                    <div class="col-md-4 mb-3">
+                                        <label for="category" class="form-label">Category</label>
+                                        <select class="form-select" id="category" name="category" required>
+                                            <option value="" selected disabled>Select Category</option>
+                                            <option value="Access">Access</option>
+                                            <option value="Watch">Watch</option>
+                                            <option value="Reserve">Reserve</option>
+                                        </select>
+                                    </div>
+
                                     <!-- First Dosage and STV pair -->
                                     <div id="dosageFields" class="mb-3">
                                         <div class="row align-items-end mb-2">
@@ -194,7 +204,7 @@ $stmt->close();
                                     const stvCol = document.createElement('div');
                                     stvCol.classList.add('col-md-4');
                                     stvCol.innerHTML = `
-                                        <label class="form-label">STV Number</label>
+                                        <label class="form-label">SR Number</label>
                                         <input type="text" class="form-control" name="stv[]" placeholder="eg: 12345" required>
                                     `;
 

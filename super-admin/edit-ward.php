@@ -51,11 +51,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $team = trim($_POST['team']);
     $managed_by = trim($_POST['managed_by']);
     $description = trim($_POST['description']);
+    $category = trim($_POST['category']);
 
-    // Update query
-    $sql = "UPDATE ward SET ward_name = ?, team = ?, managed_by = ?, description = ? WHERE id = ?";
+    $sql = "UPDATE ward SET ward_name = ?, team = ?, managed_by = ?, description = ?, category = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssi", $ward_name, $team, $managed_by, $description, $ward_id);
+    $stmt->bind_param("sssssi", $ward_name, $team, $managed_by, $description, $category, $ward_id);
 
     if ($stmt->execute()) {
         $_SESSION['status'] = 'success';
@@ -127,6 +127,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <label for="managed_by" class="form-label">Managed By (Doctor Name):</label>
                                     <input type="text" id="managed_by" name="managed_by" class="form-control" 
                                         value="<?php echo htmlspecialchars($ward['managed_by']); ?>" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Category:</label>
+                                    <select id="category" name="category" class="form-select" required>
+                                        <option value="">-- Select Category --</option>
+                                        <option value="Pediatrics" <?php if ($ward['category'] == 'Pediatrics') echo 'selected'; ?>>Pediatrics</option>
+                                        <option value="Medicine" <?php if ($ward['category'] == 'Medicine') echo 'selected'; ?>>Medicine</option>
+                                        <option value="Medicine Subspecialty" <?php if ($ward['category'] == 'Medicine Subspecialty') echo 'selected'; ?>>Medicine Subspecialty</option>
+                                        <option value="Surgery" <?php if ($ward['category'] == 'Surgery') echo 'selected'; ?>>Surgery </option>
+                                        <option value="Surgery Subspecialty" <?php if ($ward['category'] == 'Surgery Subspecialty') echo 'selected'; ?>>Surgery Subspecialty</option>
+
+                                    </select>
                                 </div>
 
                                 <div class="mb-3">

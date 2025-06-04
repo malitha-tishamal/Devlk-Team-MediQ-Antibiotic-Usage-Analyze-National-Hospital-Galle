@@ -46,17 +46,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Get STV number
-    $stmt = $conn->prepare("SELECT stv_number FROM dosages WHERE antibiotic_id = (SELECT id FROM antibiotics WHERE name = ?) AND dosage = ?");
+    // Get STV number and category
+    $stmt = $conn->prepare("SELECT d.stv_number, a.category 
+                            FROM dosages d 
+                            JOIN antibiotics a ON d.antibiotic_id = a.id 
+                            WHERE a.name = ? AND d.dosage = ?");
     $stmt->bind_param("ss", $antibioticName, $dosage);
     $stmt->execute();
-    $stmt->bind_result($stvNumber);
+    $stmt->bind_result($stvNumber, $category);
     $stmt->fetch();
     $stmt->close();
 
-    if (!$stvNumber) {
+    if (!$stvNumber || !$category) {
         $_SESSION['status'] = 'error';
-        $_SESSION['message'] = "Error: Matching dosage not found!";
+        $_SESSION['message'] = "Error: Matching dosage or category not found!";
         header("Location: pages-return-antibiotic.php");
         exit();
     }
@@ -70,17 +73,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->close();
 
     $newQty = $currentQty + $itemCount;
+
     $stmt = $conn->prepare("UPDATE stock SET quantity = ?, last_updated = NOW() WHERE stv_number = ?");
     $stmt->bind_param("is", $newQty, $stvNumber);
     $stmt->execute();
     $stmt->close();
 
-    // Insert into returns table
+    // Insert into returns table including category
     $stmt = $conn->prepare("INSERT INTO returns 
-        (antibiotic_name, dosage, item_count, return_time, ward_name, type, ant_type, system_name, book_number, page_number)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssisssssss", 
-        $antibioticName, $dosage, $itemCount, $returnTime, $ward, $type, $antType, $systemName, $bookNumber, $pageNumber);
+        (antibiotic_name, dosage, item_count, return_time, ward_name, type, ant_type, category, system_name, book_number, page_number)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+    $stmt->bind_param("ssissssssss", 
+        $antibioticName, $dosage, $itemCount, $returnTime, $ward, $type, $antType, $category, $systemName, $bookNumber, $pageNumber);
 
     if ($stmt->execute()) {
         $_SESSION['status'] = 'success';

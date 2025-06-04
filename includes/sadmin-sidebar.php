@@ -28,26 +28,41 @@
 
         <li class="nav-item">
             <a class="nav-link collapsed" data-bs-toggle="collapse" href="#analyze-nav" role="button">
-                <i class="bi bi-bar-chart"></i> <span>Analyze</span> <i class="bi bi-chevron-down ms-auto"></i>
+                <i class="bi bi-bar-chart"></i> <span>Antibiotics Analyze</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul id="analyze-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
                 <li>
                     <a href="../super-admin/pages-release-summery.php">
-                        <i class="bi bi-circle"></i> <span>Antibiotic Release Only</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../super-admin/pages-release-summery-ward-wise.php">
-                        <i class="bi bi-circle"></i> <span>Ward Wise</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="../super-admin/pages-usage-combined.php">
-                        <i class="bi bi-circle"></i> <span>Ward Wise Combined</span>
+                        <i class="bi bi-circle"></i> <span>Antibiotic Release With Chart</span>
                     </a>
                 </li>
             </ul>
         </li>
+
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#analyze-nav2" role="button">
+                <i class="bi bi-bar-chart"></i> <span>Ward Wise Analyze</span> <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="analyze-nav2" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="../super-admin/pages-release-summery-ward-wise.php">
+                        <i class="bi bi-circle"></i> <span>Antibiotic Release</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../super-admin/pages-release-summery-chart-ward-wise-category.php">
+                        <i class="bi bi-circle"></i> <span>Ward Wise Charts</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../super-admin/pages-release-summery-charts-ward-wise.php">
+                        <i class="bi bi-circle"></i> <span>Ward Wise Category Charts</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
 
         <li class="nav-item">
             <a class="nav-link collapsed" data-bs-toggle="collapse" href="#wards-nav" role="button">

@@ -19,10 +19,11 @@ $user = $result->fetch_assoc();
 $stmt->close();
 
 // Fetch all antibiotics with dosages and their STV numbers
-$sql = "SELECT a.id, a.name, GROUP_CONCAT(CONCAT(d.dosage, ' (SR: ', d.stv_number, ')') SEPARATOR '|') AS dosages
+$sql = "SELECT a.id, a.name, a.category, GROUP_CONCAT(CONCAT(d.dosage, ' (SR: ', d.stv_number, ')') SEPARATOR '|') AS dosages
         FROM antibiotics a
         LEFT JOIN dosages d ON a.id = d.antibiotic_id
         GROUP BY a.id";
+
 $result = $conn->query($sql);
 ?>
 
@@ -95,6 +96,7 @@ $result = $conn->query($sql);
                                 <thead class="align-middle text-center">
                                     <tr>
                                         <th>Name</th>
+                                        <th>Category</th>
                                         <th>Dosages & SR Numbers</th>
                                     </tr>
                                 </thead>
@@ -103,6 +105,7 @@ $result = $conn->query($sql);
                                         <?php while ($row = $result->fetch_assoc()): ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($row['name']) ?></td>
+                                                <td><?= htmlspecialchars($row['category'] ?? '-') ?></td>
                                                 <td>
                                                     <?php
                                                     if (!empty($row['dosages'])) {

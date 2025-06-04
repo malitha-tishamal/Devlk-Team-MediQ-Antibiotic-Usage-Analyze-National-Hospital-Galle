@@ -28,13 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $book_number = trim($_POST['book_number_select'] ?? '');
     $page_number = trim($_POST['page_number_manual'] ?? '');
 
-    if (isset($_POST['datetime_option']) && $_POST['datetime_option'] === 'manual') {
-        $releaseTime = trim($_POST['manual_datetime'] ?? '');
-    } else {
-        $releaseTime = date('Y-m-d H:i:s');
-    }
+    $releaseTime = (isset($_POST['datetime_option']) && $_POST['datetime_option'] === 'manual')
+        ? trim($_POST['manual_datetime'] ?? '')
+        : date('Y-m-d H:i:s');
 
-    // Validation
+    // Step 3: Validate fields
     if (empty($antibioticname) || empty($itemCount) || empty($ward) || empty($type) || empty($ant_type) || empty($releaseTime)) {
         $_SESSION['status'] = 'error';
         $_SESSION['message'] = "Error: Missing required fields!";
@@ -49,8 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Step 3: Get stv_number using antibiotic name and dosage
-    $stmt = $conn->prepare("SELECT stv_number FROM dosages WHERE antibiotic_id = (SELECT id FROM antibiotics WHERE name = ?) AND dosage = ?");
+    // Step 4: Get stv_number from dosage
+    $stmt = $conn->prepare("SELECT d.stv_number FROM dosages d 
+                            JOIN antibiotics a ON d.antibiotic_id = a.id 
+                            WHERE a.name = ? AND d.dosage = ?");
     $stmt->bind_param("ss", $antibioticname, $dosage);
     $stmt->execute();
     $stmt->bind_result($stv_number);
@@ -64,7 +64,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Step 4: Check and update stock
+    // Step 4.1: Get ward_category from wards table
+    $stmt = $conn->prepare("SELECT category FROM ward WHERE ward_name = ?");
+    $stmt->bind_param("s", $ward);
+    $stmt->execute();
+    $stmt->bind_result($ward_category);
+    $stmt->fetch();
+    $stmt->close();
+
+    if (!$ward_category) {
+        $_SESSION['status'] = 'error';
+        $_SESSION['message'] = "Error: Ward category not found.";
+        header("Location: pages-release-antibiotic.php");
+        exit();
+    }
+
+    // Step 4.2: Get category from antibiotics table
+    $stmt = $conn->prepare("SELECT category FROM antibiotics WHERE name = ?");
+    $stmt->bind_param("s", $antibioticname);
+    $stmt->execute();
+    $stmt->bind_result($antibiotic_category);
+    $stmt->fetch();
+    $stmt->close();
+
+    if (!$antibiotic_category) {
+        $_SESSION['status'] = 'error';
+        $_SESSION['message'] = "Error: Antibiotic category not found.";
+        header("Location: pages-release-antibiotic.php");
+        exit();
+    }
+
+    // Step 5: Check and update stock
     $stmt = $conn->prepare("SELECT quantity FROM stock WHERE stv_number = ?");
     $stmt->bind_param("s", $stv_number);
     $stmt->execute();
@@ -79,20 +109,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Reduce stock
     $new_quantity = $current_quantity - $itemCount;
+
     $stmt = $conn->prepare("UPDATE stock SET quantity = ?, last_updated = NOW() WHERE stv_number = ?");
     $stmt->bind_param("is", $new_quantity, $stv_number);
     $stmt->execute();
     $stmt->close();
 
-    // Step 5: Insert release data
+    // Step 6: Insert into releases (with antibiotic category)
     $query = "INSERT INTO releases 
-        (antibiotic_name, dosage, item_count, release_time, ward_name, type, ant_type, system_name, book_number, page_number) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        (antibiotic_name, dosage, item_count, release_time, ward_name, type, ant_type, ward_category, system_name, book_number, page_number, category) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ssisssssss", $antibioticname, $dosage, $itemCount, $releaseTime, $ward, $type, $ant_type, $systemName, $book_number, $page_number);
+    $stmt->bind_param(
+        "ssisssssssss", 
+        $antibioticname, $dosage, $itemCount, $releaseTime, 
+        $ward, $type, $ant_type, $ward_category, 
+        $systemName, $book_number, $page_number, $antibiotic_category
+    );
 
     if ($stmt->execute()) {
         $_SESSION['status'] = 'success';

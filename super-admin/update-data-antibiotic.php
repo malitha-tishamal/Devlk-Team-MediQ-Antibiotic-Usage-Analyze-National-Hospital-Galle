@@ -5,18 +5,19 @@ require_once '../includes/db-conn.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $antibiotic_id = intval($_POST['antibiotic_id']);
     $antibiotic_name = trim($_POST['antibiotic_name']);
+    $category = trim($_POST['category']);
     $dosage_ids = $_POST['dosage_ids'];
     $dosages = $_POST['dosage'];
     $stv_numbers = $_POST['stv'];
 
-    if (empty($antibiotic_name) || empty($dosages) || empty($stv_numbers)) {
+    if (empty($antibiotic_name) || empty($category) || empty($dosages) || empty($stv_numbers)) {
         $_SESSION['status'] = 'error';
         $_SESSION['message'] = 'All fields are required.';
         header("Location: edit-antibiotic.php?id=" . $antibiotic_id);
         exit();
     }
 
-    // Check for duplicate STV numbers (excluding current rows)
+    // Check for duplicate STV numbers excluding current rows
     foreach ($stv_numbers as $index => $stv) {
         $check_sql = "SELECT id FROM dosages WHERE stv_number = ? AND id != ?";
         $check_stmt = $conn->prepare($check_sql);
@@ -33,18 +34,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $check_stmt->close();
     }
 
-    // Update antibiotic name
-    $update_name_sql = "UPDATE antibiotics SET name = ? WHERE id = ?";
+    // Update antibiotic name and category
+    $update_name_sql = "UPDATE antibiotics SET name = ?, category = ? WHERE id = ?";
     $stmt = $conn->prepare($update_name_sql);
-    $stmt->bind_param("si", $antibiotic_name, $antibiotic_id);
+    $stmt->bind_param("ssi", $antibiotic_name, $category, $antibiotic_id);
     $stmt->execute();
     $stmt->close();
 
-    // Update each dosage row
+    // Update each dosage record
     for ($i = 0; $i < count($dosage_ids); $i++) {
+        $dosage = trim($dosages[$i]);
+        $stv = trim($stv_numbers[$i]);
+        $id = intval($dosage_ids[$i]);
+
         $update_dosage_sql = "UPDATE dosages SET dosage = ?, stv_number = ? WHERE id = ?";
         $stmt = $conn->prepare($update_dosage_sql);
-        $stmt->bind_param("ssi", $dosages[$i], $stv_numbers[$i], $dosage_ids[$i]);
+        $stmt->bind_param("ssi", $dosage, $stv, $id);
         $stmt->execute();
         $stmt->close();
     }

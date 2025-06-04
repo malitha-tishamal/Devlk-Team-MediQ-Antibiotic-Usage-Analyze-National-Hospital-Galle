@@ -103,8 +103,9 @@ if ($result->num_rows > 0) {
                                     <tr>
                                         <th>ID</th>
                                         <th>Ward Name</th>
-                                        <th>Managed By(Team)</th>
-                                        <th>Managed By(Docters Name)</th>
+                                        <th>Team</th>
+                                        <th>Managed By</th>
+                                        <th>Category</th> 
                                         <th>Description</th>
                                         <th>Created At</th>
                                     </tr>
@@ -116,6 +117,7 @@ if ($result->num_rows > 0) {
                                             <td><?php echo htmlspecialchars($ward['ward_name']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['team']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['managed_by']); ?></td>
+                                            <td><?php echo htmlspecialchars($ward['category']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['description']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['created_at']); ?></td>
                                         </tr>

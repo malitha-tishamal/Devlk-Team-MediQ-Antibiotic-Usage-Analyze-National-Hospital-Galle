@@ -22,8 +22,8 @@ $stmt->close();
 
 $antibiotic_id = $_GET['id'];
 
-// Fetch antibiotic name
-$sql = "SELECT name FROM antibiotics WHERE id = ?";
+// Fetch antibiotic name and category
+$sql = "SELECT name, category FROM antibiotics WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $antibiotic_id);
 $stmt->execute();
@@ -68,19 +68,29 @@ $stmt->close();
 
                 <div class="mb-3">
                     <label class="form-label">Antibiotic Name</label>
-                    <input type="text" name="antibiotic_name" class="form-control" required value="<?= htmlspecialchars($antibiotic['name']) ?>">
+                    <input type="text" name="antibiotic_name" class="form-control w-75" required value="<?= htmlspecialchars($antibiotic['name']) ?>">
                 </div>
 
-                <h5>Dosages and SR Numbers</h5>
+                <div class="mb-3">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select w-50" required>
+                        <option value="">-- Select Category --</option>
+                        <option value="Access" <?= ($antibiotic['category'] == 'Access') ? 'selected' : '' ?>>Access</option>
+                        <option value="Watch" <?= ($antibiotic['category'] == 'Watch') ? 'selected' : '' ?>>Watch</option>
+                        <option value="Reserve" <?= ($antibiotic['category'] == 'Reserve') ? 'selected' : '' ?>>Reserve</option>
+                    </select>
+                </div>
+
+                <h5>Dosages and STV Numbers</h5>
                 <div id="dosageFields">
                     <?php foreach ($dosages as $d): ?>
                         <div class="row mb-2">
                             <input type="hidden" name="dosage_ids[]" value="<?= $d['id'] ?>">
                             <div class="col-md-5">
-                                <input type="text" name="dosage[]" class="form-control" value="<?= htmlspecialchars($d['dosage']) ?>" required>
+                                <input type="text" name="dosage[]" class="form-control" value="<?= htmlspecialchars($d['dosage']) ?>" >
                             </div>
                             <div class="col-md-5">
-                                <input type="text" name="stv[]" class="form-control" value="<?= htmlspecialchars($d['stv_number']) ?>" required>
+                                <input type="text" name="stv[]" class="form-control" value="<?= htmlspecialchars($d['stv_number']) ?>" >
                             </div>
                         </div>
                     <?php endforeach; ?>

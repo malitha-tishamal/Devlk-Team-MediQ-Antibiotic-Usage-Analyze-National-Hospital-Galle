@@ -1,187 +1,288 @@
-<?php
+<?php 
 session_start();
 require_once '../includes/db-conn.php';
 
-// Fetch user details (optional)
-$user_id = $_SESSION['admin_id'] ?? 0;
-$sql = "SELECT * FROM admins WHERE id = ?";
-$stmt = $conn->prepare($sql);
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: ../index.php");
+    exit();
+}
+
+$user_id = $_SESSION['admin_id'];
+$stmt = $conn->prepare("SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$result_user = $stmt->get_result();
-$user = $result_user->fetch_assoc();
+$user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-// Add return book
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_number'])) {
-    $book_number = trim($_POST['book_number']);
-    if (!empty($book_number)) {
-        $stmt = $conn->prepare("INSERT INTO return_books (book_number) VALUES (?)");
-        $stmt->bind_param("s", $book_number);
-        if ($stmt->execute()) {
-            $_SESSION['status'] = 'success';
-            $_SESSION['message'] = "Return book number added.";
-        } else {
-            $_SESSION['status'] = 'error';
-            $_SESSION['message'] = "Error: " . $stmt->error;
-        }
-        $stmt->close();
+// Get filter inputs or default to current month/year
+$startMonth = $_POST['start_month'] ?? date('m');
+$startYear = $_POST['start_year'] ?? date('Y');
+$endMonth = $_POST['end_month'] ?? date('m');
+$endYear = $_POST['end_year'] ?? date('Y');
+
+$startDate = date('Y-m-01', strtotime("$startYear-$startMonth-01"));
+$endDate = date('Y-m-t', strtotime("$endYear-$endMonth-01"));
+
+/** Chart 1: Antibiotic usage by Ward Category **/
+$antibioticData = [];
+$wardCategories = ['Pediatrics', 'Medicine', 'Medicine Subspecialty', 'Surgery', 'Surgery Subspecialty'];
+$antibiotics = [];
+
+$stmt = $conn->prepare("SELECT ward_category, antibiotic_name, dosage, SUM(item_count) AS usage_count FROM releases WHERE release_time BETWEEN ? AND ? GROUP BY ward_category, antibiotic_name, dosage");
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $category = $row['ward_category'];
+    $antibiotic = $row['antibiotic_name'];
+    $dosage = strtolower($row['dosage']);
+    $count = $row['usage_count'];
+
+    if (!in_array($antibiotic, $antibiotics)) $antibiotics[] = $antibiotic;
+
+    $units = 0;
+    if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+        $units = ($matches[1] / 1000) * $count;
+    } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+        $units = $matches[1] * $count;
     }
-    header("Location: pages-return-books.php");
-    exit();
+
+    $antibioticData[$category][$antibiotic] = ($antibioticData[$category][$antibiotic] ?? 0) + $units;
 }
+$stmt->close();
+sort($antibiotics);
 
-// Edit return book
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_id'], $_POST['edit_book_number'])) {
-    $edit_id = intval($_POST['edit_id']);
-    $edit_book_number = trim($_POST['edit_book_number']);
+/** Chart 2: Category usage (Access, Watch, Reserve) by Ward Category **/
+$categoryColors = ['Access' => '#28a745', 'Watch' => '#0000ff', 'Reserve' => '#dc3545'];
+$categories = ['Access', 'Watch', 'Reserve'];
+$dataMap = [];
 
-    if (!empty($edit_book_number)) {
-        $stmt = $conn->prepare("UPDATE return_books SET book_number = ? WHERE id = ?");
-        $stmt->bind_param("si", $edit_book_number, $edit_id);
-        if ($stmt->execute()) {
-            $_SESSION['status'] = 'success';
-            $_SESSION['message'] = "Return book number updated.";
-        } else {
-            $_SESSION['status'] = 'error';
-            $_SESSION['message'] = "Error updating: " . $stmt->error;
-        }
-        $stmt->close();
+$stmt = $conn->prepare("SELECT ward_category, category, dosage, SUM(item_count) AS usage_count FROM releases WHERE release_time BETWEEN ? AND ? GROUP BY ward_category, category, dosage");
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $category = $row['ward_category'];
+    $catType = $row['category'];
+    $dosage = strtolower($row['dosage']);
+    $count = $row['usage_count'];
+
+    $units = 0;
+    if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+        $units = ($matches[1] / 1000) * $count;
+    } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+        $units = $matches[1] * $count;
     }
-    header("Location: pages-return-books.php");
-    exit();
-}
 
-// Toggle status
-if (isset($_GET['toggle'])) {
-    $id = intval($_GET['toggle']);
-    $conn->query("UPDATE return_books SET status = IF(status='available','disabled','available') WHERE id = $id");
-    header("Location: pages-return-books.php");
-    exit();
-}
+    if ($units < 0) $units = 0;
+    elseif ($units < 0.01) $units = 0;
 
-// Delete
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    $conn->query("DELETE FROM return_books WHERE id = $id");
-    header("Location: pages-return-books.php");
-    exit();
+    $dataMap[$category][$catType] = ($dataMap[$category][$catType] ?? 0) + $units;
 }
+$stmt->close();
 
-// Fetch all return books
-$result = $conn->query("SELECT * FROM return_books ORDER BY created_at DESC");
+/** Chart 3: Total usage by Ward Category **/
+$usageTotals = [];
+$stmt = $conn->prepare("SELECT ward_category, dosage, SUM(item_count) AS total_count FROM releases WHERE release_time BETWEEN ? AND ? GROUP BY ward_category, dosage");
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $category = $row['ward_category'];
+    $dosage = strtolower($row['dosage']);
+    $count = $row['total_count'];
+
+    $units = 0;
+    if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+        $units = ($matches[1] / 1000) * $count;
+    } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+        $units = $matches[1] * $count;
+    }
+
+    $usageTotals[$category] = ($usageTotals[$category] ?? 0) + $units;
+}
+$stmt->close();
+
+$chartWidth = max(1000, count($wardCategories) * 60);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Return Books</title>
+    <title>Antibiotic Usage by Ward Category</title>
     <?php include_once("../includes/css-links-inc.php"); ?>
-</head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+        google.charts.load("current", {packages:['corechart']});
+        google.charts.setOnLoadCallback(drawAllCharts);
 
+        function drawAllCharts() {
+            drawChart1();
+            drawChart2();
+            drawChart3();
+        }
+
+        function drawChart1() {
+            var data = google.visualization.arrayToDataTable([
+                ['Ward Category', <?php foreach ($antibiotics as $a) echo "'".addslashes($a)."',"; ?>],
+                <?php foreach ($wardCategories as $wc): ?>
+                ['<?= $wc ?>',
+                    <?php foreach ($antibiotics as $a): ?>
+                        <?= isset($antibioticData[$wc][$a]) ? round($antibioticData[$wc][$a], 2) : 0 ?>,
+                    <?php endforeach; ?>
+                ],
+                <?php endforeach; ?>
+            ]);
+
+            var options = {
+                title: 'Chart 1: Antibiotic Usage by Ward Category',
+                hAxis: {title: 'Ward Category'},
+                vAxis: {title: 'Units (g)'},
+                isStacked: false,
+                legend: {position: 'top'},
+                height: 500
+            };
+
+            new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
+        }
+
+        function drawChart2() {
+            var data = google.visualization.arrayToDataTable([
+                ['Ward Category', 'Access', 'Watch', 'Reserve'],
+                <?php foreach ($wardCategories as $wc): ?>
+                ['<?= $wc ?>',
+                    <?= isset($dataMap[$wc]['Access']) ? round($dataMap[$wc]['Access'], 2) : 0 ?>,
+                    <?= isset($dataMap[$wc]['Watch']) ? round($dataMap[$wc]['Watch'], 2) : 0 ?>,
+                    <?= isset($dataMap[$wc]['Reserve']) ? round($dataMap[$wc]['Reserve'], 2) : 0 ?>,
+                ],
+                <?php endforeach; ?>
+            ]);
+
+            var options = {
+                title: 'Chart 2: Category Usage by Ward Category (Stacked)',
+                isStacked: true,
+                height: 500,
+                legend: { position: 'top' },
+                hAxis: { title: 'Ward Category' },
+                vAxis: { title: 'Units (g)' },
+                colors: ['#28a745', '#0000ff', '#dc3545'] // Access, Watch, Reserve colors
+            };
+
+            new google.visualization.ColumnChart(document.getElementById('chart2')).draw(data, options);
+        }
+
+        function drawChart3() {
+            var data = google.visualization.arrayToDataTable([
+                ['Ward Category', 'Total Usage (g)'],
+                <?php foreach ($wardCategories as $wc): ?>
+                ['<?= $wc ?>', <?= isset($usageTotals[$wc]) ? round($usageTotals[$wc], 2) : 0 ?>],
+                <?php endforeach; ?>
+            ]);
+
+            var options = {
+                title: 'Chart 3: Total Usage by Ward Category',
+                hAxis: {title: 'Ward Category'},
+                vAxis: {title: 'Total Usage (g)'},
+                height: 500,
+                legend: 'none'
+            };
+
+            new google.visualization.ColumnChart(document.getElementById('chart3')).draw(data, options);
+        }
+    </script>
+    <style>
+        .chart-container {
+            width: <?= $chartWidth ?>px;
+            margin: 30px auto;
+        }
+    </style>
+</head>
+<body>
 <?php include_once("../includes/header.php"); ?>
 <?php include_once("../includes/sadmin-sidebar.php"); ?>
-
-<body>
 <main id="main" class="main">
     <div class="pagetitle">
-        <h1>Manage Return Books</h1>
-        <nav>
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                <li class="breadcrumb-item">Pages</li>
-                <li class="breadcrumb-item active">Manage Return Books</li>
-            </ol>
-        </nav>
+        <h1>Antibiotic Usage by Ward Category</h1>
     </div>
 
     <section class="section">
-        <div class="card">
-            <div class="card-body pt-4">
-                <div class="container mt-1">
-                    <h4 class="mb-4">Manage Return Books</h4>
+        <form method="POST" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="start_month" class="form-label">Start Month</label>
+                <select name="start_month" id="start_month" class="form-select">
+                    <?php 
+                    for ($m=1; $m<=12; $m++) {
+                        $selected = ($m == intval($startMonth)) ? 'selected' : '';
+                        echo "<option value='$m' $selected>".date('F', mktime(0,0,0,$m,1))."</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="start_year" class="form-label">Start Year</label>
+                <select name="start_year" id="start_year" class="form-select">
+                    <?php 
+                    $currentYear = date('Y');
+                    for ($y = $currentYear-5; $y <= $currentYear; $y++) {
+                        $selected = ($y == intval($startYear)) ? 'selected' : '';
+                        echo "<option value='$y' $selected>$y</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="end_month" class="form-label">End Month</label>
+                <select name="end_month" id="end_month" class="form-select">
+                    <?php 
+                    for ($m=1; $m<=12; $m++) {
+                        $selected = ($m == intval($endMonth)) ? 'selected' : '';
+                        echo "<option value='$m' $selected>".date('F', mktime(0,0,0,$m,1))."</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="end_year" class="form-label">End Year</label>
+                <select name="end_year" id="end_year" class="form-select">
+                    <?php 
+                    for ($y = $currentYear-5; $y <= $currentYear; $y++) {
+                        $selected = ($y == intval($endYear)) ? 'selected' : '';
+                        echo "<option value='$y' $selected>$y</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+        </form>
 
-                    <form method="POST" class="d-flex mb-4">
-                        <input type="text" name="book_number" class="form-control me-2" placeholder="Enter Book Number" required>
-                        <button type="submit" class="btn btn-success">Add</button>
-                    </form>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title text-center">Chart 1: Antibiotic Usage by Ward Category</h5>
+                <div id="chart1" class="chart-container"></div>
+            </div>
+        </div>
 
-                    <?php if (isset($_SESSION['status'])): ?>
-                        <div class="alert alert-<?= $_SESSION['status'] === 'success' ? 'success' : 'danger' ?>">
-                            <?= $_SESSION['message'] ?>
-                        </div>
-                        <?php unset($_SESSION['status'], $_SESSION['message']); ?>
-                    <?php endif; ?>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title text-center">Chart 2: Category Usage by Ward Category</h5>
+                <div id="chart2" class="chart-container"></div>
+            </div>
+        </div>
 
-                    <table class="table table-bordered table-striped text-center align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Book Number</th>
-                                <th>Created At</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php while ($row = $result->fetch_assoc()): ?>
-                            <tr class="<?= $row['status'] === 'disabled' ? 'table-danger' : '' ?>">
-                                <td><?= $row['id'] ?></td>
-                                <td><?= htmlspecialchars($row['book_number']) ?></td>
-                                <td><?= $row['created_at'] ?></td>
-                                <td>
-                                    <?php if ($row['status'] === 'available'): ?>
-                                        <span class="badge bg-success">Active</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-danger">Disabled</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <a href="?toggle=<?= $row['id'] ?>" class="btn btn-sm <?= $row['status'] === 'available' ? 'btn-danger' : 'btn-success' ?>">
-                                        <?= $row['status'] === 'available' ? 'Disable' : 'Activate' ?>
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">Edit</button>
-                                    <a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this book?')" class="btn btn-sm btn-outline-danger">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title text-center">Chart 3: Total Usage by Ward Category</h5>
+                <div id="chart3" class="chart-container"></div>
             </div>
         </div>
     </section>
 </main>
-
-<!-- Edit Modals -->
-<?php
-$result->data_seek(0);
-while ($row = $result->fetch_assoc()):
-?>
-<div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1" aria-labelledby="editModalLabel<?= $row['id'] ?>" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="POST" class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel<?= $row['id'] ?>">Edit Return Book Number</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" name="edit_id" value="<?= $row['id'] ?>">
-                <div class="mb-3">
-                    <label class="form-label">Book Number</label>
-                    <input type="text" name="edit_book_number" value="<?= htmlspecialchars($row['book_number']) ?>" class="form-control" required>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary">Update</button>
-            </div>
-        </form>
-    </div>
-</div>
-<?php endwhile; ?>
-
 <?php include_once("../includes/footer.php"); ?>
 <?php include_once("../includes/js-links-inc.php"); ?>
 </body>

@@ -4,17 +4,18 @@ require_once "../includes/db-conn.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $antibiotic_name = trim($_POST['antibiotic_name']);
+    $category = trim($_POST['category'] ?? '');
     $dosages = $_POST['dosage'] ?? [];
     $stv_numbers = $_POST['stv'] ?? [];
 
-    if (empty($antibiotic_name) || empty($stv_numbers)) {
+    if (empty($antibiotic_name) || empty($category) || empty($stv_numbers)) {
         $_SESSION['status'] = 'error';
-        $_SESSION['message'] = 'Please enter the antibiotic name and at least one STV number.';
+        $_SESSION['message'] = 'Please enter the antibiotic name, category, and at least one STV number.';
         header("Location: pages-add-antibiotic.php");
         exit();
     }
 
-    //  Check for duplicate STV numbers within the form
+    // Check for duplicate STV numbers within the form
     if (count($stv_numbers) !== count(array_unique($stv_numbers))) {
         $_SESSION['status'] = 'error';
         $_SESSION['message'] = 'Duplicate STV numbers entered in the form!';
@@ -22,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    //  Check for STV numbers already in the database
+    // Check for STV numbers already in the database
     $placeholders = implode(',', array_fill(0, count($stv_numbers), '?'));
     $types = str_repeat('s', count($stv_numbers));
     $check_sql = "SELECT stv_number FROM dosages WHERE stv_number IN ($placeholders)";
@@ -41,10 +42,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    // Insert antibiotic
-    $sql = "INSERT INTO antibiotics (name) VALUES (?)";
+    // Insert antibiotic with category
+    $sql = "INSERT INTO antibiotics (name, category) VALUES (?, ?)";
     if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("s", $antibiotic_name);
+        $stmt->bind_param("ss", $antibiotic_name, $category);
         if ($stmt->execute()) {
             $antibiotic_id = $stmt->insert_id;
 

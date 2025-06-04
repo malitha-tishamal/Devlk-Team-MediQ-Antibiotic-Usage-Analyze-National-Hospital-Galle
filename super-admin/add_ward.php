@@ -16,9 +16,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $ward_name = trim($_POST['ward_name']);
     $team = trim($_POST['team']);
     $manage = trim($_POST['manage']);
+    $category = trim($_POST['category']);
     $description = trim($_POST['description']);
 
-    if (empty($ward_name) || empty($team) || empty($manage)) {
+    // Validate required fields
+    if (empty($ward_name) || empty($team) || empty($manage) || empty($category)) {
         $_SESSION['status'] = "error";
         $_SESSION['message'] = "All fields are required!";
         echo json_encode(["status" => "error", "message" => $_SESSION['message']]);
@@ -26,6 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     try {
+        // Check for duplicate ward name
         $check_sql = "SELECT id FROM ward WHERE ward_name = ?";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("s", $ward_name);
@@ -41,9 +44,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         $check_stmt->close();
 
-        $sql = "INSERT INTO ward (ward_name, team, managed_by, description) VALUES (?, ?, ?, ?)";
+        // Insert new ward
+        $sql = "INSERT INTO ward (ward_name, team, managed_by, category, description) VALUES (?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssss", $ward_name, $team, $manage, $description);
+        $stmt->bind_param("sssss", $ward_name, $team, $manage, $category, $description);
 
         if ($stmt->execute()) {
             $_SESSION['status'] = "success";

@@ -19,7 +19,7 @@ $user = $result->fetch_assoc();
 $stmt->close();
 
 // Determine which filter method is being used
-$filterType = $_POST['filter_type'] ?? 'date'; // Default to date range
+$filterType = $_POST['filter_type'] ?? 'month';
 
 // Get date range values
 $startDate = $_POST['start_date'] ?? date('Y-m-01'); // Default to first day of current month
