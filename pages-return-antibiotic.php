@@ -103,13 +103,13 @@ while ($row = $bookQuery->fetch_assoc()) {
                 if (popupAlert) {
                     popupAlert.style.display = 'none';
                 }
-            }, 500);
+            }, 1000);
 
             // If success message, redirect to index.php after 10 seconds
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
                     window.location.href = 'pages-release-antibiotic.php'; // Redirect after 10 seconds
-                }, 500); // Delay 10 seconds before redirecting
+                }, 1000); // Delay 10 seconds before redirecting
             <?php endif; ?>
         </script>
         <?php

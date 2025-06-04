@@ -14,120 +14,219 @@ $sql = "SELECT * FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+$result_user = $stmt->get_result();
+$user = $result_user->fetch_assoc();
 $stmt->close();
 
-// Handle date filter
-$filter_date = isset($_POST['filter_date']) ? $_POST['filter_date'] : date('Y-m-d');
-$sql = "SELECT * FROM releases WHERE DATE(release_time) = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $filter_date);
+// Handle filters
+$filter_date = $_POST['filter_date'] ?? '';
+$filter_month = $_POST['filter_month'] ?? '';
+$filter_year = $_POST['filter_year'] ?? '';
+
+if (!empty($filter_date)) {
+    $sql = "SELECT * FROM releases WHERE DATE(release_time) = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $filter_date);
+} elseif (!empty($filter_month) && !empty($filter_year)) {
+    $sql = "SELECT * FROM releases WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $filter_month, $filter_year);
+} else {
+    $sql = "SELECT * FROM releases WHERE DATE(release_time) = CURDATE()";
+    $stmt = $conn->prepare($sql);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-
     <title>Antibiotic Release Details - Mediq</title>
 
     <?php include_once("includes/css-links-inc.php"); ?>
+
+    <!-- jsPDF & SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-
 <body>
-    <?php include_once("includes/header.php"); ?>
-    <?php include_once("includes/user-sidebar.php"); ?>
+<?php include_once("includes/header.php"); ?>
+<?php include_once("includes/user-sidebar.php"); ?>
 
-    <main id="main" class="main">
-        <div class="pagetitle">
-            <h1>Release Details</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                    <li class="breadcrumb-item">Pages</li>
-                    <li class="breadcrumb-item active">Antibiotic Release Details</li>
-                </ol>
-            </nav>
-        </div>
+<main id="main" class="main">
+    <div class="pagetitle">
+        <h1>Release Details</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+                <li class="breadcrumb-item">Pages</li>
+                <li class="breadcrumb-item active">Antibiotic Release Details</li>
+            </ol>
+        </nav>
+    </div>
 
-        <section class="section">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Antibiotic Release Details</h5>
+    <section class="section">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Antibiotic Release Details</h5>
 
-                            <!-- Date Filter Form -->
-                            <form method="POST" class="mb-3">
-                                <div class="d-flex">
-                                    <label for="filter_date">Select Date: &nbsp;&nbsp;&nbsp;</label>
-                                    <input type="date" name="filter_date" id="filter_date" value="<?php echo htmlspecialchars($filter_date); ?>" class="form-control w-25">
-                                    &nbsp;&nbsp;
-                                    <button type="submit" class="btn btn-primary">Filter</button>
+                        <!-- Filter Form -->
+                        <form method="POST" class="mb-3">
+                            <div class="row align-items-end">
+                                <div class="col-md-3">
+                                    <label for="filter_date">Select Specific Date:</label>
+                                    <input type="date" name="filter_date" class="form-control" value="<?= htmlspecialchars($filter_date) ?>">
                                 </div>
-                            </form>
+                                <div class="col-md-2">
+                                    <label>Month:</label>
+                                    <select name="filter_month" class="form-control">
+                                        <option value="">-- Month --</option>
+                                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                                            <option value="<?= $m ?>" <?= ($filter_month == $m ? 'selected' : '') ?>><?= date('F', mktime(0, 0, 0, $m)) ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Year:</label>
+                                    <select name="filter_year" class="form-control">
+                                        <option value="">-- Year --</option>
+                                        <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
+                                            <option value="<?= $y ?>" <?= ($filter_year == $y ? 'selected' : '') ?>><?= $y ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <button type="submit" class="btn btn-primary mt-2">Filter</button>
+                                    <button type="button" class="btn btn-danger mt-2" onclick="exportTableToPDF()">Download PDF</button>
+                                    <button type="button" class="btn btn-success mt-2" onclick="exportTableToExcel()">Download Excel</button>
+                                    <button class="btn btn-secondary mt-2" onclick="printTable()">🖨️ Print </button>
+                                </div>
+                            </div>
+                        </form>
 
-                            <!-- Table with release data -->
-                            <table class="table datatable">
-                                <thead class="align-middle text-center">
+                        <!-- Custom Search -->
+                        <div class="mb-3">
+                          <input type="text" id="customSearch" class="form-control" placeholder="Search in table...">
+                        </div>
+
+                        <!-- Table -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center">
+                                <thead>
                                     <tr>
-                                        <th class="text-center">#</th>
-                                        <th class="text-center">Antibiotic Name</th>
-                                        <th class="text-center">Dosage</th>
-                                        <th class="text-center">Item Count</th>
-                                        <th class="text-center">Ward Name</th>
-                                        <th class="text-center">Stock Type</th>
-                                        <th class="text-center">Route Type</th>
-                                        <th class="text-center">Book Number</th>
-                                        <th class="text-center">Page Number</th>
-                                        <th class="text-center">Release Time</th>
-                                        <th class="text-center">User</th>
+                                        <th>#</th>
+                                        <th>Antibiotic Name</th>
+                                        <th>Dosage</th>
+                                        <th>Item Count</th>
+                                        <th>Ward Name</th>
+                                        <th>Stock Type</th>
+                                        <th>Route Type</th>
+                                        <th>Book Number</th>
+                                        <th>Page Number</th>
+                                        <th>Release Time</th>
+                                        <th>User</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php
-                                    if ($result->num_rows > 0) {
-                                        while ($row = $result->fetch_assoc()) {
-                                            echo "<tr>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['id']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['antibiotic_name']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['dosage']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['item_count']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['ward_name']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['type']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['ant_type']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['book_number']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['page_number']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['release_time']) . "</td>";
-                                            echo "<td class='text-center'>" . htmlspecialchars($row['system_name']) . "</td>";
-                                            echo "</tr>";
-                                        }
-                                    } else {
-                                        echo "<tr><td colspan='8' class='text-center'>No antibiotic releases found for this date.</td></tr>";
-                                    }
-                                    ?>
+                                    <?php if ($result->num_rows > 0): ?>
+                                        <?php while ($row = $result->fetch_assoc()): ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars($row['id']) ?></td>
+                                                <td><?= htmlspecialchars($row['antibiotic_name']) ?></td>
+                                                <td><?= htmlspecialchars($row['dosage']) ?></td>
+                                                <td><?= htmlspecialchars($row['item_count']) ?></td>
+                                                <td><?= htmlspecialchars($row['ward_name']) ?></td>
+                                                <td><?= htmlspecialchars($row['type']) ?></td>
+                                                <td><?= htmlspecialchars($row['ant_type']) ?></td>
+                                                <td><?= htmlspecialchars($row['book_number']) ?></td>
+                                                <td><?= htmlspecialchars($row['page_number']) ?></td>
+                                                <td><?= htmlspecialchars($row['release_time']) ?></td>
+                                                <td><?= htmlspecialchars($row['system_name']) ?></td>
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="11">No antibiotic releases found for this filter.</td></tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
-                            <!-- End Table with release data -->
                         </div>
+                        <!-- End Table -->
                     </div>
                 </div>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
+</main>
 
-    <?php include_once("includes/footer.php"); ?>
-    <?php include_once("includes/js-links-inc.php") ?>
-    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+<?php include_once("includes/footer.php"); ?>
+<?php include_once("includes/js-links-inc.php"); ?>
+
+<script>
+    function printTable() {
+        const printContents = document.querySelector('.table-responsive').innerHTML;
+        const printWindow = window.open('', '', 'height=600,width=1000');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print - Antibiotic Release Details</title>
+              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+              <style>
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+                th { background-color: #f5f5f5; }
+              </style>
+            </head>
+            <body>
+              <h3 class="text-center">Antibiotic Release Details</h3>
+              ${printContents}
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }
+
+    async function exportTableToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Antibiotic Release Details", 14, 15);
+        doc.autoTable({ html: '.table', startY: 20, theme: 'grid' });
+        doc.save("release-details.pdf");
+    }
+
+    function exportTableToExcel() {
+        const table = document.querySelector('.table');
+        const wb = XLSX.utils.table_to_book(table, {sheet: "ReleaseDetails"});
+        XLSX.writeFile(wb, "release-details.xlsx");
+    }
+
+    // Custom search filter
+    document.getElementById('customSearch').addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        const table = document.querySelector('.table tbody');
+        const rows = table.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const rowText = rows[i].textContent.toLowerCase();
+            if (rowText.indexOf(filter) > -1) {
+                rows[i].style.display = '';
+            } else {
+                rows[i].style.display = 'none';
+            }
+        }
+    });
+</script>
+
+<a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 </body>
 </html>
 
-<?php
-// Close database connection
-$conn->close();
-?>
+<?php $conn->close(); ?>

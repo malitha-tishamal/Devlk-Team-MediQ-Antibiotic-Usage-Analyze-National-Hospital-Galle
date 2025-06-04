@@ -51,12 +51,12 @@
                     </a>
                 </li>
                 <li>
-                    <a href="../super-admin/pages-release-summery-chart-ward-wise-category.php">
+                    <a href="../super-admin/pages-release-summery-charts-ward-wise.php">
                         <i class="bi bi-circle"></i> <span>Ward Wise Charts</span>
                     </a>
                 </li>
                 <li>
-                    <a href="../super-admin/pages-release-summery-charts-ward-wise.php">
+                    <a href="../super-admin/pages-release-summery-chart-ward-wise-category.php">
                         <i class="bi bi-circle"></i> <span>Ward Wise Category Charts</span>
                     </a>
                 </li>
