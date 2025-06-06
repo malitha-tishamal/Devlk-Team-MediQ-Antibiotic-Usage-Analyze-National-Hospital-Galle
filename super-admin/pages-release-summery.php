@@ -86,7 +86,13 @@ $categoryPieResult = $categoryPieStmt->get_result();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
 
     <style>
         #piechart, #categoryPieChart { width: 95%; height: 400px; margin: auto; }
@@ -301,6 +307,97 @@ function drawCategoryChart() {
             </div>
         </div>
 
+
+        <div class="mb-3 no-print d-flex gap-2">
+            <button onclick="exportToExcel()" class="btn btn-success">Download Excel</button>
+            <!--button onclick="downloadPDF()" class="btn btn-danger">Download PDF</button-->
+            <button onclick="window.print()" class="btn btn-primary">Print</button>
+        </div>
+
+
+        <script>
+            function exportToExcel() {
+                // Create a new workbook
+                var wb = XLSX.utils.book_new();
+
+                // 1. Table Data Sheet
+                var table = document.getElementById("antibioticTable");
+                var ws1 = XLSX.utils.table_to_sheet(table);
+                XLSX.utils.book_append_sheet(wb, ws1, "Antibiotic Usage");
+
+                // 2. Pie Chart 1 Data (Antibiotic Usage by name)
+                var pieData = [
+                    ["Antibiotic", "Usage in Units"]
+                    <?php
+                    foreach ($pieData as $name => $units) {
+                        echo ", [\"". addslashes($name) ."\", ". round($units, 2) ."]";
+                    }
+                    ?>
+                ];
+                var ws2 = XLSX.utils.aoa_to_sheet(pieData);
+                XLSX.utils.book_append_sheet(wb, ws2, "Usage by Antibiotic");
+
+                // 3. Pie Chart 2 Data (Category Usage)
+                var categoryData = [
+                    ["Category", "Usage in Units"]
+                    <?php
+                    foreach ($categoryUnits as $category => $grams) {
+                        echo ", [\"". addslashes($category) ."\", ". round($grams, 2) ."]";
+                    }
+                    ?>
+                ];
+                var ws3 = XLSX.utils.aoa_to_sheet(categoryData);
+                XLSX.utils.book_append_sheet(wb, ws3, "Usage by Category");
+
+                // Download
+                XLSX.writeFile(wb, "antibiotic_usage_full.xlsx");
+            }
+            </script>
+
+        <script>
+            async function downloadPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', 'a4');
+
+                const chart1 = document.getElementById('piechart');
+                const chart2 = document.getElementById('categoryPieChart');
+
+                // Convert charts to canvas and then to image
+                const canvas1 = await html2canvas(chart1);
+                const canvas2 = await html2canvas(chart2);
+
+                const imgData1 = canvas1.toDataURL('image/png');
+                const imgData2 = canvas2.toDataURL('image/png');
+
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const chartWidth = pageWidth - 40;
+
+                // Add chart 1
+                doc.text("Antibiotic Usage (by Antibiotic)", 20, 20);
+                doc.addImage(imgData1, 'PNG', 20, 30, chartWidth, 200);
+
+                // Add chart 2
+                doc.text("Antibiotic Usage (by Category)", 20, 250);
+                doc.addImage(imgData2, 'PNG', 20, 260, chartWidth, 200);
+
+                // Move below charts
+                const finalY = 470;
+
+                doc.text("Usage Table", 20, finalY);
+
+                doc.autoTable({
+                    html: '#antibioticTable',
+                    startY: finalY + 10,
+                    styles: { fontSize: 8 },
+                    theme: 'grid',
+                });
+
+                doc.save("antibiotic_usage_report.pdf");
+            }
+
+        </script>
+
+
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Antibiotic Usage Data</h5>
@@ -312,7 +409,23 @@ function drawCategoryChart() {
                     <div id="categoryPieChart"></div>
                </div>
 
-                <table class="table table-bordered table-striped datatable">
+               <div class="mb-3">
+                <input type="text" id="customSearchBox" class="form-control w-75" placeholder="Search antibiotic data...">
+            </div>
+
+        <script>
+            document.getElementById('customSearchBox').addEventListener('keyup', function () {
+                const query = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#antibioticTable tbody tr');
+
+                rows.forEach(function (row) {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+            </script>
+
+                    <table id="antibioticTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>#</th>

@@ -135,6 +135,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <option value="">-- Select Category --</option>
                                         <option value="Pediatrics" <?php if ($ward['category'] == 'Pediatrics') echo 'selected'; ?>>Pediatrics</option>
                                         <option value="Medicine" <?php if ($ward['category'] == 'Medicine') echo 'selected'; ?>>Medicine</option>
+                                        <option value="ICU" <?php if ($ward['category'] == 'ICU') echo 'selected'; ?>>ICU</option>
                                         <option value="Medicine Subspecialty" <?php if ($ward['category'] == 'Medicine Subspecialty') echo 'selected'; ?>>Medicine Subspecialty</option>
                                         <option value="Surgery" <?php if ($ward['category'] == 'Surgery') echo 'selected'; ?>>Surgery </option>
                                         <option value="Surgery Subspecialty" <?php if ($ward['category'] == 'Surgery Subspecialty') echo 'selected'; ?>>Surgery Subspecialty</option>

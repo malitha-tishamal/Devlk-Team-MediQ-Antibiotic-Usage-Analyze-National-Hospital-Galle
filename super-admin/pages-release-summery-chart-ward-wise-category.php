@@ -25,7 +25,7 @@ $endDate = date('Y-m-t', strtotime("$endYear-$endMonth-01"));
 
 /** Chart 1: Antibiotic usage by Ward Category **/
 $antibioticData = [];
-$wardCategories = ['Pediatrics', 'Medicine', 'Medicine Subspecialty', 'Surgery', 'Surgery Subspecialty'];
+$wardCategories = ['Pediatrics', 'Medicine', 'Medicine Subspecialty', 'Surgery', 'Surgery Subspecialty', 'ICU'];
 $antibiotics = [];
 
 $stmt = $conn->prepare("SELECT ward_category, antibiotic_name, dosage, SUM(item_count) AS usage_count FROM releases WHERE release_time BETWEEN ? AND ? GROUP BY ward_category, antibiotic_name, dosage");
@@ -106,7 +106,9 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-$chartWidth = max(1000, count($wardCategories) * 60);
+$chart1Width = max(4000, count($wardCategories) * 100);
+$chart2Width = max(1500, count($wardCategories) * 100);
+$chart3Width = max(1500, count($wardCategories) * 100);
 ?>
 
 <!DOCTYPE html>
@@ -195,10 +197,9 @@ $chartWidth = max(1000, count($wardCategories) * 60);
         }
     </script>
     <style>
-        .chart-container {
-            width: <?= $chartWidth ?>px;
-            margin: 30px auto;
-        }
+        #chart1.chart-container { width: <?= $chart1Width ?>px; margin: 10px auto; }
+        #chart2.chart-container { width: <?= $chart2Width ?>px; margin: 10px auto; }
+        #chart3.chart-container { width: <?= $chart3Width ?>px; margin: 10px auto; }
     </style>
 </head>
 <body>
@@ -211,6 +212,19 @@ $chartWidth = max(1000, count($wardCategories) * 60);
 
     <section class="section">
         <form method="POST" class="row g-3 mb-4">
+            
+            <div class="col-md-3">
+                <label for="start_year" class="form-label">Start Year</label>
+                <select name="start_year" id="start_year" class="form-select">
+                    <?php 
+                    $currentYear = date('Y');
+                    for ($y = $currentYear-5; $y <= $currentYear; $y++) {
+                        $selected = ($y == intval($startYear)) ? 'selected' : '';
+                        echo "<option value='$y' $selected>$y</option>";
+                    }
+                    ?>
+                </select>
+            </div>
             <div class="col-md-3">
                 <label for="start_month" class="form-label">Start Month</label>
                 <select name="start_month" id="start_month" class="form-select">
@@ -222,13 +236,13 @@ $chartWidth = max(1000, count($wardCategories) * 60);
                     ?>
                 </select>
             </div>
+            
             <div class="col-md-3">
-                <label for="start_year" class="form-label">Start Year</label>
-                <select name="start_year" id="start_year" class="form-select">
+                <label for="end_year" class="form-label">End Year</label>
+                <select name="end_year" id="end_year" class="form-select">
                     <?php 
-                    $currentYear = date('Y');
                     for ($y = $currentYear-5; $y <= $currentYear; $y++) {
-                        $selected = ($y == intval($startYear)) ? 'selected' : '';
+                        $selected = ($y == intval($endYear)) ? 'selected' : '';
                         echo "<option value='$y' $selected>$y</option>";
                     }
                     ?>
@@ -245,19 +259,9 @@ $chartWidth = max(1000, count($wardCategories) * 60);
                     ?>
                 </select>
             </div>
-            <div class="col-md-3">
-                <label for="end_year" class="form-label">End Year</label>
-                <select name="end_year" id="end_year" class="form-select">
-                    <?php 
-                    for ($y = $currentYear-5; $y <= $currentYear; $y++) {
-                        $selected = ($y == intval($endYear)) ? 'selected' : '';
-                        echo "<option value='$y' $selected>$y</option>";
-                    }
-                    ?>
-                </select>
-            </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">Filter</button>
+                 <button onclick="window.print()" class="btn btn-danger">Print</button>
             </div>
         </form>
 

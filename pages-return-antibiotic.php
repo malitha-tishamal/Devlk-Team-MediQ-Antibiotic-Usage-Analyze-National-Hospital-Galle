@@ -231,7 +231,7 @@ while ($row = $bookQuery->fetch_assoc()) {
                                             <option value="oral">Oral</option>
                                             <option value="intravenous">Intravenous</option>
                                             <option value="topical">Topical</option>
-                                            <option value="topical">Other</option>
+                                            <option value="other">Other</option>
                                         </select>
                                     </div>
 

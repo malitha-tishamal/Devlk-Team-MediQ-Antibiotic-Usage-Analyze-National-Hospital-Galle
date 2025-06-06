@@ -124,6 +124,7 @@ $stmt->close();
                                         <option value="Pediatrics">Pediatrics</option>
                                         <option value="Medicine">Medicine</option>
                                         <option value="Surgery">Surgery </option>
+                                        <option value="ICU">ICU </option>
                                         <option value="Medicine Subspecialty">Medicine Subspecialty</option>
                                         <option value="Surgery Subspecialty">Surgery Subspecialty</option>
                                     </select>

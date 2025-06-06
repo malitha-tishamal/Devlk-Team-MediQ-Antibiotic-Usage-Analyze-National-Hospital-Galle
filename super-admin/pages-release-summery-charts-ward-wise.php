@@ -104,7 +104,9 @@ while ($row = $result->fetch_assoc()) {
 sort($wards2);
 $stmt->close();
 
-$chartWidth = max(1000, max(count($wards1), count($wards2)) * 60);
+$chart1Width = max(5000, count($wards1) * 100);
+$chart2Width = max(1500, count($wards2) * 100);
+
 ?>
 
 <!DOCTYPE html>
@@ -124,28 +126,29 @@ $chartWidth = max(1000, max(count($wards1), count($wards2)) * 60);
     }
 
     function drawChart1() {
-        var data = google.visualization.arrayToDataTable([
-            ['Ward', <?php foreach ($antibiotics as $a) echo "'".addslashes($a)."',"; ?>],
-            <?php foreach ($wards1 as $ward): ?>
-                ['<?= addslashes($ward) ?>',
-                    <?php foreach ($antibiotics as $a): ?>
-                        <?= isset($antibioticData[$a][$ward]) ? round($antibioticData[$a][$ward], 2) : 0 ?>,
-                    <?php endforeach; ?>
-                ],
-            <?php endforeach; ?>
-        ]);
+    var data = google.visualization.arrayToDataTable([
+        ['Ward', <?php foreach ($antibiotics as $a) echo "'".addslashes($a)."',"; ?>],
+        <?php foreach ($wards1 as $ward): ?>
+            ['<?= addslashes($ward) ?>',
+                <?php foreach ($antibiotics as $a): ?>
+                    <?= isset($antibioticData[$a][$ward]) ? round($antibioticData[$a][$ward], 2) : 0 ?>,
+                <?php endforeach; ?>
+            ],
+        <?php endforeach; ?>
+    ]);
 
-        var options = {
-            title: 'Usage by Ward (per Antibiotic) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?>',
-            hAxis: { title: 'Ward' },
-            vAxis: { title: 'Units (g)' },
-            isStacked: false,
-            legend: { position: 'top' },
-            height: 500
-        };
+    var options = {
+        title: 'Usage by Ward (per Antibiotic) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?>',
+        hAxis: { title: 'Ward' },
+        vAxis: { title: 'Units (g)' },
+        isStacked: false,
+        legend: { position: 'top' },
+        height: 500
+    };
 
-        new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
-    }
+    new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
+}
+
 
     function drawChart2() {
         var data = google.visualization.arrayToDataTable([
@@ -173,12 +176,11 @@ $chartWidth = max(1000, max(count($wards1), count($wards2)) * 60);
         new google.visualization.ColumnChart(document.getElementById('chart2')).draw(data, options);
     }
     </script>
-    <style>
-        .chart-container {
-            width: <?= $chartWidth ?>px;
-            margin: 30px auto;
-        }
+   <style>
+        #chart1.chart-container { width: <?= $chart1Width ?>px; margin: 10px auto; }
+        #chart2.chart-container { width: <?= $chart2Width ?>px; margin: 10px auto; }
     </style>
+
 </head>
 <body>
 <?php include_once("../includes/header.php"); ?>
@@ -231,20 +233,23 @@ $chartWidth = max(1000, max(count($wards1), count($wards2)) * 60);
                 </select>
             </div>
 
-            <div class="col-12 d-flex justify-content-center">
+            <div class="col-12 d-flex ">
                 <button type="submit" class="btn btn-primary px-4">Filter</button>
+                &nbsp;&nbsp;&nbsp;
+                 <button onclick="window.print()" class="btn btn-danger">Print</button>
             </div>
         </form>
 
+
         <!-- Charts -->
-        <div class="card mb-4">
-            <div class="card-body">
+        <div style="overflow-x: auto;">
+            
                 <h5 class="card-title text-center">Chart 1: Antibiotic Usage by Ward</h5>
                 <div id="chart1" class="chart-container"></div>
-            </div>
+            
         </div>
 
-        <div class="card">
+        <div style="overflow-x: auto;">
             <div class="card-body">
                 <h5 class="card-title text-center">Chart 2: Usage by Ward (Stacked Categories)</h5>
                 <div id="chart2" class="chart-container"></div>
