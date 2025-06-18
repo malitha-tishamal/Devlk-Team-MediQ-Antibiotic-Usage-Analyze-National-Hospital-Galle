@@ -1,5 +1,7 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Colombo'); // ✅ Set Sri Lanka time zone
+
 require_once '../includes/db-conn.php';
 
 // Redirect if not logged in
@@ -10,7 +12,7 @@ if (!isset($_SESSION['admin_id'])) {
 
 // Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql = "SELECT name, email, nic, mobile,profile_picture FROM admins WHERE id = ?";
+$sql = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -86,6 +88,7 @@ $stmt->close();
 $wardStmt->close();
 $wardUsageStmt->close();
 ?>
+
 
 
 <!DOCTYPE html>

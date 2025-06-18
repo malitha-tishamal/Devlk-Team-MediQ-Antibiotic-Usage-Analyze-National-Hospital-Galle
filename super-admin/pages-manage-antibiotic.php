@@ -67,9 +67,9 @@ $result = $conn->query($sql);
         </div>
         <script>
             document.getElementById('popup-alert').style.display = 'block';
-            setTimeout(() => { document.getElementById('popup-alert').style.display = 'none'; }, 5000);
+            setTimeout(() => { document.getElementById('popup-alert').style.display = 'none'; }, 1000);
             <?php if ($_SESSION['status'] == 'success'): ?>
-                setTimeout(() => { window.location.href = 'pages-manage-antibiotic.php'; }, 5000);
+                setTimeout(() => { window.location.href = 'pages-manage-antibiotic.php'; }, 1000);
             <?php endif; ?>
         </script>
         <?php unset($_SESSION['status'], $_SESSION['message']); ?>

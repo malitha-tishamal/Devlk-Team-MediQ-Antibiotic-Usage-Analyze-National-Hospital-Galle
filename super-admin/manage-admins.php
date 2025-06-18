@@ -65,18 +65,18 @@ $result = $conn->query($sql);
                             <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
-                                        <th class="text-center">#</th>
                                          <th>Profile Picture</th>
                                         <th class="text-center ">Name</th>
                                         <th class="text-center ">System Name</th>
                                         <th class="text-center">Email</th>
                                         <th class="text-center">ID-No</th>
                                         <th class="text-center">Mobile No</th>
+                                        <th class="text-center">Last LogIn</th>
                                         <th class="text-center">Status</th>
                                         <th class="text-center" colspan="3">Actions</th> <!-- Main Title for Actions -->
                                     </tr>
                                     <tr>
-                                        <th colspan="6"></th> <!-- Empty columns for alignment -->
+                                        <th colspan="8"></th> <!-- Empty columns for alignment -->
                                         <th class="text-center">Approve</th>
                                         <th class="text-center">Disable</th>
                                         <th class="text-center">Delete</th>
@@ -87,13 +87,13 @@ $result = $conn->query($sql);
                                     if ($result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
                                             echo "<tr>";
-                                            echo "<td>" . $row['id'] . "</td>";
-                                            echo "<td><img src='../uploads/" . htmlspecialchars($row["profile_picture"]) . "' alt='Profile' width='50'></td>";
+                                            echo "<td><img src='../uploads/" . htmlspecialchars($row["profile_picture"]) . "' alt='Profile' width='80'></td>";
                                             echo "<td>" . $row['name'] . "</td>";
                                             echo "<td>" . $row['system_name'] . "</td>";
                                             echo "<td>" . $row['email'] . "</td>";
                                             echo "<td>" . $row['nic'] . "</td>";
                                             echo "<td>" . $row['mobile'] . "</td>";
+                                            echo "<td>" . $row['last_login'] . "</td>";
 
                                             // Status Column with Color
                                             echo "<td>";
@@ -119,6 +119,10 @@ $result = $conn->query($sql);
                                                   </td>";
                                             echo "<td class='text-center'>
                                                     <button class='btn btn-danger btn-sm w-100 delete-btn' data-id='" . $row['id'] . "'>Delete</button>
+                                                  </td>";
+                                            // Edit Profile Button
+                                            echo "<td class='text-center'>
+                                                    <a href='edit-admin.php?id=" . $row['id'] . "' class='btn btn-primary btn-sm w-100'>Edit</a>
                                                   </td>";
                                             echo "</tr>";
                                         }

@@ -78,6 +78,7 @@ $stmt->close();
                         <option value="Access" <?= ($antibiotic['category'] == 'Access') ? 'selected' : '' ?>>Access</option>
                         <option value="Watch" <?= ($antibiotic['category'] == 'Watch') ? 'selected' : '' ?>>Watch</option>
                         <option value="Reserve" <?= ($antibiotic['category'] == 'Reserve') ? 'selected' : '' ?>>Reserve</option>
+                        <option value="Other" <?= ($antibiotic['category'] == 'Other') ? 'selected' : '' ?>>Other</option>
                     </select>
                 </div>
 

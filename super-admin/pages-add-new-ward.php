@@ -71,7 +71,7 @@ $stmt->close();
 
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
-                    window.location.href = 'pages-add-new-ward.php';
+                    //window.location.href = 'pages-add-new-ward.php';
                 }, 500);
             <?php endif; ?>
         </script>
@@ -123,8 +123,8 @@ $stmt->close();
                                         <option value="" disabled selected>Select a category</option>
                                         <option value="Pediatrics">Pediatrics</option>
                                         <option value="Medicine">Medicine</option>
-                                        <option value="Surgery">Surgery </option>
                                         <option value="ICU">ICU </option>
+                                        <option value="Surgery">Surgery </option>
                                         <option value="Medicine Subspecialty">Medicine Subspecialty</option>
                                         <option value="Surgery Subspecialty">Surgery Subspecialty</option>
                                     </select>

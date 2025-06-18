@@ -12,7 +12,7 @@
             return $protocol . $host . '/Devlk-Team-MediQ-New/';
         } else {
             // Production base URL
-            return $protocol . $host . '/Devlk-Team-MediQ-New/';
+            return $protocol . $host . '/';
         }
     }
 

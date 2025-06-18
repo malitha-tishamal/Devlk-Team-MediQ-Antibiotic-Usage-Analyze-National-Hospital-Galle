@@ -1,6 +1,13 @@
 <?php
 session_start();
+
+// Set PHP timezone to Sri Lanka
+date_default_timezone_set('Asia/Colombo');
+
 require_once 'includes/db-conn.php';
+
+// Set MySQL timezone for the current session to Sri Lanka time zone (+05:30)
+$conn->query("SET time_zone = '+05:30'");
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -19,33 +26,49 @@ $user = $result->fetch_assoc();
 $stmt->close();
 
 // Get filters from POST or set defaults
-$filter_date = isset($_POST['filter_date']) ? $_POST['filter_date'] : '';
-$filter_year = isset($_POST['filter_year']) ? $_POST['filter_year'] : '';
-$filter_month = isset($_POST['filter_month']) ? $_POST['filter_month'] : '';
+$filter_date = $_POST['filter_date'] ?? '';
+// Get filters from POST or set defaults
+$filter_date = $_POST['filter_date'] ?? '';
+$filter_year = $_POST['filter_year'] ?? '';
+$filter_month = $_POST['filter_month'] ?? '';
+
 
 // Build dynamic SQL with filters
+$filter_date = $_POST['filter_date'] ?? '';
+$start_year = $_POST['start_year'] ?? '';
+$start_month = $_POST['start_month'] ?? '';
+$end_year = $_POST['end_year'] ?? '';
+$end_month = $_POST['end_month'] ?? '';
+
 $sql = "SELECT * FROM returns WHERE 1=1 ";
 $params = [];
 $types = "";
 
+// If specific date selected
 if (!empty($filter_date)) {
     $sql .= " AND DATE(return_time) = ? ";
     $params[] = $filter_date;
     $types .= "s";
-} else {
-    if (!empty($filter_year)) {
-        $sql .= " AND YEAR(return_time) = ? ";
-        $params[] = $filter_year;
-        $types .= "i";
-    }
-    if (!empty($filter_month)) {
-        $sql .= " AND MONTH(return_time) = ? ";
-        $params[] = $filter_month;
-        $types .= "i";
-    }
+}
+// If month range selected
+elseif (!empty($start_month) && !empty($start_year) && !empty($end_month) && !empty($end_year)) {
+    $start_date = sprintf('%04d-%02d-01', $start_year, $start_month);
+    $end_date = date("Y-m-t", strtotime(sprintf('%04d-%02d-01', $end_year, $end_month))); // Last day of end month
+
+    $sql .= " AND return_time BETWEEN ? AND ? ";
+    $params[] = $start_date;
+    $params[] = $end_date;
+    $types .= "ss";
+}
+// Default to current date
+else {
+    $today = date('Y-m-d');
+    $sql .= " AND DATE(return_time) = ? ";
+    $params[] = $today;
+    $types .= "s";
 }
 
-$sql .= " ORDER BY return_time DESC ";
+$sql .= " ORDER BY return_time DESC";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
@@ -53,7 +76,11 @@ if (!empty($params)) {
 }
 $stmt->execute();
 $result = $stmt->get_result();
+
+
+
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -94,52 +121,65 @@ $result = $stmt->get_result();
             <div class="card-body">
               <h5 class="card-title">Antibiotic Return Details</h5>
 
-              <!-- Filters Form -->
-              <form method="POST" class="mb-3 row align-items-end">
-                <!-- Year filter -->
-                <div class="col-auto">
-                  <label for="filter_year" class="form-label">Year:</label>
-                  <select name="filter_year" id="filter_year" class="form-select">
-                    <option value="">-- All Years --</option>
-                    <?php
-                    $currentYear = date('Y');
-                    for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
-                        $selected = ($filter_year == $y) ? "selected" : "";
-                        echo "<option value='$y' $selected>$y</option>";
-                    }
-                    ?>
-                  </select>
-                </div>
+              <!-- Filter Form -->
+                <form method="POST" class="mb-3">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                    <label for="filter_date">Select Specific Date:</label>
+                    <input type="date" name="filter_date" class="form-control" value="<?= htmlspecialchars($filter_date) ?>">
+                    </div>
 
-                <!-- Month filter -->
-                <div class="col-auto">
-                  <label for="filter_month" class="form-label">Month:</label>
-                  <select name="filter_month" id="filter_month" class="form-select">
-                    <option value="">-- All Months --</option>
-                    <?php
-                    for ($m = 1; $m <= 12; $m++) {
-                        $monthName = date('F', mktime(0, 0, 0, $m, 10));
-                        $selected = ($filter_month == $m) ? "selected" : "";
-                        echo "<option value='$m' $selected>$monthName</option>";
-                    }
-                    ?>
-                  </select>
-                </div>
+                    <div class="col-md-2">
+                    <label>Start Year:</label>
+                    <select name="start_year" class="form-control">
+                        <option value="">-- Year --</option>
+                        <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
+                        <option value="<?= $y ?>" <?= (isset($_POST['start_year']) && $_POST['start_year'] == $y ? 'selected' : '') ?>><?= $y ?></option>
+                        <?php endfor; ?>
+                    </select>
+                    </div>
 
-                <!-- Date filter -->
-                <div class="col-auto">
-                  <label for="filter_date" class="form-label">Exact Date:</label>
-                  <input type="date" name="filter_date" id="filter_date" value="<?php echo htmlspecialchars($filter_date); ?>" class="form-control">
-                </div>
+                    <!-- Start Month-Year -->
+                    <div class="col-md-2">
+                    <label>Start Month:</label>
+                    <select name="start_month" class="form-control">
+                        <option value="">-- Month --</option>
+                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                        <option value="<?= $m ?>" <?= (isset($_POST['start_month']) && $_POST['start_month'] == $m ? 'selected' : '') ?>><?= date('F', mktime(0, 0, 0, $m)) ?></option>
+                        <?php endfor; ?>
+                    </select>
+                    </div>
 
-                <!-- Buttons -->
-                <div class="col-md-5 d-flex flex-wrap gap-2">
-                  <button type="submit" class="btn btn-primary mt-2">Filter</button>
-                  <button type="button" class="btn btn-danger mt-2" onclick="exportTableToPDF()">Download PDF</button>
-                  <button type="button" class="btn btn-success mt-2" onclick="exportTableToExcel()">Download Excel</button>
-                  <button type="button" class="btn btn-secondary mt-2" onclick="printTable()">🖨️ Print</button>
+                    <div class="col-md-2">
+                    <label>End Year:</label>
+                    <select name="end_year" class="form-control">
+                        <option value="">-- Year --</option>
+                        <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
+                        <option value="<?= $y ?>" <?= (isset($_POST['end_year']) && $_POST['end_year'] == $y ? 'selected' : '') ?>><?= $y ?></option>
+                        <?php endfor; ?>
+                    </select>
+                    </div>
+                    
+
+                    <!-- End Month-Year -->
+                    <div class="col-md-2">
+                    <label>End Month:</label>
+                    <select name="end_month" class="form-control">
+                        <option value="">-- Month --</option>
+                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                        <option value="<?= $m ?>" <?= (isset($_POST['end_month']) && $_POST['end_month'] == $m ? 'selected' : '') ?>><?= date('F', mktime(0, 0, 0, $m)) ?></option>
+                        <?php endfor; ?>
+                    </select>
+                    </div>
+
+                    <div class="col-md-12 mt-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <button type="button" class="btn btn-danger" onclick="exportTableToPDF()">Download PDF</button>
+                    <button type="button" class="btn btn-success" onclick="exportTableToExcel()">Download Excel</button>
+                    <button class="btn btn-secondary" onclick="printTable()">🖨️ Print </button>
+                    </div>
                 </div>
-              </form>
+                </form>
 
               <!-- Custom Search Bar -->
               <div class="mb-3">

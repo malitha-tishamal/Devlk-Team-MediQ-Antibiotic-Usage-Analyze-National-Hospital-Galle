@@ -1,6 +1,13 @@
 <?php
 session_start();
+
+// Set PHP timezone to Sri Lanka
+date_default_timezone_set('Asia/Colombo');
+
 require_once 'includes/db-conn.php';
+
+// Set MySQL connection timezone to Sri Lanka time zone (+05:30)
+$conn->query("SET time_zone = '+05:30'");
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
@@ -20,24 +27,33 @@ $stmt->close();
 
 // Handle filters
 $filter_date = $_POST['filter_date'] ?? '';
-$filter_month = $_POST['filter_month'] ?? '';
-$filter_year = $_POST['filter_year'] ?? '';
+$start_month = $_POST['start_month'] ?? '';
+$start_year = $_POST['start_year'] ?? '';
+$end_month = $_POST['end_month'] ?? '';
+$end_year = $_POST['end_year'] ?? '';
+
 
 if (!empty($filter_date)) {
     $sql = "SELECT * FROM releases WHERE DATE(release_time) = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $filter_date);
-} elseif (!empty($filter_month) && !empty($filter_year)) {
-    $sql = "SELECT * FROM releases WHERE MONTH(release_time) = ? AND YEAR(release_time) = ?";
+} elseif (!empty($start_month) && !empty($start_year) && !empty($end_month) && !empty($end_year)) {
+    // Format start and end dates
+    $start_date = sprintf('%04d-%02d-01', $start_year, $start_month);
+    $end_date = date("Y-m-t", strtotime(sprintf('%04d-%02d-01', $end_year, $end_month))); // last day of end month
+
+    $sql = "SELECT * FROM releases WHERE release_time BETWEEN ? AND ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $filter_month, $filter_year);
+    $stmt->bind_param("ss", $start_date, $end_date);
 } else {
     $sql = "SELECT * FROM releases WHERE DATE(release_time) = CURDATE()";
     $stmt = $conn->prepare($sql);
 }
+
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -77,38 +93,65 @@ $result = $stmt->get_result();
                         <h5 class="card-title">Antibiotic Release Details</h5>
 
                         <!-- Filter Form -->
-                        <form method="POST" class="mb-3">
+                            <form method="POST" class="mb-3">
                             <div class="row align-items-end">
                                 <div class="col-md-3">
-                                    <label for="filter_date">Select Specific Date:</label>
-                                    <input type="date" name="filter_date" class="form-control" value="<?= htmlspecialchars($filter_date) ?>">
+                                <label for="filter_date">Select Specific Date:</label>
+                                <input type="date" name="filter_date" class="form-control" value="<?= htmlspecialchars($filter_date) ?>">
                                 </div>
+
                                 <div class="col-md-2">
-                                    <label>Month:</label>
-                                    <select name="filter_month" class="form-control">
-                                        <option value="">-- Month --</option>
-                                        <?php for ($m = 1; $m <= 12; $m++): ?>
-                                            <option value="<?= $m ?>" <?= ($filter_month == $m ? 'selected' : '') ?>><?= date('F', mktime(0, 0, 0, $m)) ?></option>
-                                        <?php endfor; ?>
-                                    </select>
+                                <label>Start Year:</label>
+                                <select name="start_year" class="form-control">
+                                    <option value="">-- Year --</option>
+                                    <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
+                                    <option value="<?= $y ?>" <?= (isset($_POST['start_year']) && $_POST['start_year'] == $y ? 'selected' : '') ?>><?= $y ?></option>
+                                    <?php endfor; ?>
+                                </select>
                                 </div>
+
+                                <!-- Start Month-Year -->
                                 <div class="col-md-2">
-                                    <label>Year:</label>
-                                    <select name="filter_year" class="form-control">
-                                        <option value="">-- Year --</option>
-                                        <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
-                                            <option value="<?= $y ?>" <?= ($filter_year == $y ? 'selected' : '') ?>><?= $y ?></option>
-                                        <?php endfor; ?>
-                                    </select>
+                                <label>Start Month:</label>
+                                <select name="start_month" class="form-control">
+                                    <option value="">-- Month --</option>
+                                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                                    <option value="<?= $m ?>" <?= (isset($_POST['start_month']) && $_POST['start_month'] == $m ? 'selected' : '') ?>><?= date('F', mktime(0, 0, 0, $m)) ?></option>
+                                    <?php endfor; ?>
+                                </select>
                                 </div>
-                                <div class="col-md-5">
-                                    <button type="submit" class="btn btn-primary mt-2">Filter</button>
-                                    <button type="button" class="btn btn-danger mt-2" onclick="exportTableToPDF()">Download PDF</button>
-                                    <button type="button" class="btn btn-success mt-2" onclick="exportTableToExcel()">Download Excel</button>
-                                    <button class="btn btn-secondary mt-2" onclick="printTable()">🖨️ Print </button>
+
+                                <div class="col-md-2">
+                                <label>End Year:</label>
+                                <select name="end_year" class="form-control">
+                                    <option value="">-- Year --</option>
+                                    <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
+                                    <option value="<?= $y ?>" <?= (isset($_POST['end_year']) && $_POST['end_year'] == $y ? 'selected' : '') ?>><?= $y ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                                </div>
+                                
+
+                                <!-- End Month-Year -->
+                                <div class="col-md-2">
+                                <label>End Month:</label>
+                                <select name="end_month" class="form-control">
+                                    <option value="">-- Month --</option>
+                                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                                    <option value="<?= $m ?>" <?= (isset($_POST['end_month']) && $_POST['end_month'] == $m ? 'selected' : '') ?>><?= date('F', mktime(0, 0, 0, $m)) ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                                </div>
+
+                                <div class="col-md-12 mt-2">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                                <button type="button" class="btn btn-danger" onclick="exportTableToPDF()">Download PDF</button>
+                                <button type="button" class="btn btn-success" onclick="exportTableToExcel()">Download Excel</button>
+                                <button class="btn btn-secondary" onclick="printTable()">🖨️ Print </button>
                                 </div>
                             </div>
-                        </form>
+                            </form>
+
 
                         <!-- Custom Search -->
                         <div class="mb-3">

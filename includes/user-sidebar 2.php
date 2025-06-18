@@ -33,6 +33,12 @@
             </ul>
         </li>
 
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="book-transactions.php">
+                <i class="bi bi-people"></i> <span>Books Numbers</span>
+            </a>
+        </li>
+
         <!-- Wards Details Item -->
         <li class="nav-item">
             <a class="nav-link collapsed" href="pages-wards-details.php">

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 27, 2025 at 04:19 PM
+-- Generation Time: Mar 17, 2025 at 10:57 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,7 +44,7 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`, `profile_picture`) VALUES
-(1, '200202202615', 'Malitha Tishamal', 'malithatishamal@gmail.com', '785530992', '$2y$10$e3yU/.35yCf9ZbkWhUHm8u9IkKvyaO3ZuO/0K2ALLHa/JRWR.5asm', 'approved', '2025-02-10 12:21:20', '67d9756470279-411001152_1557287805017611_3900716309730349802_n.jpg'),
+(1, '200202202615', 'Malitha', 'malithatishamal@gmail.com', '785530992', '$2y$10$e3yU/.35yCf9ZbkWhUHm8u9IkKvyaO3ZuO/0K2ALLHa/JRWR.5asm', 'approved', '2025-02-10 12:21:20', '67d3cb0c84369-453627665_1689679218445135_3860109769014762294_n.jpg'),
 (8, '200202226777', 'admin user', 'admin@gmail.com', '710000000', '$2y$10$FWwvXaoYAFTWI0hrO0RpAOV6eN3qN0PX2nGQy9h/qCsDwNiDutcgm', 'approved', '2025-02-15 22:38:05', 'default.jpg');
 
 -- --------------------------------------------------------
@@ -242,10 +242,14 @@ CREATE TABLE `releases` (
 --
 
 INSERT INTO `releases` (`id`, `antibiotic_name`, `dosage`, `item_count`, `ward_name`, `release_time`, `type`, `ant_type`) VALUES
-(9, 'Piperacillin/tazobactam', '4.5g (4500mg) IV', 100, '1 & 2 - Pediatrics - Combined', '2025-03-18 20:04:31', 'msd', 'oral'),
-(10, 'Amoxicillin/clavulanic-acid (Co-amoxiclav)', '0.51g (510mg) IV', 100, '1 & 2 - Pediatrics - Combined', '2025-03-18 20:06:23', 'msd', 'oral'),
-(11, 'Amikacin', '500 mg IV', 100, '5 - Surgical Prof - Male', '2025-03-18 21:38:43', 'msd', 'oral'),
-(12, 'Amikacin', '500 mg IV', 100, '3 - Surgical Prof - Female', '2025-03-18 21:39:03', 'lp', 'oral');
+(1, 'Amikacin', '500 mg IV', 100, '3 - Surgical Prof - Female', '2025-03-08 13:05:21', 'msd', 'oral'),
+(2, 'Co-Trimoxazole', '600 mg Oral', 100, '1 & 2 - Pediatrics - Combined', '2025-03-08 13:42:14', 'msd', 'oral'),
+(3, 'Vancomycin', '1 g IV', 12, '5 - Surgical Prof - Male', '2025-03-08 13:42:49', 'msd', 'oral'),
+(4, 'MDT-PB Pediatric', 'No dosage available', 10, '1 & 2 - Pediatrics - Combined', '2025-03-11 13:34:34', 'lp', 'intravenous'),
+(5, 'Vancomycin', '1 g IV', 100, '1 & 2 - Pediatrics - Combined', '2025-03-14 11:21:40', 'msd', 'oral'),
+(6, 'Vancomycin', '1 g IV', 10, '1 & 2 - Pediatrics - Combined', '2025-03-16 06:16:49', 'msd', 'intravenous'),
+(7, 'Ceftriaxone', '1 g IV', 10, '12 - Medicine Prof - Male', '2025-03-16 13:01:21', 'lp', 'intravenous'),
+(8, 'Erythromycin', '250 mg  oral', 70, '37 - Neuro-Surgery - Male', '2025-03-15 00:00:00', 'msd', 'topical');
 
 -- --------------------------------------------------------
 
@@ -270,7 +274,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nic`, `name`, `email`, `mobile`, `password`, `status`, `created_at`, `profile_picture`) VALUES
-(43, '200202222620', 'malitha', 'malithatishamal2002@gmail.com', '713223952', '$2y$10$kfHNLivdLEwJ13NoA2PmaODOHZdeTzXm3lIL8DC./TCVJDUPjnuDK', 'approved', '2025-02-10 18:08:22', '67d975c3ba8e9-file.jpg'),
+(43, '200202202615', 'malitha', 'malithatishamal2002@gmail.com', '713223952', '$2y$10$kfHNLivdLEwJ13NoA2PmaODOHZdeTzXm3lIL8DC./TCVJDUPjnuDK', 'approved', '2025-02-10 18:08:22', '67d6c54e28cc6-msi-red-dragon-and-black-background-wallpaper-1280x1024_32.jpg'),
 (45, '200202226299', 'user test', 'user@gmail.com', '712222222', '$2y$10$VsfVH9VG3RWyLRBulY6Tr.MKVEMzlUI16kzHTB22LySBaaLuoqJDW', 'approved', '2025-02-15 22:37:20', 'default.jpg'),
 (46, '200202222625', 'test', 'demo3@gmail.com', '771000000', '$2y$10$IIjq.h0RCLc2ytCT.MhdpuRFxjhmDFKBeJUzh62/dgZMVbtzi6WgO', 'pending', '2025-03-06 15:26:52', 'default.jpg');
 
@@ -351,17 +355,7 @@ INSERT INTO `ward` (`id`, `ward_name`, `team`, `managed_by`, `description`, `cre
 (70, '70 - Nephrology', 'Team 39', '', '', '2025-03-08 12:03:36'),
 (71, '71 - Nephrology - Male', 'Team 39', '', '', '2025-03-08 12:03:36'),
 (72, '72 - Vascular Surgery - Combined', 'Team 40', '', '', '2025-03-08 12:03:36'),
-(73, '73 - Nephrology - Female', 'Team 39', '', '', '2025-03-08 12:03:36'),
-(74, '9 (Surgery) - Combined', 'Team 8', 'Dr. Seewali thilakarathna', '', '2025-03-17 15:35:55'),
-(75, '38 (Neuro-Surgery)', 'Team 5', 'Dr. Yohan Koralage, Dr.Nishantha Gunasekara', '', '2025-03-17 15:41:38'),
-(76, 'Children ICU (Neonatal ICU)', 'No Data', 'No Data', '', '2025-03-17 16:24:00'),
-(77, 'Children ICU (Pediatric ICU)', 'No Data', 'No Data', '', '2025-03-17 16:24:22'),
-(78, 'Adult ICU (ETC ICU)', 'No Data', 'No Data', '', '2025-03-17 16:25:15'),
-(79, 'Adult ICU (Main ICU)', 'No Data', 'No Data', '', '2025-03-17 16:25:34'),
-(80, 'Adult ICU (CTC ICU)', 'No Data', 'No Data', '', '2025-03-17 16:26:12'),
-(81, 'Adult ICU (Onco ICU)', 'No Data', 'No Data', '', '2025-03-17 16:26:26'),
-(82, 'Adult ICU (NSU ICU)', 'No Data', 'No Data', '', '2025-03-17 16:26:47'),
-(83, '36 (Pediatrics) - Combined', 'Team 22', 'Dr. Upeksha Liyanage, Dr. Jagath', '', '2025-03-17 16:53:28');
+(73, '73 - Nephrology - Female', 'Team 39', '', '', '2025-03-08 12:03:36');
 
 --
 -- Indexes for dumped tables
@@ -448,7 +442,7 @@ ALTER TABLE `password_reset`
 -- AUTO_INCREMENT for table `releases`
 --
 ALTER TABLE `releases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -460,7 +454,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `ward`
 --
 ALTER TABLE `ward`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- Constraints for dumped tables

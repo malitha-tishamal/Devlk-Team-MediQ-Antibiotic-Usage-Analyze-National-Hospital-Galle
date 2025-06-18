@@ -1,5 +1,7 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Colombo'); // ✅ Set Sri Lanka time zone
+
 require_once '../includes/db-conn.php';
 
 if (!isset($_SESSION['admin_id'])) {
@@ -104,10 +106,13 @@ while ($row = $result->fetch_assoc()) {
 sort($wards2);
 $stmt->close();
 
-$chart1Width = max(5000, count($wards1) * 100);
+$chart1Width = max(12000, count($wards1) * 100);
 $chart2Width = max(1500, count($wards2) * 100);
 
+// Optional: log current SL time
+// echo "Current Sri Lanka Time: " . date('Y-m-d H:i:s');
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

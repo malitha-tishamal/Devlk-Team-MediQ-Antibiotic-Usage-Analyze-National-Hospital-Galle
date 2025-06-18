@@ -1,5 +1,7 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Colombo'); // ✅ Set Sri Lanka Timezone
+
 require_once 'includes/db-conn.php';
 
 // Redirect if not logged in
@@ -25,6 +27,7 @@ while ($row = $bookQuery->fetch_assoc()) {
     $bookOptions[] = $row;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -97,7 +100,7 @@ while ($row = $bookQuery->fetch_assoc()) {
             // Display the popup message
             document.getElementById('popup-alert').style.display = 'block';
 
-            // Automatically hide the popup after 10 seconds
+            // Automatically hide the popup after 1 seconds
             setTimeout(function() {
                 const popupAlert = document.getElementById('popup-alert');
                 if (popupAlert) {
@@ -105,10 +108,10 @@ while ($row = $bookQuery->fetch_assoc()) {
                 }
             }, 1000);
 
-            // If success message, redirect to index.php after 10 seconds
+            // If success message, redirect to index.php after 1 seconds
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
-                    window.location.href = 'pages-release-antibiotic.php'; // Redirect after 10 seconds
+                    //window.location.href = 'pages-release-antibiotic.php'; // Redirect after 10 seconds
                 }, 1000); // Delay 10 seconds before redirecting
             <?php endif; ?>
         </script>
@@ -177,7 +180,7 @@ while ($row = $bookQuery->fetch_assoc()) {
                                         <input type="hidden" name="current_datetime" id="currentDateTime">
 
                                         <!-- Manual input (hidden by default) -->
-                                        <input type="datetime-local" name="manual_datetime" id="manualDateTime" class="form-control w-25 mt-2" style="display: none;">
+                                        <input type="datetime-local" name="manual_datetime" id="manualDateTime" class="form-control w-100 mt-2" style="display: none;">
                                     </div>
                                     <script>
                                         // Set current datetime in hidden input

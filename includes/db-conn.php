@@ -1,8 +1,8 @@
 <?php
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "mediq_db2";
+    $servername = "sql113.infinityfree.com";
+    $username = "if0_38329700";
+    $password = "3FOTawAx0nH";
+    $dbname = "if0_38329700_mediq";
     
     // Create connection
     $conn = new mysqli($servername, $username, $password, $dbname);

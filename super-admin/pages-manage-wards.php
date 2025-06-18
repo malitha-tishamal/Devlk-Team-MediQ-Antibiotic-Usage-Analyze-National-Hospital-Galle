@@ -95,7 +95,7 @@ if ($result->num_rows > 0) {
                             <table class="table datatable">
                                 <thead class="align-middle text-center">
                                     <tr>
-                                        <th>ID</th>
+                                        <!--th>ID</th-->
                                         <th>Ward Name</th>
                                         <th>Team</th>
                                         <th>Managed By</th>
@@ -108,7 +108,7 @@ if ($result->num_rows > 0) {
                                 <tbody>
                                     <?php foreach ($wards as $ward): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($ward['id']); ?></td>
+                                            <!--td><?php echo htmlspecialchars($ward['id']); ?></td-->
                                             <td><?php echo htmlspecialchars($ward['ward_name']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['team']); ?></td>
                                             <td><?php echo htmlspecialchars($ward['managed_by']); ?></td>
@@ -117,7 +117,7 @@ if ($result->num_rows > 0) {
                                             <td><?php echo htmlspecialchars($ward['created_at']); ?></td>
                                             <td>
                                                 <a href="edit-ward.php?id=<?php echo $ward['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                                                <a href="delete-ward.php?id=<?php echo $ward['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this ward?');">Delete</a>
+                                                <a href="delete_ward.php?id=<?php echo $ward['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this ward?');">Delete</a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

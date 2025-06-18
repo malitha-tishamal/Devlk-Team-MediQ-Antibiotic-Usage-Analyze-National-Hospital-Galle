@@ -73,7 +73,7 @@ $stmt->close();
             // If success message, redirect to index.php after 10 seconds
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
-                    window.location.href = 'add-admin.php'; // Redirect after 10 seconds
+                    //window.location.href = 'add-admin.php'; // Redirect after 10 seconds
                 }, 10000); // Delay 10 seconds before redirecting
             <?php endif; ?>
         </script>

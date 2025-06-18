@@ -1,5 +1,7 @@
 <?php 
 session_start();
+date_default_timezone_set('Asia/Colombo'); // Set timezone to Sri Lanka
+
 require_once '../includes/db-conn.php';
 
 if (!isset($_SESSION['admin_id'])) {
@@ -54,8 +56,14 @@ $stmt->close();
 sort($antibiotics);
 
 /** Chart 2: Category usage (Access, Watch, Reserve) by Ward Category **/
-$categoryColors = ['Access' => '#28a745', 'Watch' => '#0000ff', 'Reserve' => '#dc3545'];
-$categories = ['Access', 'Watch', 'Reserve'];
+$categoryColors = [
+    'Access' => '#28a745',
+    'Watch' => '#0000ff',
+    'Reserve' => '#dc3545',
+    'Other' => '#6c757d' // gray for "Other"
+];
+
+$categories = ['Access', 'Watch', 'Reserve', 'Other'];
 $dataMap = [];
 
 $stmt = $conn->prepare("SELECT ward_category, category, dosage, SUM(item_count) AS usage_count FROM releases WHERE release_time BETWEEN ? AND ? GROUP BY ward_category, category, dosage");
@@ -106,10 +114,17 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-$chart1Width = max(4000, count($wardCategories) * 100);
+// Optional: output Sri Lanka time (for logging or user display)
+$currentSriLankaTime = date('Y-m-d H:i:s');
+
+// Optional Debugging Output
+// echo "Current Sri Lanka Time: $currentSriLankaTime";
+
+$chart1Width = max(6000, count($wardCategories) * 100);
 $chart2Width = max(1500, count($wardCategories) * 100);
 $chart3Width = max(1500, count($wardCategories) * 100);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -154,12 +169,13 @@ $chart3Width = max(1500, count($wardCategories) * 100);
 
         function drawChart2() {
             var data = google.visualization.arrayToDataTable([
-                ['Ward Category', 'Access', 'Watch', 'Reserve'],
+                ['Ward Category', 'Access', 'Watch', 'Reserve', 'Other'],
                 <?php foreach ($wardCategories as $wc): ?>
                 ['<?= $wc ?>',
                     <?= isset($dataMap[$wc]['Access']) ? round($dataMap[$wc]['Access'], 2) : 0 ?>,
                     <?= isset($dataMap[$wc]['Watch']) ? round($dataMap[$wc]['Watch'], 2) : 0 ?>,
                     <?= isset($dataMap[$wc]['Reserve']) ? round($dataMap[$wc]['Reserve'], 2) : 0 ?>,
+                    <?= isset($dataMap[$wc]['Other']) ? round($dataMap[$wc]['Other'], 2) : 0 ?>,
                 ],
                 <?php endforeach; ?>
             ]);
@@ -171,7 +187,7 @@ $chart3Width = max(1500, count($wardCategories) * 100);
                 legend: { position: 'top' },
                 hAxis: { title: 'Ward Category' },
                 vAxis: { title: 'Units (g)' },
-                colors: ['#28a745', '#0000ff', '#dc3545'] // Access, Watch, Reserve colors
+               colors: ['#28a745', '#0000ff', '#dc3545', '#6c757d']
             };
 
             new google.visualization.ColumnChart(document.getElementById('chart2')).draw(data, options);

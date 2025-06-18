@@ -82,7 +82,7 @@ $stmt->close();
             // If success message, redirect to index.php after 10 seconds
             <?php if ($_SESSION['status'] == 'success'): ?>
                 setTimeout(function() {
-                    window.location.href = 'pages-add-antibiotic.php'; // Redirect after 10 seconds
+                    //window.location.href = 'pages-add-antibiotic.php'; // Redirect after 10 seconds
                 }, 500); // Delay 10 seconds before redirecting
             <?php endif; ?>
         </script>
@@ -160,6 +160,7 @@ $stmt->close();
                                             <option value="Access">Access</option>
                                             <option value="Watch">Watch</option>
                                             <option value="Reserve">Reserve</option>
+                                            <option value="Other">Other</option>
                                         </select>
                                     </div>
 

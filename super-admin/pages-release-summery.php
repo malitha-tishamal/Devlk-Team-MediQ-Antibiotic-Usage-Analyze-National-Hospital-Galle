@@ -1,5 +1,7 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Colombo'); // ✅ Set timezone to Sri Lanka
+
 require_once '../includes/db-conn.php';
 
 // Redirect if not logged in
@@ -26,6 +28,7 @@ $endMonth = $_POST['end_month_select'] ?? 12;
 $startDate = $_POST['start_date'] ?? date('Y-m-01');
 $endDate = $_POST['end_date'] ?? date('Y-m-t');
 
+// Handle monthly range filtering
 if ($filterType === 'month') {
     $startDate = "$selectedYear-$startMonth-01";
     $endDate = date('Y-m-t', strtotime("$selectedYear-$endMonth-01"));
@@ -75,6 +78,7 @@ $categoryPieStmt->bind_param("ssiii", $startDate, $endDate, $selectedYear, $star
 $categoryPieStmt->execute();
 $categoryPieResult = $categoryPieStmt->get_result();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -192,33 +196,39 @@ function drawCategoryChart() {
 
         $categoryUnits = [];
 
-        while ($row = $catResult->fetch_assoc()) {
-            $category = ucfirst(strtolower($row['category']));
-            $dosage = strtolower($row['dosage']);
-            $count = $row['usage_count'];
-            $grams = 0;
+    while ($row = $catResult->fetch_assoc()) {
+        $category = ucfirst(strtolower($row['category']));
+        $dosage = strtolower($row['dosage']);
+        $count = $row['usage_count'];
+        $grams = 0;
 
-            if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $m)) {
-                $grams = ($m[1] / 1000) * $count;
-            } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $m)) {
-                $grams = $m[1] * $count;
-            }
-
-            if (!isset($categoryUnits[$category])) {
-                $categoryUnits[$category] = 0;
-            }
-            $categoryUnits[$category] += $grams;
+        if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $m)) {
+            $grams = ($m[1] / 1000) * $count;
+        } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $m)) {
+            $grams = $m[1] * $count;
         }
 
-        foreach ($categoryUnits as $category => $grams) {
-            echo "['" . addslashes($category) . "', " . round($grams, 2) . "],";
-            $colorsMap[$category] = match ($category) {
-                'Access' => '#28a745',
-                'Watch' => '#0000ff',
-                'Reserve' => '#dc3545',
-                default => '#999999',
-            };
+        if (!isset($categoryUnits[$category])) {
+            $categoryUnits[$category] = 0;
         }
+
+        $categoryUnits[$category] += $grams;
+    }
+
+    // Color mapping based on actual category names
+    $colorsMap = [];
+
+    foreach ($categoryUnits as $category => $grams) {
+        echo "['" . addslashes($category) . "', " . round($grams, 2) . "],";
+        $colorsMap[$category] = match (strtolower($category)) {
+            'access' => '#28a745',
+            'watch' => '#0000ff',
+            'reserve' => '#dc3545',
+            'other' => '#999999', // gray color for legitimate "Other" category
+            default => '#cccccc',
+        };
+    }
+
         ?>
     ]);
 
