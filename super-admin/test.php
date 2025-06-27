@@ -1,345 +1,302 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Colombo');
 require_once '../includes/db-conn.php';
 
-// Redirect if not logged in
 if (!isset($_SESSION['admin_id'])) {
     header("Location: ../index.php");
     exit();
 }
 
-// Fetch user details
 $user_id = $_SESSION['admin_id'];
-$sql2 = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
-$stmt = $conn->prepare($sql2);
+$stmt = $conn->prepare("SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+$user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-$year = isset($_GET['year']) ? $_GET['year'] : date('Y');
-$startMonth = isset($_GET['start_month']) ? $_GET['start_month'] : "01";
-$endMonth = isset($_GET['end_month']) ? $_GET['end_month'] : date('m');
-
-$startDate = "$year-$startMonth-01"; // Default: first day of start month
-$endDate = "$year-$endMonth-31";  // Default: last possible day of end month
-
-// If custom dates are provided, override month range
-if (!empty($_GET['start_date']) && !empty($_GET['end_date'])) {
-    $startDate = $_GET['start_date'];
-    $endDate = $_GET['end_date'];
+// Fetch available wards
+$wardList = [];
+$wardRes = $conn->query("SELECT DISTINCT ward_name FROM releases ORDER BY ward_name ASC");
+while ($w = $wardRes->fetch_assoc()) {
+    $wardList[] = $w['ward_name'];
 }
 
+// Default to the first ward if none selected
+$startMonth = $_POST['start_month'] ?? date('m');
+$startYear = $_POST['start_year'] ?? date('Y');
+$endMonth = $_POST['end_month'] ?? date('m');
+$endYear = $_POST['end_year'] ?? date('Y');
+$selectedWard = $_POST['ward_name'] ?? ($wardList[0] ?? '');
 
+$startDate = date('Y-m-01', strtotime("$startYear-$startMonth-01"));
+$endDate = date('Y-m-t', strtotime("$endYear-$endMonth-01"));
 
+/** Chart 1: Antibiotic-wise by Ward **/
+$antibioticData = [];
+$wards1 = [];
+$hasChart1Data = false;
 
-
-// Fetch antibiotic usage by ward using your provided query with month filter
-$sql = "
-    SELECT 
-    CASE 
-        WHEN ward_name = '1 & 2 - Pediatrics - Combined' THEN '1 (Pediatrics)'
-        WHEN ward_name IN ('3 - Surgical Prof - Female', '5 - Surgical Prof - Male') THEN '3+5 (Surgical Prof)'
-        WHEN ward_name IN ('4 - Surgery - Male', '7 - Surgical Prof - Female') THEN '4+7 (Surgery)'
-        WHEN ward_name = '6 - Surgery - Combined' THEN '6 (Surgery)'
-        WHEN ward_name IN ('8 - Neuro-Surgery - Female', '37 - Neuro-Surgery - Male') THEN '8+37 (Neuro-Surgery)'
-        WHEN ward_name = '9 - Surgery - Combined' THEN '9 (Surgery)'
-        WHEN ward_name = '10 - Surgery' THEN '10 (Surgery)'
-        WHEN ward_name = '38 (Neuro-Surgery)' THEN '38 (Neuro-Surgery)'
-        WHEN ward_name IN ('11 - Medicine Prof - Female', '12 - Medicine Prof - Male') THEN '11+12 (Medicine Prof)'
-        WHEN ward_name IN ('14 - Medicine - Male', '15 - Medicine - Female') THEN '14+15 (Medicine)'
-        WHEN ward_name IN ('16 - Medicine - Male', '17 - Medicine - Female') THEN '16+17 (Medicine)'
-        WHEN ward_name IN ('18 - Psychiatry - Male', '23 - Psychiatry - Female') THEN '18+23 (Psychiatry)'
-        WHEN ward_name IN ('19 - Medicine - Male', '21 - Medicine - Female') THEN '19+21 (Medicine)'
-        WHEN ward_name IN ('20 - Orthopedic - Female', '22 - Orthopedic - Male') THEN '20+22 (Orthopedic)'
-        WHEN ward_name IN ('30 - ENT - Male', '31 - ENT - Female') THEN '30+31 (ENT)'
-        WHEN ward_name = '24 - Neurology - Combined' THEN '24 (Neurology)'
-        WHEN ward_name = '26 - Oro-Maxillary Facial - Combined' THEN '26 (Oro-Maxillary Facial)'
-        WHEN ward_name = '36 (Pediatrics) - Combined' THEN '36 (Pediatrics)'
-        WHEN ward_name IN ('25 - Dermatology - Female', '27 - Dermatology - Male') THEN '25+27 (Dermatology)'
-        WHEN ward_name IN ('28 - Oncology - Male', '29 - Oncology - Female') THEN '28+29 (Oncology)'
-        WHEN ward_name IN ('32 - Ophthalmology - Female', '33 - Ophthalmology - Male') THEN '32+33 (Ophthalmology)'
-        WHEN ward_name IN ('34 - Medicine - Male', '35 - Medicine - Female') THEN '34+35 (Medicine)'
-        WHEN ward_name IN ('39 & 40 - Cardiology') THEN '39+40 (Cardiology)'
-        WHEN ward_name IN ('41, 42 & 43 - Maliban Rehabilitation') THEN '41+42+43 (Maliban Rehabilitation)'
-        WHEN ward_name IN ('44 - Cardio-Thoracic - Female', '45 - Cardio-Thoracic - Male') THEN '44+45 (Cardio-Thoracic)'
-        WHEN ward_name IN ('46 & 47 - GU Surgery - Male') THEN '46+47 (GU Surgery)'
-        WHEN ward_name IN ('48 - Onco-Surgery - Female', 'Ward 59', '49 - Onco-Surgery - Male') THEN '48+49 (Onco-Surgery)'
-        WHEN ward_name = '50 - Pediatric Oncology - Combined' THEN '50 (Pediatric Oncology)'
-        WHEN ward_name IN ('51 & 52 - Pediatric Surgery') THEN '51+52 (Pediatric Surgery)'
-        WHEN ward_name IN ('53 - Ophthalmology - Male', '54 - Ophthalmology - Female') THEN '53+54 (Ophthalmology)'
-        WHEN ward_name = '55 - Rheumatology - Combined' THEN '55 (Rheumatology)'
-        WHEN ward_name IN ('58 - Emergency/ETC - Male', '59 - Emergency/ETC - Female') THEN '58+59 (Emergency/ETC)'
-        WHEN ward_name = '60 - ETC Pead - Combined' THEN '60 (ETC Pead)'
-        WHEN ward_name IN ('61 & 62 - Bhikku') THEN '61+62 (Bhikku)'
-        WHEN ward_name = '65 - Palliative' THEN '65 (Palliative)'
-        WHEN ward_name = '67 - Stroke' THEN '67 (Stroke)'
-        WHEN ward_name IN ('68 & 69 - Respiratory') THEN '68+69 (Respiratory)'
-        WHEN ward_name IN ('70 - Nephrology', '71 - Nephrology - Male', '73 - Nephrology - Female') THEN '70+71+73+74 (Nephrology)'
-        WHEN ward_name = '72 - Vascular Surgery - Combined' THEN '72 (Vascular Surgery)'
-        WHEN ward_name LIKE '%ICU%' THEN 'All ICU'
-        WHEN ward_name LIKE '%Theater%' THEN 'All Theater'
-        ELSE ward_name 
-    END AS ward_group,
-    antibiotic_name,
-    dosage,
-    SUM(item_count) AS total_items
-FROM releases
-WHERE release_time BETWEEN ? AND ?
-
-GROUP BY ward_group, antibiotic_name, dosage;
+$query1 = "
+    SELECT ward_name, antibiotic_name, dosage, SUM(item_count) AS usage_count
+    FROM releases
+    WHERE release_time BETWEEN ? AND ?
 ";
+$params1 = [$startDate, $endDate];
+$types1 = "ss";
+if (!empty($selectedWard)) {
+    $query1 .= " AND ward_name = ?";
+    $params1[] = $selectedWard;
+    $types1 .= "s";
+}
+$query1 .= " GROUP BY ward_name, antibiotic_name, dosage ORDER BY antibiotic_name, ward_name";
 
-
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ss", $startDate, $endDate);
-
+$stmt = $conn->prepare($query1);
+$stmt->bind_param($types1, ...$params1);
 $stmt->execute();
-$result2 = $stmt->get_result();
-$stmt->close()
+$result = $stmt->get_result();
 
-// Start HTML output
+while ($row = $result->fetch_assoc()) {
+    $hasChart1Data = true;
+    $antibiotic = $row['antibiotic_name'];
+    $ward = $row['ward_name'];
+    $dosage = strtolower($row['dosage']);
+    $count = $row['usage_count'];
+
+    if (!in_array($ward, $wards1)) $wards1[] = $ward;
+
+    $units = 0;
+    if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+        $units = ($matches[1] / 1000) * $count;
+    } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+        $units = $matches[1] * $count;
+    }
+
+    $antibioticData[$antibiotic][$ward] = ($antibioticData[$antibiotic][$ward] ?? 0) + $units;
+}
+$antibiotics = array_keys($antibioticData);
+sort($wards1);
+sort($antibiotics);
+$stmt->close();
+
+/** Chart 2: Category-wise by Ward **/
+$categoryColors = ['Access' => '#28a745', 'Watch' => '#0000ff', 'Reserve' => '#dc3545'];
+$categories = [];
+$dataMap = [];
+$wards2 = [];
+$hasChart2Data = false;
+
+$catResult = $conn->query("SELECT DISTINCT category FROM releases WHERE category IS NOT NULL AND category != ''");
+while ($catRow = $catResult->fetch_assoc()) {
+    $categories[] = $catRow['category'];
+}
+sort($categories);
+$colorList = array_map(fn($c) => $categoryColors[$c] ?? '#888', $categories);
+
+$query2 = "
+    SELECT ward_name, category, dosage, SUM(item_count) AS usage_count
+    FROM releases
+    WHERE release_time BETWEEN ? AND ?
+";
+$params2 = [$startDate, $endDate];
+$types2 = "ss";
+if (!empty($selectedWard)) {
+    $query2 .= " AND ward_name = ?";
+    $params2[] = $selectedWard;
+    $types2 .= "s";
+}
+$query2 .= " GROUP BY ward_name, category, dosage ORDER BY ward_name, category";
+
+$stmt = $conn->prepare($query2);
+$stmt->bind_param($types2, ...$params2);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $hasChart2Data = true;
+    $ward = $row['ward_name'];
+    $category = $row['category'];
+    $dosage = strtolower($row['dosage']);
+    $count = $row['usage_count'];
+
+    if (!in_array($ward, $wards2)) $wards2[] = $ward;
+
+    $units = 0;
+    if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
+        $units = ($matches[1] / 1000) * $count;
+    } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
+        $units = $matches[1] * $count;
+    }
+
+    $dataMap[$ward][$category] = ($dataMap[$ward][$category] ?? 0) + $units;
+}
+sort($wards2);
+$stmt->close();
+
+$chart1Width = max(1200, count($wards1) * 100);
+$chart2Width = max(1200, count($wards2) * 100);
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antibiotic Usage Monitor</title>
-    <!-- DataTable CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <title>Antibiotic Usage Dashboard</title>
     <?php include_once("../includes/css-links-inc.php"); ?>
-    <!-- jQuery -->
-    <script type="text/javascript" charset="utf-8" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- DataTable JS -->
-    <script type="text/javascript" charset="utf-8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+    google.charts.load("current", {packages: ['corechart']});
+    google.charts.setOnLoadCallback(drawCharts);
+
+    function drawCharts() {
+        drawChart1();
+        drawChart2();
+    }
+
+    function drawChart1() {
+        var data = google.visualization.arrayToDataTable([
+            ['Ward', <?php foreach ($antibiotics as $a) echo "'".addslashes($a)."',"; ?>],
+            <?php foreach ($wards1 as $ward): ?>
+                ['<?= addslashes($ward) ?>',
+                    <?php foreach ($antibiotics as $a): ?>
+                        <?= isset($antibioticData[$a][$ward]) ? round($antibioticData[$a][$ward], 2) : 0 ?>,
+                    <?php endforeach; ?>
+                ],
+            <?php endforeach; ?>
+        ]);
+
+        var options = {
+            title: 'Usage by Ward (Antibiotic) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?><?= (!empty($selectedWard) && $selectedWard !== 'All') ? " | Ward: $selectedWard" : " | All Wards" ?>',
+            hAxis: { title: 'Ward' },
+            vAxis: { title: 'Units (g)' },
+            isStacked: false,
+            legend: { position: 'top' },
+            height: 500
+        };
+
+        new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
+    }
+
+    function drawChart2() {
+        var data = google.visualization.arrayToDataTable([
+            ['Ward', <?php foreach ($categories as $cat) echo "'".addslashes($cat)."',"; ?>],
+            <?php foreach ($wards2 as $ward): ?>
+                ['<?= addslashes($ward) ?>',
+                    <?php foreach ($categories as $cat): ?>
+                        <?= isset($dataMap[$ward][$cat]) ? round($dataMap[$ward][$cat], 2) : 0 ?>,
+                    <?php endforeach; ?>
+                ],
+            <?php endforeach; ?>
+        ]);
+
+        var options = {
+            title: 'Usage by Ward (Categories) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?><?= (!empty($selectedWard) && $selectedWard !== 'All') ? " | Ward: $selectedWard" : " | All Wards" ?>',
+            hAxis: { title: 'Ward' },
+            vAxis: { title: 'Units (g)' },
+            isStacked: true,
+            legend: { position: 'top' },
+            height: 500,
+            bar: { groupWidth: '20px' },
+            colors: <?= json_encode($colorList) ?>
+        };
+
+        new google.visualization.ColumnChart(document.getElementById('chart2')).draw(data, options);
+    }
+    </script>
+    <style>
+        #chart1.chart-container { width: <?= $chart1Width ?>px; margin: 10px auto; }
+        #chart2.chart-container { width: <?= $chart2Width ?>px; margin: 10px auto; }
+    </style>
 </head>
 <body>
+<?php include_once("../includes/header.php"); ?>
+<?php include_once("../includes/sadmin-sidebar.php"); ?>
 
 <main id="main" class="main">
-        <div class="pagetitle">
-            <h1>Usage Details Ward Wise</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                    <li class="breadcrumb-item">Pages</li>
-                    <li class="breadcrumb-item active">Antibiotic Usage Details</li>
-                </ol>
-            </nav>
-        </div>
-
-        <section class="section">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Antibiotic Usage Details</h5>
-
-                            <form method="get" action="">
-    <div class="form-group mb-3">
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="filter_type" id="filter_by_month" value="month" <?= (!isset($_GET['filter_type']) || $_GET['filter_type'] == 'month') ? 'checked' : '' ?>>
-            <label class="form-check-label" for="filter_by_month">Filter by Month Range</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="filter_type" id="filter_by_date" value="date" <?= (isset($_GET['filter_type']) && $_GET['filter_type'] == 'date') ? 'checked' : '' ?>>
-            <label class="form-check-label" for="filter_by_date">Filter by Custom Date Range</label>
-        </div>
+    <div class="pagetitle">
+        <h1>Antibiotic Usage Dashboard</h1>
     </div>
 
-    <div id="month_range_filters" class="<?= (isset($_GET['filter_type']) && $_GET['filter_type'] == 'date') ? 'd-none' : '' ?>">
-        <div class="form-group d-flex align-items-center gap-2 mb-3">
-            <label for="year">Select Year</label>
-            <select id="year" name="year" class="form-control w-25">
-                <?php
-                $currentYear = date('Y');
-                for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
-                    $selected = (isset($_GET['year']) && $_GET['year'] == $y) ? "selected" : "";
-                    echo "<option value='$y' $selected>$y</option>";
-                }
-                ?>
-            </select>
-
-            <label for="start_month">Start Month</label>
-            <select id="start_month" name="start_month" class="form-control w-25">
-                <?php
-                $months = [
-                    '01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April',
-                    '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August',
-                    '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'
-                ];
-                $selectedStartMonth = isset($_GET['start_month']) ? $_GET['start_month'] : "01";
-                foreach ($months as $num => $name) {
-                    $selected = ($num == $selectedStartMonth) ? "selected" : "";
-                    echo "<option value='$num' $selected>$name</option>";
-                }
-                ?>
-            </select>
-
-            <label for="end_month">End Month</label>
-            <select id="end_month" name="end_month" class="form-control w-25">
-                <?php
-                $selectedEndMonth = isset($_GET['end_month']) ? $_GET['end_month'] : date('m');
-                foreach ($months as $num => $name) {
-                    $selected = ($num == $selectedEndMonth) ? "selected" : "";
-                    echo "<option value='$num' $selected>$name</option>";
-                }
-                ?>
-            </select>
-        </div>
-    </div>
-
-    <div id="date_range_filters" class="<?= (!isset($_GET['filter_type']) || $_GET['filter_type'] == 'month') ? 'd-none' : '' ?>">
-        <div class="form-group d-flex align-items-center gap-2 mb-3">
-            <label for="start_date">Start Date</label>
-            <input type="date" id="start_date" name="start_date" class="form-control w-25" value="<?= isset($_GET['start_date']) ? $_GET['start_date'] : '' ?>">
-
-            <label for="end_date">End Date</label>
-            <input type="date" id="end_date" name="end_date" class="form-control w-25" value="<?= isset($_GET['end_date']) ? $_GET['end_date'] : '' ?>">
-        </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary mt-2">Filter</button>
-</form>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get radio buttons and filter divs
-    const filterByMonth = document.getElementById('filter_by_month');
-    const filterByDate = document.getElementById('filter_by_date');
-    const monthRangeFilters = document.getElementById('month_range_filters');
-    const dateRangeFilters = document.getElementById('date_range_filters');
-    
-    // Add event listeners
-    filterByMonth.addEventListener('change', function() {
-        if (this.checked) {
-            monthRangeFilters.classList.remove('d-none');
-            dateRangeFilters.classList.add('d-none');
-        }
-    });
-    
-    filterByDate.addEventListener('change', function() {
-        if (this.checked) {
-            monthRangeFilters.classList.add('d-none');
-            dateRangeFilters.classList.remove('d-none');
-        }
-    });
-});
-</script>
-
-
-
-                            <?php include_once("../includes/header.php") ?>
-                            <?php include_once("../includes/sadmin-sidebar.php") ?>
-
-                            <table id="antibioticUsageTable" class="display table">
-                                <thead class="align-middle text-center">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Antibiotic Name</th>
-                                        <th>Dosage</th>
-                                        <th>Count</th>
-                                        <th>Units</th>
-                                        <th>Percentage (%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody">
-                                <?php 
-                                if ($result2->num_rows > 0) {
-                                    $rowNumber = 1;
-                                    $previousWard = "";
-                                    $totalUnits = 0;
-                                    $wardUsage = []; // Store per-ward total units
-
-                                    // First pass: Calculate total units
-                                    while ($row = $result2->fetch_assoc()) {
-                                        $wardName = $row['ward_group'];
-                                        $dosage = strtolower($row['dosage']);
-                                        $itemCount = $row['total_items'];
-                                        $usageInGrams = 0;
-
-                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
-                                            $mgValue = (int)$matches[1];
-                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
-                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
-                                            $gValue = (float)$matches[1];
-                                            $usageInGrams = $gValue * $itemCount;
-                                        }
-
-                                        $usageInUnits = $usageInGrams; // 1g = 1 unit
-                                        $totalUnits += $usageInUnits;
-
-                                        // Store per-ward usage
-                                        if (!isset($wardUsage[$wardName])) {
-                                            $wardUsage[$wardName] = 0;
-                                        }
-                                        $wardUsage[$wardName] += $usageInUnits;
-                                    }
-
-                                    $result2->data_seek(0); // Reset result pointer for display loop
-
-                                    // Second pass: Display data
-                                    while ($row = $result2->fetch_assoc()) {
-                                        $wardName = $row['ward_group'];
-                                        $antibioticName = $row['antibiotic_name'];
-                                        $dosage = strtolower($row['dosage']);
-                                        $itemCount = $row['total_items'];
-                                        $usageInGrams = 0;
-
-                                        if (preg_match('/(\d+)\s*mg/', $dosage, $matches)) {
-                                            $mgValue = (int)$matches[1];
-                                            $usageInGrams = ($mgValue / 1000) * $itemCount;
-                                        } elseif (preg_match('/(\d+)\s*g/', $dosage, $matches)) {
-                                            $gValue = (float)$matches[1];
-                                            $usageInGrams = $gValue * $itemCount;
-                                        }
-
-                                        $usageInUnits = $usageInGrams;
-                                        $percentageUsage = ($totalUnits > 0) ? ($usageInUnits / $totalUnits) * 100 : 0;
-
-                                        // Group by ward name
-                                        if ($wardName != $previousWard) {
-                                            // Ward heading row
-                                            echo "<tr><td colspan='6' class='text-center card-title' style='background-color: #f8f9fa; font-weight: bold;'>$wardName</td></tr>";
-                                            $previousWard = $wardName;
-                                        }
-                                ?>
-                                        <tr>
-                                            <td class='text-center'><?php echo $rowNumber; ?></td>
-                                            <td class='text-center'><?php echo $antibioticName; ?></td>
-                                            <td class='text-center'><?php echo $dosage; ?></td>
-                                            <td class='text-center'><?php echo number_format($itemCount); ?></td>
-                                            <td class='text-center'><?php echo number_format($usageInUnits, 2); ?>g</td>
-                                            <td class='text-center'><?php echo number_format($percentageUsage, 2); ?>%</td>
-                                        </tr>
-                                <?php 
-                                        $rowNumber++;
-                                    }
-
-                                    // Display total usage per ward and the overall total at the end
-                                    //echo "<tr><td colspan='6' class='text-center' style='font-weight: bold;'>Total Units: " . number_format($totalUnits, 2) . "g</td></tr>";
-
-                                    // Display each ward's total usage
-                                    //foreach ($wardUsage as $ward => $wardTotal) {
-                                      //  echo "<tr><td colspan='6' class='text-center' style='background-color: #e9ecef;'>$ward - Total Usage: " . number_format($wardTotal, 2) . "g</td></tr>";
-                                   // }
-                                } else {
-                                    echo "<tr><td colspan='6' class='text-center'>No data available for the selected period, ward, and type</td></tr>";
-                                }
-                                ?>
-                            </tbody>
-
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <section class="section">
+        <form method="POST" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="ward_name" class="form-label">Ward</label>
+                <select name="ward_name" id="ward_name" class="form-select" required>
+                    <option value="" disabled <?= empty($selectedWard) ? 'selected' : '' ?>>-- Select Ward --</option>
+                    <!--option value="All" <?= $selectedWard == 'All' ? 'selected' : '' ?>>All Wards</option-->
+                    <?php
+                    $wardRes = $conn->query("SELECT DISTINCT ward_name FROM releases ORDER BY ward_name ASC");
+                    while ($w = $wardRes->fetch_assoc()):
+                        $selected = ($w['ward_name'] == $selectedWard) ? 'selected' : '';
+                    ?>
+                        <option value="<?= htmlspecialchars($w['ward_name']) ?>" <?= $selected ?>>
+                            <?= htmlspecialchars($w['ward_name']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
             </div>
-        </section>
-    </main>
 
-<?php include_once("../includes/js-links-inc.php") ?>
-    <?php include_once("../includes/footer.php") ?>
+            <!-- Keep rest of filter controls the same -->
+            <div class="col-md-3">
+                <label for="start_year" class="form-label">Start Year</label>
+                <select name="start_year" id="start_year" class="form-select">
+                    <?php for ($y = 2020; $y <= date('Y'); $y++): ?>
+                        <option value="<?= $y ?>" <?= $startYear == $y ? 'selected' : '' ?>><?= $y ?></option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="start_month" class="form-label">Start Month</label>
+                <select name="start_month" id="start_month" class="form-select">
+                    <?php for ($m = 1; $m <= 12; $m++): $val = str_pad($m, 2, '0', STR_PAD_LEFT); ?>
+                        <option value="<?= $val ?>" <?= $startMonth == $val ? 'selected' : '' ?>>
+                            <?= date('F', mktime(0, 0, 0, $m, 1)) ?>
+                        </option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="end_year" class="form-label">End Year</label>
+                <select name="end_year" id="end_year" class="form-select">
+                    <?php for ($y = 2020; $y <= date('Y'); $y++): ?>
+                        <option value="<?= $y ?>" <?= $endYear == $y ? 'selected' : '' ?>><?= $y ?></option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="end_month" class="form-label">End Month</label>
+                <select name="end_month" id="end_month" class="form-select">
+                    <?php for ($m = 1; $m <= 12; $m++): $val = str_pad($m, 2, '0', STR_PAD_LEFT); ?>
+                        <option value="<?= $val ?>" <?= $endMonth == $val ? 'selected' : '' ?>>
+                            <?= date('F', mktime(0, 0, 0, $m, 1)) ?>
+                        </option>
+                    <?php endfor; ?>
+                </select>
+            </div>
+
+            <div class="col-12 d-flex">
+                <button type="submit" class="btn btn-primary px-4">Filter</button>
+                &nbsp;&nbsp;&nbsp;
+                <button onclick="window.print()" class="btn btn-danger">Print</button>
+            </div>
+        </form>
+
+        <div style="overflow-x: auto;">
+            <h5 class="card-title text-center">Chart 1: Antibiotic Usage by Ward</h5>
+            <div id="chart1" class="chart-container"></div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <div class="card-body">
+                <h5 class="card-title text-center">Chart 2: Usage by Ward (Stacked Categories)</h5>
+                <div id="chart2" class="chart-container"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<?php include_once("../includes/js-links-inc.php"); ?>
+<?php include_once("../includes/footer.php"); ?>
 </body>
 </html>
