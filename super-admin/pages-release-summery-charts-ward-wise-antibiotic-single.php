@@ -126,7 +126,7 @@ while ($row = $result->fetch_assoc()) {
 sort($wards2);
 $stmt->close();
 
-$chart1Width = max(1200, count($wards1) * 100);
+$chart1Width = max(1000, count($wards1) * 80);
 $chart2Width = max(1200, count($wards2) * 100);
 ?>
 
@@ -155,7 +155,11 @@ $chart2Width = max(1200, count($wards2) * 100);
 
         rawData.sort((a, b) => b[1] - a[1]);
 
-        var dataArray = [['Ward', '<?= addslashes($selectedAntibiotic ?: 'Usage') ?>']].concat(rawData);
+        var dataArray = [['Ward', '<?= addslashes($selectedAntibiotic ?: 'Usage') ?>', { role: 'annotation' }]];
+        rawData.forEach(function(row) {
+            dataArray.push([row[0], row[1], row[1].toFixed(2)]);
+        });
+
         var data = google.visualization.arrayToDataTable(dataArray);
 
         var options = {
@@ -164,9 +168,7 @@ $chart2Width = max(1200, count($wards2) * 100);
                 title: 'Ward',
                 slantedText: true,
                 slantedTextAngle: 45,
-                textStyle: {
-                    fontSize: 12
-                }
+                textStyle: { fontSize: 12 }
             },
             vAxis: { title: 'Units (g)' },
             legend: { position: 'none' },
@@ -177,9 +179,53 @@ $chart2Width = max(1200, count($wards2) * 100);
                 top: 60,
                 bottom: 250
             },
+            annotations: {
+                alwaysOutside: true,
+                textStyle: {
+                    fontSize: 12,
+                    color: '#000',
+                    auraColor: 'none',
+                    italic: false
+                },
+                stem: {
+                    length: 0
+                },
+                boxStyle: {
+                    rotation: 45
+                }
+            },
+            bar: { groupWidth: '30%' }
         };
 
-        new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
+        var chart = new google.visualization.ColumnChart(document.getElementById('chart1'));
+        chart.draw(data, options);
+    }
+
+
+    function drawChart2() {
+        var data = google.visualization.arrayToDataTable([
+            ['Ward', <?php foreach ($categories as $cat) echo "'".addslashes($cat)."',"; ?>],
+            <?php foreach ($wards2 as $ward): ?>
+                ['<?= addslashes($ward) ?>',
+                    <?php foreach ($categories as $cat): ?>
+                        <?= isset($dataMap[$ward][$cat]) ? round($dataMap[$ward][$cat], 2) : 0 ?>,
+                    <?php endforeach; ?>
+                ],
+            <?php endforeach; ?>
+        ]);
+
+        var options = {
+            title: 'Usage by Ward (Categories) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?>',
+            hAxis: { title: 'Ward' },
+            vAxis: { title: 'Units (g)' },
+            isStacked: true,
+            legend: { position: 'top' },
+            height: 500,
+            bar: { groupWidth: '10%' },
+            colors: <?= json_encode($colorList) ?>
+        };
+
+        new google.visualization.ColumnChart(document.getElementById('chart2')).draw(data, options);
     }
 
     function drawChart2() {

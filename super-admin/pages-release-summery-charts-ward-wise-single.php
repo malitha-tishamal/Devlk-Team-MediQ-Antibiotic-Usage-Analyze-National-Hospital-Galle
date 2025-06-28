@@ -156,29 +156,59 @@ $chart2Width = max(1200, count($wards2) * 100);
     }
 
     function drawChart1() {
-        var data = google.visualization.arrayToDataTable([
-            ['Ward', <?php foreach ($antibiotics as $a) echo "'".addslashes($a)."',"; ?>],
-            <?php foreach ($wards1 as $ward): ?>
-                ['<?= addslashes($ward) ?>',
-                    <?php foreach ($antibiotics as $a): ?>
-                        <?= isset($antibioticData[$a][$ward]) ? round($antibioticData[$a][$ward], 2) : 0 ?>,
-                    <?php endforeach; ?>
-                ],
-            <?php endforeach; ?>
-        ]);
+    var data = new google.visualization.DataTable();
 
-        var options = {
-            title: 'Usage by Ward (Antibiotic) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?><?= (!empty($selectedWard) && $selectedWard !== 'All') ? " | Ward: $selectedWard" : " | All Wards" ?>',
-            hAxis: { title: 'Ward' },
-            vAxis: { title: 'Units (g)' },
-            isStacked: false,
-            legend: { position: 'top' },
-            height: 500,
-            bar: { groupWidth: '5%' }  // Approx 10% width bars for thinner bars
-        };
+    data.addColumn('string', 'Ward');
 
-        new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
+    <?php
+    // Add data + annotation columns
+    foreach ($antibiotics as $a) {
+        echo "data.addColumn('number', '".addslashes($a)."');\n";
+        echo "data.addColumn({type: 'string', role: 'annotation'});\n";
     }
+    ?>
+
+    data.addRows([
+        <?php foreach ($wards1 as $ward): ?>
+        [
+            '<?= addslashes($ward) ?>',
+            <?php foreach ($antibiotics as $a):
+                $value = isset($antibioticData[$a][$ward]) ? round($antibioticData[$a][$ward], 2) : 0;
+                $annotation = ($value > 0) ? $value : ''; // annotation = count value
+            ?>
+                <?= $value ?>, '<?= $annotation ?>',
+            <?php endforeach; ?>
+        ],
+        <?php endforeach; ?>
+    ]);
+
+    var options = {
+        title: 'Usage by Ward (per Antibiotic) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?>',
+        hAxis: {
+            title: 'Ward',
+            slantedText: true,
+            slantedTextAngle: 90,
+            textStyle: { fontSize: 12 }
+        },
+        vAxis: { title: 'Units (g)' },
+        isStacked: false,
+        legend: { position: 'top' },
+        height: 600,
+        chartArea: { left: 80, right: 50, top: 60, bottom: 250 },
+        bar: { groupWidth: '10%' },
+        annotations: {
+            alwaysOutside: true,
+            textStyle: {
+                fontSize: 12,
+                color: '#000',
+                auraColor: 'none'
+            }
+        }
+    };
+
+    new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
+}
+
 
     function drawChart2() {
         var data = google.visualization.arrayToDataTable([

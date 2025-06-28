@@ -143,44 +143,47 @@ $chart3Width = max(1500, count($wardCategories) * 100);
             drawChart3();
         }
 
-        function drawChart1() {
-        var data = google.visualization.arrayToDataTable([
-            ['Ward Category', <?php foreach ($antibiotics as $a) echo "'".addslashes($a)."',"; ?>],
-            <?php foreach ($wardCategories as $wc): ?>
-            ['<?= $wc ?>',
-                <?php foreach ($antibiotics as $a): ?>
-                    <?= isset($antibioticData[$wc][$a]) ? round($antibioticData[$wc][$a], 2) : 0 ?>,
+      function drawChart1() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Ward Category');
+    <?php foreach ($antibiotics as $a): ?>
+        data.addColumn('number', '<?= addslashes($a) ?>');
+        // data.addColumn({type: 'string', role: 'annotation'});
+    <?php endforeach; ?>
+
+    data.addRows([
+        <?php foreach ($wardCategories as $wc): ?>
+            [
+                '<?= $wc ?>',
+                <?php foreach ($antibiotics as $a): 
+                    $val = isset($antibioticData[$wc][$a]) ? round($antibioticData[$wc][$a], 2) : 0;
+                ?>
+                <?= $val ?>,
                 <?php endforeach; ?>
             ],
-            <?php endforeach; ?>
-        ]);
+        <?php endforeach; ?>
+    ]);
 
-        var options = {
-            title: 'Chart 1: Antibiotic Usage by Ward Category',
-            hAxis: {
-                title: 'Ward Category',
-                slantedText: true,
-                slantedTextAngle: 45,
-                textStyle: {
-                    fontSize: 15
-                }
-            },
-            vAxis: {title: 'Units (g)'},
-            isStacked: false,
-            legend: {position: 'top'},
-            height: 800,
-            chartArea: {
-                left: 150,
-                right: 50,
-                top: 60,
-                bottom: 180
-            },
-            bar: { groupWidth: '40%' }
-        };
+    var options = {
+        vAxis: { title: 'Units (g)' },
+        isStacked: false,
+        legend: { position: 'top' },
+        height: 800,
+        chartArea: { left: 150, right: 50, top: 60, bottom: 180 },
+        bar: { groupWidth: '40%' },
+        annotations: {
+            alwaysOutside: false,  // annotation labels දැක්කාට ගැටළුවක් නෑ නම් false කරන්න
+            textStyle: { fontSize: 12, color: '#000', auraColor: 'none' }
+        },
+        hAxis: {
+            slantedText: true,
+            slantedTextAngle: 50,
+            textStyle: { fontSize: 12, color: '#000', auraColor: 'none' }
+        }
+    };
 
-        new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
-    }
-
+    new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
+}
 
         function drawChart2() {
             var data = google.visualization.arrayToDataTable([
@@ -209,23 +212,38 @@ $chart3Width = max(1500, count($wardCategories) * 100);
         }
 
         function drawChart3() {
-            var data = google.visualization.arrayToDataTable([
-                ['Ward Category', 'Total Usage (g)'],
-                <?php foreach ($wardCategories as $wc): ?>
-                ['<?= $wc ?>', <?= isset($usageTotals[$wc]) ? round($usageTotals[$wc], 2) : 0 ?>],
-                <?php endforeach; ?>
-            ]);
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Ward Category');
+    data.addColumn('number', 'Total Usage (g)');
+    data.addColumn({type: 'string', role: 'annotation'});  // annotation column
 
-            var options = {
-                title: 'Chart 3: Total Usage by Ward Category',
-                hAxis: {title: 'Ward Category'},
-                vAxis: {title: 'Total Usage (g)'},
-                height: 500,
-                legend: 'none'
-            };
+    data.addRows([
+        <?php foreach ($wardCategories as $wc): 
+            $val = isset($usageTotals[$wc]) ? round($usageTotals[$wc], 2) : 0;
+        ?>
+        ['<?= $wc ?>', <?= $val ?>, '<?= $val ?>'],
+        <?php endforeach; ?>
+    ]);
 
-            new google.visualization.ColumnChart(document.getElementById('chart3')).draw(data, options);
+    var options = {
+        title: 'Chart 3: Total Usage by Ward Category',
+        hAxis: {title: 'Ward Category'},
+        vAxis: {title: 'Total Usage (g)'},
+        height: 800,
+        legend: 'none',
+        annotations: {
+            alwaysOutside: true,
+            textStyle: {
+                fontSize: 15,
+                color: '#000',
+                auraColor: 'none'
+            }
         }
+    };
+
+    new google.visualization.ColumnChart(document.getElementById('chart3')).draw(data, options);
+}
+
     </script>
     <style>
         #chart1.chart-container { width: <?= $chart1Width ?>px; margin: 10px auto; }
