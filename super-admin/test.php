@@ -15,22 +15,22 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-// Fetch available wards
-$wardList = [];
-$wardRes = $conn->query("SELECT DISTINCT ward_name FROM releases ORDER BY ward_name ASC");
-while ($w = $wardRes->fetch_assoc()) {
-    $wardList[] = $w['ward_name'];
-}
-
-// Default to the first ward if none selected
+// Get filters
 $startMonth = $_POST['start_month'] ?? date('m');
 $startYear = $_POST['start_year'] ?? date('Y');
 $endMonth = $_POST['end_month'] ?? date('m');
 $endYear = $_POST['end_year'] ?? date('Y');
-$selectedWard = $_POST['ward_name'] ?? ($wardList[0] ?? '');
+$selectedAntibiotic = $_POST['antibiotic_name'] ?? '';
 
 $startDate = date('Y-m-01', strtotime("$startYear-$startMonth-01"));
 $endDate = date('Y-m-t', strtotime("$endYear-$endMonth-01"));
+
+// Fetch antibiotic list
+$antibioticList = [];
+$antibioticRes = $conn->query("SELECT DISTINCT antibiotic_name FROM releases ORDER BY antibiotic_name ASC");
+while ($a = $antibioticRes->fetch_assoc()) {
+    $antibioticList[] = $a['antibiotic_name'];
+}
 
 /** Chart 1: Antibiotic-wise by Ward **/
 $antibioticData = [];
@@ -44,12 +44,14 @@ $query1 = "
 ";
 $params1 = [$startDate, $endDate];
 $types1 = "ss";
-if (!empty($selectedWard)) {
-    $query1 .= " AND ward_name = ?";
-    $params1[] = $selectedWard;
+
+if (!empty($selectedAntibiotic)) {
+    $query1 .= " AND antibiotic_name = ?";
+    $params1[] = $selectedAntibiotic;
     $types1 .= "s";
 }
-$query1 .= " GROUP BY ward_name, antibiotic_name, dosage ORDER BY antibiotic_name, ward_name";
+
+$query1 .= " GROUP BY ward_name, antibiotic_name, dosage ORDER BY ward_name";
 
 $stmt = $conn->prepare($query1);
 $stmt->bind_param($types1, ...$params1);
@@ -72,14 +74,12 @@ while ($row = $result->fetch_assoc()) {
         $units = $matches[1] * $count;
     }
 
-    $antibioticData[$antibiotic][$ward] = ($antibioticData[$antibiotic][$ward] ?? 0) + $units;
+    $antibioticData[$ward] = ($antibioticData[$ward] ?? 0) + $units;
 }
-$antibiotics = array_keys($antibioticData);
 sort($wards1);
-sort($antibiotics);
 $stmt->close();
 
-/** Chart 2: Category-wise by Ward **/
+/** Chart 2: Category-wise by Ward (unchanged) **/
 $categoryColors = ['Access' => '#28a745', 'Watch' => '#0000ff', 'Reserve' => '#dc3545'];
 $categories = [];
 $dataMap = [];
@@ -97,18 +97,11 @@ $query2 = "
     SELECT ward_name, category, dosage, SUM(item_count) AS usage_count
     FROM releases
     WHERE release_time BETWEEN ? AND ?
+    GROUP BY ward_name, category, dosage ORDER BY ward_name, category
 ";
-$params2 = [$startDate, $endDate];
-$types2 = "ss";
-if (!empty($selectedWard)) {
-    $query2 .= " AND ward_name = ?";
-    $params2[] = $selectedWard;
-    $types2 .= "s";
-}
-$query2 .= " GROUP BY ward_name, category, dosage ORDER BY ward_name, category";
 
 $stmt = $conn->prepare($query2);
-$stmt->bind_param($types2, ...$params2);
+$stmt->bind_param("ss", $startDate, $endDate);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -135,7 +128,6 @@ $stmt->close();
 
 $chart1Width = max(1200, count($wards1) * 100);
 $chart2Width = max(1200, count($wards2) * 100);
-
 ?>
 
 <!DOCTYPE html>
@@ -156,22 +148,17 @@ $chart2Width = max(1200, count($wards2) * 100);
 
     function drawChart1() {
         var data = google.visualization.arrayToDataTable([
-            ['Ward', <?php foreach ($antibiotics as $a) echo "'".addslashes($a)."',"; ?>],
+            ['Ward', '<?= addslashes($selectedAntibiotic ?: 'Usage') ?>'],
             <?php foreach ($wards1 as $ward): ?>
-                ['<?= addslashes($ward) ?>',
-                    <?php foreach ($antibiotics as $a): ?>
-                        <?= isset($antibioticData[$a][$ward]) ? round($antibioticData[$a][$ward], 2) : 0 ?>,
-                    <?php endforeach; ?>
-                ],
+                ['<?= addslashes($ward) ?>', <?= round($antibioticData[$ward] ?? 0, 2) ?>],
             <?php endforeach; ?>
         ]);
 
         var options = {
-            title: 'Usage by Ward (Antibiotic) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?><?= (!empty($selectedWard) && $selectedWard !== 'All') ? " | Ward: $selectedWard" : " | All Wards" ?>',
+            title: 'Usage by Ward (Antibiotic) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?><?= $selectedAntibiotic ? " | Antibiotic: $selectedAntibiotic" : "" ?>',
             hAxis: { title: 'Ward' },
             vAxis: { title: 'Units (g)' },
-            isStacked: false,
-            legend: { position: 'top' },
+            legend: { position: 'none' },
             height: 500
         };
 
@@ -191,13 +178,13 @@ $chart2Width = max(1200, count($wards2) * 100);
         ]);
 
         var options = {
-            title: 'Usage by Ward (Categories) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?><?= (!empty($selectedWard) && $selectedWard !== 'All') ? " | Ward: $selectedWard" : " | All Wards" ?>',
+            title: 'Usage by Ward (Categories) - <?= "$startYear-$startMonth to $endYear-$endMonth" ?>',
             hAxis: { title: 'Ward' },
             vAxis: { title: 'Units (g)' },
             isStacked: true,
             legend: { position: 'top' },
             height: 500,
-            bar: { groupWidth: '20px' },
+            bar: { groupWidth: '10%' },
             colors: <?= json_encode($colorList) ?>
         };
 
@@ -221,23 +208,17 @@ $chart2Width = max(1200, count($wards2) * 100);
     <section class="section">
         <form method="POST" class="row g-3 mb-4">
             <div class="col-md-3">
-                <label for="ward_name" class="form-label">Ward</label>
-                <select name="ward_name" id="ward_name" class="form-select" required>
-                    <option value="" disabled <?= empty($selectedWard) ? 'selected' : '' ?>>-- Select Ward --</option>
-                    <!--option value="All" <?= $selectedWard == 'All' ? 'selected' : '' ?>>All Wards</option-->
-                    <?php
-                    $wardRes = $conn->query("SELECT DISTINCT ward_name FROM releases ORDER BY ward_name ASC");
-                    while ($w = $wardRes->fetch_assoc()):
-                        $selected = ($w['ward_name'] == $selectedWard) ? 'selected' : '';
+                <label for="antibiotic_name" class="form-label">Antibiotic</label>
+                <select name="antibiotic_name" id="antibiotic_name" class="form-select">
+                    <option value="">-- All Antibiotics --</option>
+                    <?php foreach ($antibioticList as $a): 
+                        $sel = ($a == $selectedAntibiotic) ? 'selected' : '';
                     ?>
-                        <option value="<?= htmlspecialchars($w['ward_name']) ?>" <?= $selected ?>>
-                            <?= htmlspecialchars($w['ward_name']) ?>
-                        </option>
-                    <?php endwhile; ?>
+                        <option value="<?= htmlspecialchars($a) ?>" <?= $sel ?>><?= htmlspecialchars($a) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
-            <!-- Keep rest of filter controls the same -->
             <div class="col-md-3">
                 <label for="start_year" class="form-label">Start Year</label>
                 <select name="start_year" id="start_year" class="form-select">
@@ -278,7 +259,7 @@ $chart2Width = max(1200, count($wards2) * 100);
             <div class="col-12 d-flex">
                 <button type="submit" class="btn btn-primary px-4">Filter</button>
                 &nbsp;&nbsp;&nbsp;
-                <button onclick="window.print()" class="btn btn-danger">Print</button>
+                <button onclick="window.print()" type="button" class="btn btn-danger">Print</button>
             </div>
         </form>
 
@@ -287,12 +268,12 @@ $chart2Width = max(1200, count($wards2) * 100);
             <div id="chart1" class="chart-container"></div>
         </div>
 
-        <div style="overflow-x: auto;">
+        <!--div style="overflow-x: auto;">
             <div class="card-body">
                 <h5 class="card-title text-center">Chart 2: Usage by Ward (Stacked Categories)</h5>
                 <div id="chart2" class="chart-container"></div>
             </div>
-        </div>
+        </div-->
     </section>
 </main>
 

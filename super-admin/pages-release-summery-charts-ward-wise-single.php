@@ -133,14 +133,16 @@ while ($row = $result->fetch_assoc()) {
 sort($wards2);
 $stmt->close();
 
-$chart1Width = max(1200, count($wards1) * 100);
+// Calculate dynamic chart widths
+$totalBarsChart1 = count($wards1) * count($antibiotics);
+$chart1Width = max(1500, $totalBarsChart1 * 30); // 30px per bar approx
 $chart2Width = max(1200, count($wards2) * 100);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Antibiotic Usage Dashboard</title>
     <?php include_once("../includes/css-links-inc.php"); ?>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -171,7 +173,8 @@ $chart2Width = max(1200, count($wards2) * 100);
             vAxis: { title: 'Units (g)' },
             isStacked: false,
             legend: { position: 'top' },
-            height: 500
+            height: 500,
+            bar: { groupWidth: '5%' }  // Approx 10% width bars for thinner bars
         };
 
         new google.visualization.ColumnChart(document.getElementById('chart1')).draw(data, options);
@@ -196,7 +199,7 @@ $chart2Width = max(1200, count($wards2) * 100);
             isStacked: true,
             legend: { position: 'top' },
             height: 500,
-            bar: { groupWidth: '10%' },  // Thinner bars here
+            bar: { groupWidth: '15%' },
             colors: <?= json_encode($colorList) ?>
         };
 
@@ -204,8 +207,15 @@ $chart2Width = max(1200, count($wards2) * 100);
     }
     </script>
     <style>
-        #chart1.chart-container { width: <?= $chart1Width ?>px; margin: 10px auto; }
-        #chart2.chart-container { width: <?= $chart2Width ?>px; margin: 10px auto; }
+        #chart1.chart-container {
+            width: <?= $chart1Width ?>px;
+            margin: 10px auto;
+            overflow-x: auto;
+        }
+        #chart2.chart-container {
+            width: <?= $chart2Width ?>px;
+            margin: 10px auto;
+        }
     </style>
 </head>
 <body>
@@ -223,7 +233,7 @@ $chart2Width = max(1200, count($wards2) * 100);
                 <label for="ward_name" class="form-label">Ward</label>
                 <select name="ward_name" id="ward_name" class="form-select" required>
                     <option value="" disabled <?= empty($selectedWard) ? 'selected' : '' ?>>-- Select Ward --</option>
-                    <?php foreach ($wardList as $ward): 
+                    <?php foreach ($wardList as $ward):
                         $sel = ($ward == $selectedWard) ? 'selected' : '';
                     ?>
                         <option value="<?= htmlspecialchars($ward) ?>" <?= $sel ?>><?= htmlspecialchars($ward) ?></option>

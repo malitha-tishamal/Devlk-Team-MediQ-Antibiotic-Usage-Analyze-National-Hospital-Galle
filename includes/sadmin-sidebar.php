@@ -57,6 +57,12 @@
                 </li>
 
                 <li>
+                    <a href="../super-admin/pages-release-summery-charts-ward-wise-antibiotic-single.php">
+                        <i class="bi bi-circle"></i> <span>Ward Wise Charts Antibiotic Single</span>
+                    </a>
+                </li>
+
+                <li>
                     <a href="../super-admin/pages-release-summery-charts-ward-wise-single.php">
                         <i class="bi bi-circle"></i> <span>Ward Wise Charts Single</span>
                     </a>
