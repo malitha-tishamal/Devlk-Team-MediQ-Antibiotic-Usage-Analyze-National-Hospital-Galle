@@ -144,6 +144,26 @@
         </li>
 
         <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-clipboard-data"></i></i></i><span>Reports</span><i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+
+            <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="pages-release-details.php">
+                        <i class="bi bi-circle"></i><span>Dispensing Details</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="pages-return-details.php">
+                        <i class="bi bi-circle"></i><span>Return Details</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link collapsed" href="user-profile.php">
                 <i class="bi bi-person-circle"></i> <span>Profile</span>
             </a>
