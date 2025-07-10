@@ -95,10 +95,24 @@
             </ul>
         </li>
 
+
         <li class="nav-item">
-            <a class="nav-link collapsed" href="pages-manage-stock.php">
-                <i class="bi bi-backpack4"></i> <span>Stock</span>
+            <a class="nav-link collapsed" data-bs-toggle="collapse" href="#stock-nav" role="button">
+                <i class="bi bi-backpack4"></i> <span>Stock</span> <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul id="stock-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="../super-admin/pages-manage-stock.php">
+                        <i class="bi bi-circle"></i> <span>Dispensing Stock (Main)</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="../super-admin/pages-manage-return-stock.php">
+                        <i class="bi bi-circle"></i> <span>Return Stock</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="nav-item">

@@ -227,7 +227,7 @@ while ($row = $bookQuery->fetch_assoc()) {
                                         <input type="number" id="itemCount" name="item_count" class="form-control w-50" placeholder="Enter item count" required>
                                     </div>
 
-                                    <div class="mb-3">
+                                    <!--div class="mb-3">
                                         <label for="option" class="form-label">Route:</label>
                                         <select name="ant_type" id="" class="form-select w-50" required>
                                             <option >--Select Route--</option>
@@ -236,7 +236,7 @@ while ($row = $bookQuery->fetch_assoc()) {
                                             <option value="topical">Topical</option>
                                             <option value="other">Other</option>
                                         </select>
-                                    </div>
+                                    </div-->
 
                                     <div class="mb-3">
                                         <label for="type" class="form-label">Stock of Antibiotic:</label>

@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         : date('Y-m-d H:i:s');
 
     // Step 3: Validate fields
-    if (empty($antibioticname) || empty($itemCount) || empty($ward) || empty($type) || empty($ant_type) || empty($releaseTime)) {
+    if (empty($antibioticname) || empty($itemCount) || empty($ward) || empty($type) || empty($releaseTime)) {
         $_SESSION['status'] = 'error';
         $_SESSION['message'] = "Error: Missing required fields!";
         header("Location: pages-release-antibiotic.php");

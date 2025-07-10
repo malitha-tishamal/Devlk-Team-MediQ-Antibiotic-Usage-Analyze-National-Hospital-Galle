@@ -169,7 +169,7 @@ $result = $stmt->get_result();
                                         <th>Item Count</th>
                                         <th>Ward Name</th>
                                         <th>Stock Type</th>
-                                        <th>Route Type</th>
+                                        <!--th>Route Type</th-->
                                         <th>Book Number</th>
                                         <th>Page Number</th>
                                         <th>Release Time</th>
@@ -186,7 +186,7 @@ $result = $stmt->get_result();
                                                 <td><?= htmlspecialchars($row['item_count']) ?></td>
                                                 <td><?= htmlspecialchars($row['ward_name']) ?></td>
                                                 <td><?= htmlspecialchars($row['type']) ?></td>
-                                                <td><?= htmlspecialchars($row['ant_type']) ?></td>
+                                                <!--td><?= htmlspecialchars($row['ant_type']) ?></td-->
                                                 <td><?= htmlspecialchars($row['book_number']) ?></td>
                                                 <td><?= htmlspecialchars($row['page_number']) ?></td>
                                                 <td><?= htmlspecialchars($row['release_time']) ?></td>

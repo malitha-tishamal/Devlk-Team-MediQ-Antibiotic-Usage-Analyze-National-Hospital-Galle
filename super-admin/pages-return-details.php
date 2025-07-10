@@ -196,7 +196,7 @@ $result = $stmt->get_result();
                       <th class="text-center">Item Count</th>
                       <th class="text-center">Ward Name</th>
                       <th class="text-center">Stock Type</th>
-                      <th class="text-center">Route Type</th>
+                      <!--th class="text-center">Route Type</th-->
                       <th class="text-center">Book Number</th>
                       <th class="text-center">Page Number</th>
                       <th class="text-center">Return Time</th>
@@ -215,7 +215,7 @@ $result = $stmt->get_result();
                             echo "<td>" . htmlspecialchars($row['item_count']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['ward_name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['type']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['ant_type']) . "</td>";
+                            //echo "<td>" . htmlspecialchars($row['ant_type']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['book_number']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['page_number']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['return_time']) . "</td>";

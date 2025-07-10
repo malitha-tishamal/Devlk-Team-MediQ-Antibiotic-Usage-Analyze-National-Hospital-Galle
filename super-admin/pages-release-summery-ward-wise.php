@@ -263,7 +263,7 @@ $wardUsageStmt->close();
                                         </select>
                                     </div>
                                   
-                                    <div class="form-group col-md-3">
+                                    <!--div class="form-group col-md-3">
                                        <label for="route_select" class="col-form-label">Select Route:</label>
                                        <select name="ant_type_select" id="ant_type_select" class="form-select">
                                         <option value="">All Types</option>
@@ -272,7 +272,7 @@ $wardUsageStmt->close();
                                         <option value="topical" <?php echo ($selectedAntType == 'topical') ? 'selected' : ''; ?>>Topical</option>
                                         <option value="other" <?php echo ($selectedAntType == 'other') ? 'selected' : ''; ?>>Other</option>
                                     </select>
-                                    </div>
+                                    </div-->
                                 </div>
 
                                 <div class="form-row">

@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         : date('Y-m-d H:i:s');
 
     // Validate required fields
-    if (empty($antibioticName) || empty($dosage) || empty($itemCount) || empty($ward) || empty($type) || empty($antType) || empty($returnTime)) {
+    if (empty($antibioticName) || empty($dosage) || empty($itemCount) || empty($ward) || empty($type) || empty($returnTime)) {
         $_SESSION['status'] = 'error';
         $_SESSION['message'] = "Error: Missing required fields!";
         header("Location: pages-return-antibiotic.php");
@@ -65,7 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Update stock (add back returned quantity)
-    $stmt = $conn->prepare("SELECT quantity FROM stock WHERE stv_number = ?");
+    // Update return_stock (add back returned quantity)
+    $stmt = $conn->prepare("SELECT quantity FROM return_stock WHERE stv_number = ?");
     $stmt->bind_param("s", $stvNumber);
     $stmt->execute();
     $stmt->bind_result($currentQty);
@@ -74,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $newQty = $currentQty + $itemCount;
 
-    $stmt = $conn->prepare("UPDATE stock SET quantity = ?, last_updated = NOW() WHERE stv_number = ?");
+    $stmt = $conn->prepare("UPDATE return_stock SET quantity = ?, last_updated = NOW() WHERE stv_number = ?");
     $stmt->bind_param("is", $newQty, $stvNumber);
     $stmt->execute();
     $stmt->close();
