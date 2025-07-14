@@ -127,12 +127,6 @@ $stmt->close();
                                         <option value="Surgery">Surgery </option>
                                         <option value="Medicine Subspecialty">Medicine Subspecialty</option>
                                         <option value="Surgery Subspecialty">Surgery Subspecialty</option>
-                                         <option value="Antenatal">Antenatal</option>
-                                        <option value="Postnatal">Postnatal</option>
-                                        <option value="Gynecology">Gynecology</option>
-                                        <option value="Labour Room">Labour Room</option>
-                                        <option value="Postnatal and Antenatal">Postnatal and Antenatal</option>
-                                        <option value="Gynecology and Oncology">Gynecology and Oncology</option>
                                     </select>
                                 </div>
 
