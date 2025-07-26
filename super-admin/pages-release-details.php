@@ -193,7 +193,11 @@ $result = $stmt->get_result();
                                                 <td><?= htmlspecialchars($row['release_time']) ?></td>
                                                 <td><?= htmlspecialchars($row['system_name']) ?></td>
                                                 <td>
-                                                    <form method="POST" action="delete-release.php" onsubmit="return confirm('Are you sure you want to delete this release?');">
+                                                    <!-- Edit Button -->
+                                                    <a href="edit-release.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-warning">✏️ Edit</a>
+
+                                                    <!-- Delete Button -->
+                                                    <form method="POST" action="delete-release.php" onsubmit="return confirm('Are you sure you want to delete this release?');" style="display:inline;">
                                                         <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                                         <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>
                                                     </form>
