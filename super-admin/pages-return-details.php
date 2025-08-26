@@ -220,12 +220,14 @@ $result = $stmt->get_result();
                             echo "<td>" . htmlspecialchars($row['page_number']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['return_time']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['system_name']) . "</td>";
-                            echo "<td>";
-                            echo '<form method="POST" action="delete-return.php" onsubmit="return confirm(\'Are you sure you want to delete this return record?\');">';
-                            echo '<input type="hidden" name="id" value="' . $row['id'] . '">';
-                            echo '<button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>';
-                            echo '</form>';
-                            echo "</td>";
+                           echo "<td class='text-center d-flex justify-content-center gap-2'>";
+                              echo '<a href="edit-return.php?id=' . $row['id'] . '" class="btn btn-sm btn-warning">✏️ Edit</a>&nbsp;&nbsp;&nbsp;';
+                              echo '<form method="POST" action="delete-return.php" onsubmit="return confirm(\'Are you sure you want to delete this return record?\');" style="display:inline-block;">';
+                              echo '<input type="hidden" name="id" value="' . $row['id'] . '">';
+
+                              echo '<button type="submit" class="btn btn-sm btn-danger">🗑️ Delete</button>';
+                              echo '</form>';
+
                             echo "</tr>";
                         }
                     } else {
