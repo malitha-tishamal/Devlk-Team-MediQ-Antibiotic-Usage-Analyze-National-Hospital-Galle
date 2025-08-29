@@ -247,6 +247,7 @@ function drawCategoryChart() {
 }
 </script>
 
+
 </head>
 
 <body>
@@ -316,6 +317,7 @@ function drawCategoryChart() {
                 </form>
             </div>
         </div>
+
 
 
         <div class="mb-3 no-print d-flex gap-2">
@@ -433,9 +435,11 @@ function drawCategoryChart() {
                     row.style.display = text.includes(query) ? '' : 'none';
                 });
             });
+
+
             </script>
 
-                    <table id="antibioticTable" class="table table-bordered table-striped">
+                    <table id="antibioticTable" class="table datatable">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -495,9 +499,11 @@ function drawCategoryChart() {
                         </tbody>
 
                 </table>
+
             </div>
         </div>
     </section>
+
 </main>
 <?php include_once("../includes/footer.php"); ?>
 <?php include_once ("../includes/js-links-inc.php") ?>
