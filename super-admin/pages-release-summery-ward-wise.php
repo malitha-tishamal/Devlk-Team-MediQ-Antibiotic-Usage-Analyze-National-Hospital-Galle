@@ -365,7 +365,7 @@ $wardUsageStmt->close();
                                             <td class='text-center'><?php echo $dosage; ?></td>
                                             <td class='text-center'><?php echo number_format($itemCount); ?></td>
                                             <td class='text-center'><?php echo number_format($usageInUnits, 2); ?>g</td>
-                                            <td class='text-center'><?php echo number_format($percentageUsage, 2); ?>%</td>
+                                            <td class='text-center'><?php echo number_format($percentageUsage, 4); ?>%</td>
                                         </tr>
                                 <?php 
                                         $rowNumber++;
