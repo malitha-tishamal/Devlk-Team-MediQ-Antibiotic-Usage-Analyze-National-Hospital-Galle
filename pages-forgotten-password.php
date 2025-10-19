@@ -1,80 +1,68 @@
 <?php
+require_once 'includes/db-conn.php';
 session_start();
+date_default_timezone_set('Asia/Colombo');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email']);
+
+    // Search in both tables
+    $tables = ['admins', 'users'];
+    $found = false;
+
+    foreach ($tables as $table) {
+        $stmt = $conn->prepare("SELECT id FROM $table WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+
+        if ($user) {
+            $found = true;
+            $token = bin2hex(random_bytes(16));
+            $expiry = date("Y-m-d H:i:s", strtotime("+15 minutes"));
+
+            $update = $conn->prepare("UPDATE $table SET reset_token = ?, token_expiry = ? WHERE email = ?");
+            $update->bind_param("sss", $token, $expiry, $email);
+            $update->execute();
+
+            // Normally you would send an email — here we just simulate it
+            $resetLink = "https://mediq.42web.io/karapitiya?token=$token&type=$table";
+            $_SESSION['success_message'] = "Password reset link: $resetLink (valid for 15 minutes).";
+            header("Location: pages-forgotten-password.php");
+            exit();
+        }
+    }
+
+    if (!$found) {
+        $_SESSION['error_message'] = "No account found with that email.";
+        header("Location: pages-forgotten-password.php");
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-
-    <title>Forgotten Password - MediQ</title>
-    <meta content="" name="description">
-    <meta content="" name="keywords">
-
-    <?php include_once("includes/css-links-inc.php"); ?>
+    <title>Forgot Password</title>
 </head>
 <body>
-    <main>
-        <div class="container">
-            <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
-                            
-                            <div class="d-flex justify-content-center py-4">
-                                <a href="index.php" class="logo d-flex align-items-center w-auto">
-                                    <img src="assets/images/logos/mediq-logo.png" alt="" style="max-height:130px;">
-                                </a>
-                            </div><!-- End Logo -->
-
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <div class="pt-4 pb-2">
-                                        <h5 class="card-title text-center pb-0 fs-4">Forgotten Password</h5>
-                                    </div>
-
-                                    <!-- Session Messages Display -->
-                                    <?php if (isset($_SESSION['message'])): ?>
-                                        <div class="alert alert-<?php echo ($_SESSION['status'] == 'success') ? 'success' : 'danger'; ?> text-center">
-                                            <?php echo $_SESSION['message']; ?>
-                                        </div>
-                                        <?php unset($_SESSION['message']); unset($_SESSION['status']); ?>
-                                    <?php endif; ?>
-
-                                    <form action="fogot.php" method="POST" class="row g-3 needs-validation" novalidate>
-                                        <div class="col-12">
-                                            <label for="email" class="form-label">Email</label>
-                                            <input type="email" class="form-control" id="email" name="email" required>
-                                            <div class="invalid-feedback">Please enter a valid email address!</div>
-                                        </div>
-
-                                        <div class="col-12">
-                                            <p class="small mb-0" style="font-size:14px;">
-                                                <a href="index.php">Back to Login page</a>
-                                            </p>
-                                        </div>
-
-                                        <div class="col-12 mt-3">
-                                            <input type="submit" class="btn btn-primary w-100" value="Send Email">
-                                        </div>
-                                    </form>
-
-                                </div>
-                            </div>
-
-                            <?php include_once("includes/footer3.php"); ?>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main> 
-
-    <a href="#" class="back-to-top d-flex align-items-center justify-content-center">
-        <i class="bi bi-arrow-up-short"></i>
-    </a>
-
-    <?php include_once("includes/js-links-inc.php"); ?>  
+<h2>Forgot Password</h2>
+<?php
+if (isset($_SESSION['error_message'])) {
+    echo "<p style='color:red'>{$_SESSION['error_message']}</p>";
+    unset($_SESSION['error_message']);
+}
+if (isset($_SESSION['success_message'])) {
+    echo "<p style='color:green'>{$_SESSION['success_message']}</p>";
+    unset($_SESSION['success_message']);
+}
+?>
+<form method="POST">
+    <label>Enter your email:</label><br>
+    <input type="email" name="email" required><br><br>
+    <button type="submit">Send Reset Link</button>
+</form>
 </body>
 </html>
