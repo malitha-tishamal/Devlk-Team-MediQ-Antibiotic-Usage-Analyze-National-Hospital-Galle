@@ -1,16 +1,14 @@
 <?php
 session_start();
-date_default_timezone_set('Asia/Colombo'); // ✅ Set timezone to Sri Lanka
+date_default_timezone_set('Asia/Colombo');
 
 require_once '../includes/db-conn.php';
 
-// Redirect if not logged in
 if (!isset($_SESSION['admin_id'])) {
     header("Location: ../index.php");
     exit();
 }
 
-// Fetch user details
 $user_id = $_SESSION['admin_id'];
 $sql = "SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?";
 $stmt = $conn->prepare($sql);
@@ -79,175 +77,399 @@ $categoryPieStmt->execute();
 $categoryPieResult = $categoryPieStmt->get_result();
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Antibiotic Usage - Mediq</title>
+    <title>Antibiotic Usage Analytics - Mediq</title>
     <?php include_once("../includes/css-links-inc.php"); ?>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://www.gstatic.com/charts/loader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
 
     <style>
-        #piechart, #categoryPieChart { width: 95%; height: 400px; margin: auto; }
-        .dataTables_filter { text-align: right; }
-        .custom-search-box { margin-bottom: 15px; }
-        @media print { .no-print { display: none; } }
-        @media only screen and (min-width: 768px) {
-            .select-bar { display: flex; }
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin: 15px auto;
+            border-radius: 10px;
+            background: white;
+            box-shadow: var(--card-shadow);
+            padding: 15px;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .filter-section {
+            background: var(--light-bg);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: var(--hover-shadow);
+            transform: translateY(-2px);
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .btn {
+            border-radius: 6px;
+            font-weight: 600;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #219653);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .dataTables_wrapper {
+            margin-top: 20px;
+        }
+        
+        .dataTables_filter input {
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+        }
+        
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr !important;
+            }
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .dataTable {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .dataTable thead th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+        
+        .dataTable tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .progress {
+            height: 8px;
+            margin-top: 5px;
+        }
+        
+        .percentage-badge {
+            background: var(--secondary-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 
     <script>
-google.charts.load('current', { 'packages': ['corechart'] });
-google.charts.setOnLoadCallback(function () {
-    drawAntibioticChart();
-    drawCategoryChart();
-});
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(function () {
+            drawAntibioticChart();
+            drawCategoryChart();
+        });
 
-function drawAntibioticChart() {
-    var data = google.visualization.arrayToDataTable([
-        ['Antibiotic', 'Usage in Units'],
-        <?php
-        // Re-run pie chart query to fetch both antibiotic and dosage
-        $pieUsageQuery = "
-            SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count
-            FROM releases
-            WHERE release_time BETWEEN ? AND ?
-            AND YEAR(release_time) = ?
-            AND MONTH(release_time) BETWEEN ? AND ?
-            GROUP BY antibiotic_name, dosage
-        ";
-        $pieUsageStmt = $conn->prepare($pieUsageQuery);
-        $pieUsageStmt->bind_param("ssiii", $startDate, $endDate, $selectedYear, $startMonth, $endMonth);
-        $pieUsageStmt->execute();
-        $pieUsageResult = $pieUsageStmt->get_result();
+        function drawAntibioticChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Antibiotic', 'Usage in Units'],
+                <?php
+                $pieUsageQuery = "
+                    SELECT antibiotic_name, dosage, SUM(item_count) AS usage_count
+                    FROM releases
+                    WHERE release_time BETWEEN ? AND ?
+                    AND YEAR(release_time) = ?
+                    AND MONTH(release_time) BETWEEN ? AND ?
+                    GROUP BY antibiotic_name, dosage
+                ";
+                $pieUsageStmt = $conn->prepare($pieUsageQuery);
+                $pieUsageStmt->bind_param("ssiii", $startDate, $endDate, $selectedYear, $startMonth, $endMonth);
+                $pieUsageStmt->execute();
+                $pieUsageResult = $pieUsageStmt->get_result();
 
-        $pieData = [];
-        $totalPieUnits = 0;
+                $pieData = [];
+                $totalPieUnits = 0;
 
-        while ($row = $pieUsageResult->fetch_assoc()) {
-            $name = $row['antibiotic_name'];
-            $dosage = strtolower($row['dosage']);
-            $count = $row['usage_count'];
-            $grams = 0;
+                while ($row = $pieUsageResult->fetch_assoc()) {
+                    $name = $row['antibiotic_name'];
+                    $dosage = strtolower($row['dosage']);
+                    $count = $row['usage_count'];
+                    $grams = 0;
 
-            if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $m)) {
-                $grams = ($m[1] / 1000) * $count;
-            } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $m)) {
-                $grams = $m[1] * $count;
-            }
+                    if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $m)) {
+                        $grams = ($m[1] / 1000) * $count;
+                    } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $m)) {
+                        $grams = $m[1] * $count;
+                    }
 
-            // Merge same name
-            if (!isset($pieData[$name])) {
-                $pieData[$name] = 0;
-            }
-            $pieData[$name] += $grams;
-            $totalPieUnits += $grams;
+                    if (!isset($pieData[$name])) {
+                        $pieData[$name] = 0;
+                    }
+                    $pieData[$name] += $grams;
+                    $totalPieUnits += $grams;
+                }
+
+                foreach ($pieData as $name => $units) {
+                    echo "['" . addslashes($name) . "', " . round($units, 2) . "],\n";
+                }
+                ?>
+            ]);
+
+            var options = {
+                title: 'Antibiotic Usage Distribution',
+                titleTextStyle: {
+                    fontSize: 18,
+                    bold: true,
+                    color: '#2c3e50'
+                },
+                pieHole: 0.4,
+                fontSize: 14,
+                chartArea: { width: '85%', height: '75%' },
+                pieSliceText: 'percentage',
+                tooltip: { 
+                    text: 'percentage',
+                    textStyle: { fontSize: 12 }
+                },
+                colors: ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c', '#e67e22'],
+                legend: {
+                    position: 'labeled',
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#2c3e50'
+                    }
+                },
+                backgroundColor: 'transparent'
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+            chart.draw(data, options);
         }
 
-        foreach ($pieData as $name => $units) {
-            echo "['" . addslashes($name) . "', " . round($units, 2) . "],\n";
+        function drawCategoryChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Category', 'Usage Count'],
+                <?php 
+                $colorsMap = [];
+                $categoryPieQuery = "
+                    SELECT COALESCE(category, 'Unknown') AS category, dosage, SUM(item_count) AS usage_count
+                    FROM releases
+                    WHERE release_time BETWEEN ? AND ?
+                    AND YEAR(release_time) = ?
+                    AND MONTH(release_time) BETWEEN ? AND ?
+                    GROUP BY category, dosage
+                ";
+                $catStmt = $conn->prepare($categoryPieQuery);
+                $catStmt->bind_param("ssiii", $startDate, $endDate, $selectedYear, $startMonth, $endMonth);
+                $catStmt->execute();
+                $catResult = $catStmt->get_result();
+
+                $categoryUnits = [];
+
+                while ($row = $catResult->fetch_assoc()) {
+                    $category = ucfirst(strtolower($row['category']));
+                    $dosage = strtolower($row['dosage']);
+                    $count = $row['usage_count'];
+                    $grams = 0;
+
+                    if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $m)) {
+                        $grams = ($m[1] / 1000) * $count;
+                    } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $m)) {
+                        $grams = $m[1] * $count;
+                    }
+
+                    if (!isset($categoryUnits[$category])) {
+                        $categoryUnits[$category] = 0;
+                    }
+
+                    $categoryUnits[$category] += $grams;
+                }
+
+                foreach ($categoryUnits as $category => $grams) {
+                    echo "['" . addslashes($category) . "', " . round($grams, 2) . "],";
+                    $colorsMap[$category] = match (strtolower($category)) {
+                        'access' => '#28a745',
+                        'watch' => '#3498db',
+                        'reserve' => '#e74c3c',
+                        'other' => '#95a5a6',
+                        default => '#f39c12',
+                    };
+                }
+                ?>
+            ]);
+
+            var options = {
+                title: 'Usage by Category',
+                titleTextStyle: {
+                    fontSize: 18,
+                    bold: true,
+                    color: '#2c3e50'
+                },
+                pieHole: 0.4,
+                fontSize: 14,
+                chartArea: { width: '85%', height: '75%' },
+                pieSliceText: 'percentage',
+                tooltip: { 
+                    text: 'percentage',
+                    textStyle: { fontSize: 12 }
+                },
+                colors: [<?php echo '"' . implode('","', $colorsMap) . '"'; ?>],
+                legend: {
+                    position: 'labeled',
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#2c3e50'
+                    }
+                },
+                backgroundColor: 'transparent'
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('categoryPieChart'));
+            chart.draw(data, options);
         }
-        ?>
-    ]);
-
-    var options = {
-        title: 'Antibiotic Usage (<?= date('F Y', strtotime("$selectedYear-$startMonth-01")); ?> - <?= date('F Y', strtotime("$selectedYear-$endMonth-01")); ?>)',
-        pieHole: 0.4,
-        fontSize: 14,
-        chartArea: { width: '85%', height: '75%' },
-        pieSliceText: 'percentage',
-        tooltip: { text: 'percentage' },
-        colors: ['#FF5733', '#33FF57', '#5733FF', '#FF33A1', '#33A1FF', '#ffcc00', '#00ccff']
-    };
-
-    var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-    chart.draw(data, options);
-}
-
-function drawCategoryChart() {
-    var data = google.visualization.arrayToDataTable([
-        ['Category', 'Usage Count'],
-        <?php 
-        $colorsMap = [];
-        $categoryPieQuery = "
-            SELECT COALESCE(category, 'Unknown') AS category, dosage, SUM(item_count) AS usage_count
-            FROM releases
-            WHERE release_time BETWEEN ? AND ?
-            AND YEAR(release_time) = ?
-            AND MONTH(release_time) BETWEEN ? AND ?
-            GROUP BY category, dosage
-        ";
-        $catStmt = $conn->prepare($categoryPieQuery);
-        $catStmt->bind_param("ssiii", $startDate, $endDate, $selectedYear, $startMonth, $endMonth);
-        $catStmt->execute();
-        $catResult = $catStmt->get_result();
-
-        $categoryUnits = [];
-
-    while ($row = $catResult->fetch_assoc()) {
-        $category = ucfirst(strtolower($row['category']));
-        $dosage = strtolower($row['dosage']);
-        $count = $row['usage_count'];
-        $grams = 0;
-
-        if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $m)) {
-            $grams = ($m[1] / 1000) * $count;
-        } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $m)) {
-            $grams = $m[1] * $count;
+        
+        function showLoading(message = 'Processing...') {
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingOverlay').style.display = 'flex';
         }
-
-        if (!isset($categoryUnits[$category])) {
-            $categoryUnits[$category] = 0;
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
-
-        $categoryUnits[$category] += $grams;
-    }
-
-    // Color mapping based on actual category names
-    $colorsMap = [];
-
-    foreach ($categoryUnits as $category => $grams) {
-        echo "['" . addslashes($category) . "', " . round($grams, 2) . "],";
-        $colorsMap[$category] = match (strtolower($category)) {
-            'access' => '#28a745',
-            'watch' => '#0000ff',
-            'reserve' => '#dc3545',
-            'other' => '#999999', // gray color for legitimate "Other" category
-            default => '#cccccc',
-        };
-    }
-
-        ?>
-    ]);
-
-    var options = {
-        title: 'Antibiotic Usage by Category (Units)',
-        pieHole: 0.4,
-        fontSize: 14,
-        chartArea: { width: '85%', height: '75%' },
-        pieSliceText: 'percentage',
-        tooltip: { text: 'percentage' },
-        colors: [<?php echo '"' . implode('","', $colorsMap) . '"'; ?>]
-    };
-
-    var chart = new google.visualization.PieChart(document.getElementById('categoryPieChart'));
-    chart.draw(data, options);
-}
-</script>
-
-
+    </script>
 </head>
 
 <body>
@@ -256,276 +478,357 @@ function drawCategoryChart() {
 
 <main id="main" class="main">
     <div class="pagetitle">
-        <h1>Usage Details</h1>
+        <h1>Antibiotic Usage Analytics</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="dashboard.php">Home</a></li>
+                <li class="breadcrumb-item active">Usage Analytics</li>
+            </ol>
+        </nav>
     </div>
 
     <section class="section">
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="text-center">
+                <div class="loading-spinner"></div>
+                <div id="loadingMessage">Processing...</div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Filter</h5>
+                <h5 class="card-title">Filter Data</h5>
                 <form method="POST">
-                    <div class="form-group mb-3">
-                        <!--div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="filter_type" value="month" <?php if ($filterType === 'month') echo 'checked'; ?>>
-                            <label class="form-check-label">Filter by Month</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="filter_type" value="date" <?php if ($filterType === 'date') echo 'checked'; ?>>
-                            <label class="form-check-label">Filter by Date</label>
-                        </div-->
-                    </div>
-
-                    <div id="month_range_filters" class="form-row mb-3 select-bar" style="<?php echo ($filterType === 'month') ? '' : 'display: none;'; ?>">
-                        <div class="col-sm-3">
-                            <label>Select Year:</label>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Select Year:</label>
                             <select name="year_select" class="form-select">
                                 <?php for ($i = 2020; $i <= date('Y'); $i++): ?>
                                     <option value="<?= $i ?>" <?= ($i == $selectedYear) ? 'selected' : '' ?>><?= $i ?></option>
                                 <?php endfor; ?>
                             </select>
                         </div>
-                        <div class="col-sm-3">
-                            <label>Start Month:</label>
+                        <div class="col-md-3">
+                            <label class="form-label">Start Month:</label>
                             <select name="start_month_select" class="form-select">
                                 <?php foreach (range(1, 12) as $m): ?>
                                     <option value="<?= $m ?>" <?= ($m == $startMonth) ? 'selected' : '' ?>><?= date("F", mktime(0, 0, 0, $m, 10)) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-sm-3">
-                            <label>End Month:</label>
+                        <div class="col-md-3">
+                            <label class="form-label">End Month:</label>
                             <select name="end_month_select" class="form-select">
                                 <?php foreach (range(1, 12) as $m): ?>
                                     <option value="<?= $m ?>" <?= ($m == $endMonth) ? 'selected' : '' ?>><?= date("F", mktime(0, 0, 0, $m, 10)) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                    </div>
-
-                    <div id="date_range_filters" class="form-row mb-3 select-bar" style="<?php echo ($filterType === 'date') ? '' : 'display: none;'; ?>">
-                        <div class="col-sm-3">
-                            <label>Start Date:</label>
-                            <input type="date" name="start_date" class="form-control" value="<?= $startDate ?>">
-                        </div>
-                        <div class="col-sm-3">
-                            <label>End Date:</label>
-                            <input type="date" name="end_date" class="form-control" value="<?= $endDate ?>">
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-funnel"></i> Apply Filter
+                            </button>
                         </div>
                     </div>
-
-                    <button type="submit" class="btn btn-primary">Apply Filter</button>
                 </form>
             </div>
         </div>
 
-
-
-        <div class="mb-3 no-print d-flex gap-2">
-            <button onclick="exportToExcel()" class="btn btn-success">Download Excel</button>
-            <!--button onclick="downloadPDF()" class="btn btn-danger">Download PDF</button-->
-            <button onclick="window.print()" class="btn btn-primary">Print</button>
+        <!-- Statistics Cards -->
+        <?php
+        // Calculate statistics
+        $totalAntibiotics = count($pieData);
+        $totalCategories = count($categoryUnits);
+        $totalUsage = array_sum($pieData);
+        $avgUsage = $totalAntibiotics > 0 ? $totalUsage / $totalAntibiotics : 0;
+        ?>
+        
+        <div class="stats-container">
+            <div class="stats-card">
+                <div class="stat-label">Total Antibiotics</div>
+                <div class="stat-number"><?= $totalAntibiotics ?></div>
+                <small>Tracked in system</small>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">Categories</div>
+                <div class="stat-number"><?= $totalCategories ?></div>
+                <small>Usage classification</small>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">Total Usage</div>
+                <div class="stat-number"><?= number_format($totalUsage, 2) ?></div>
+                <small>Units (grams)</small>
+            </div>
+            <div class="stats-card">
+                <div class="stat-label">Avg per Antibiotic</div>
+                <div class="stat-number"><?= number_format($avgUsage, 2) ?></div>
+                <small>Units (grams)</small>
+            </div>
         </div>
 
+        <!-- Export Buttons -->
+        <div class="export-buttons">
+            <button onclick="exportToExcel()" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel"></i> Export to Excel
+            </button>
+            <button onclick="downloadPDF()" class="btn btn-danger">
+                <i class="bi bi-file-pdf"></i> Export to PDF
+            </button>
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Print Report
+            </button>
+        </div>
 
-        <script>
-            function exportToExcel() {
-                // Create a new workbook
-                var wb = XLSX.utils.book_new();
+        <!-- Charts Section -->
+        <div class="chart-row">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Antibiotic Usage Distribution</h5>
+                    <div id="piechart" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Usage by Category</h5>
+                    <div id="categoryPieChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
 
-                // 1. Table Data Sheet
-                var table = document.getElementById("antibioticTable");
-                var ws1 = XLSX.utils.table_to_sheet(table);
-                XLSX.utils.book_append_sheet(wb, ws1, "Antibiotic Usage");
-
-                // 2. Pie Chart 1 Data (Antibiotic Usage by name)
-                var pieData = [
-                    ["Antibiotic", "Usage in Units"]
-                    <?php
-                    foreach ($pieData as $name => $units) {
-                        echo ", [\"". addslashes($name) ."\", ". round($units, 2) ."]";
-                    }
-                    ?>
-                ];
-                var ws2 = XLSX.utils.aoa_to_sheet(pieData);
-                XLSX.utils.book_append_sheet(wb, ws2, "Usage by Antibiotic");
-
-                // 3. Pie Chart 2 Data (Category Usage)
-                var categoryData = [
-                    ["Category", "Usage in Units"]
-                    <?php
-                    foreach ($categoryUnits as $category => $grams) {
-                        echo ", [\"". addslashes($category) ."\", ". round($grams, 2) ."]";
-                    }
-                    ?>
-                ];
-                var ws3 = XLSX.utils.aoa_to_sheet(categoryData);
-                XLSX.utils.book_append_sheet(wb, ws3, "Usage by Category");
-
-                // Download
-                XLSX.writeFile(wb, "antibiotic_usage_full.xlsx");
-            }
-            </script>
-
-        <script>
-            async function downloadPDF() {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'pt', 'a4');
-
-                const chart1 = document.getElementById('piechart');
-                const chart2 = document.getElementById('categoryPieChart');
-
-                // Convert charts to canvas and then to image
-                const canvas1 = await html2canvas(chart1);
-                const canvas2 = await html2canvas(chart2);
-
-                const imgData1 = canvas1.toDataURL('image/png');
-                const imgData2 = canvas2.toDataURL('image/png');
-
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const chartWidth = pageWidth - 40;
-
-                // Add chart 1
-                doc.text("Antibiotic Usage (by Antibiotic)", 20, 20);
-                doc.addImage(imgData1, 'PNG', 20, 30, chartWidth, 200);
-
-                // Add chart 2
-                doc.text("Antibiotic Usage (by Category)", 20, 250);
-                doc.addImage(imgData2, 'PNG', 20, 260, chartWidth, 200);
-
-                // Move below charts
-                const finalY = 470;
-
-                doc.text("Usage Table", 20, finalY);
-
-                doc.autoTable({
-                    html: '#antibioticTable',
-                    startY: finalY + 10,
-                    styles: { fontSize: 8 },
-                    theme: 'grid',
-                });
-
-                doc.save("antibiotic_usage_report.pdf");
-            }
-
-        </script>
-
-
+        <!-- Data Table Section -->
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Antibiotic Usage Data</h5>
-                <div class="text-end mb-3">
-                </div>
+                <h5 class="card-title">Detailed Usage Data</h5>
+                
+                <div class="table-responsive">
+                    <table id="antibioticTable" class="table table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Antibiotic</th>
+                                <th>Dosage</th>
+                                <th>Count</th>
+                                <th>Usage (g)</th>
+                                <th>Units</th>
+                                <th>% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $count = 1;
+                            $totalUnits = 0;
 
-               <div class="d-flex">
-                    <div id="piechart"></div>
-                    <div id="categoryPieChart"></div>
-               </div>
+                            // First pass: calculate total grams/units
+                            $tempData = [];
+                            mysqli_data_seek($result, 0); // Reset result pointer
+                            while ($row = $result->fetch_assoc()) {
+                                $dosage = strtolower($row['dosage']);
+                                $itemCount = $row['usage_count'];
+                                $usageInGrams = 0;
 
-               <div class="mb-3">
-                <input type="text" id="customSearchBox" class="form-control w-75" placeholder="Search antibiotic data...">
-            </div>
+                                if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $matches)) {
+                                    $mgValue = (float)$matches[1];
+                                    $usageInGrams = ($mgValue / 1000) * $itemCount;
+                                } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $matches)) {
+                                    $gValue = (float)$matches[1];
+                                    $usageInGrams = $gValue * $itemCount;
+                                }
 
-        <script>
-            document.getElementById('customSearchBox').addEventListener('keyup', function () {
-                const query = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#antibioticTable tbody tr');
+                                $tempData[] = [
+                                    'antibiotic_name' => $row['antibiotic_name'],
+                                    'dosage' => $dosage,
+                                    'count' => $itemCount,
+                                    'grams' => $usageInGrams,
+                                    'units' => $usageInGrams
+                                ];
 
-                rows.forEach(function (row) {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(query) ? '' : 'none';
-                });
-            });
-
-
-            </script>
-
-<script>
-  window.customSort = (sortName, sortOrder, data) => {
-    const order = sortOrder === 'desc' ? -1 : 1
-
-    data.sort(function (a, b) {
-      const aa = +`${a[sortName]}`.replace(/[^\d]/g, '')
-      const bb = +`${b[sortName]}`.replace(/[^\d]/g, '')
-
-      if (aa < bb) {
-        return order * -1
-      }
-      if (aa > bb) {
-        return order
-      }
-      return 0
-    })
-  }
-</script>
-
-
-                    <table id="antibioticTable" class="table datatable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Antibiotic</th>
-                            <th>Dosage</th>
-                            <th>Count</th>
-                            <th>Converted Usage (g)</th>
-                            <th>Units (1g = 1 Unit)</th>
-                            <th>% of Total Usage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $count = 1;
-                        $totalUnits = 0;
-
-                        // First pass: calculate total grams/units
-                        $tempData = [];
-                        while ($row = $result->fetch_assoc()) {
-                            $dosage = strtolower($row['dosage']);
-                            $itemCount = $row['usage_count'];
-                            $usageInGrams = 0;
-
-                            if (preg_match('/(\d+(?:\.\d+)?)\s*mg/', $dosage, $matches)) {
-                                $mgValue = (float)$matches[1];
-                                $usageInGrams = ($mgValue / 1000) * $itemCount;
-                            } elseif (preg_match('/(\d+(?:\.\d+)?)\s*g/', $dosage, $matches)) {
-                                $gValue = (float)$matches[1];
-                                $usageInGrams = $gValue * $itemCount;
+                                $totalUnits += $usageInGrams;
                             }
 
-                            $tempData[] = [
-                                'antibiotic_name' => $row['antibiotic_name'],
-                                'dosage' => $dosage,
-                                'count' => $itemCount,
-                                'grams' => $usageInGrams,
-                                'units' => $usageInGrams // 1g = 1 unit
-                            ];
-
-                            $totalUnits += $usageInGrams;
-                        }
-
-                        // Display table with percentage
-                        foreach ($tempData as $row) {
-                            $percentage = ($totalUnits > 0) ? ($row['units'] / $totalUnits) * 100 : 0;
-                        ?>
-                        <tr>
-                            <td><?= $count++ ?></td>
-                            <td><?= htmlspecialchars($row['antibiotic_name']) ?></td>
-                            <td><?= htmlspecialchars($row['dosage']) ?></td>
-                            <td><?= number_format($row['count']) ?></td>
-                            <td><?= number_format($row['grams'], 2) ?> g</td>
-                            <td><?= number_format($row['units'], 2) ?></td>
-                            <td><?= number_format($percentage, 4) ?>%</td>
-                        </tr>
-                        <?php } ?>
+                            // Display table with percentage
+                            foreach ($tempData as $row) {
+                                $percentage = ($totalUnits > 0) ? ($row['units'] / $totalUnits) * 100 : 0;
+                            ?>
+                            <tr>
+                                <td><?= $count++ ?></td>
+                                <td><strong><?= htmlspecialchars($row['antibiotic_name']) ?></strong></td>
+                                <td><?= htmlspecialchars($row['dosage']) ?></td>
+                                <td><?= number_format($row['count']) ?></td>
+                                <td><?= number_format($row['grams'], 2) ?> g</td>
+                                <td><?= number_format($row['units'], 2) ?></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="percentage-badge me-2"><?= number_format($percentage, 2) ?>%</span>
+                                        <div class="progress flex-grow-1" style="width: 100px;">
+                                            <div class="progress-bar" style="width: <?= $percentage ?>%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php } ?>
                         </tbody>
-
-                </table>
-
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                <td><strong><?= number_format($totalUnits, 2) ?> g</strong></td>
+                                <td><strong><?= number_format($totalUnits, 2) ?></strong></td>
+                                <td><strong>100%</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
     </section>
-
 </main>
+
 <?php include_once("../includes/footer.php"); ?>
 <?php include_once ("../includes/js-links-inc.php") ?>
+
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable
+        $('#antibioticTable').DataTable({
+            "pageLength": 25,
+            "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            "order": [[5, "desc"]], // Sort by Units descending
+            "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            "language": {
+                "search": "Search records:",
+                "lengthMenu": "Show _MENU_ entries",
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoEmpty": "Showing 0 to 0 of 0 entries",
+                "infoFiltered": "(filtered from _MAX_ total entries)"
+            }
+        });
+    });
+
+    function exportToExcel() {
+        showLoading('Generating Excel report...');
+        
+        // Create a new workbook
+        var wb = XLSX.utils.book_new();
+
+        // 1. Table Data Sheet
+        var table = document.getElementById("antibioticTable");
+        var ws1 = XLSX.utils.table_to_sheet(table);
+        XLSX.utils.book_append_sheet(wb, ws1, "Antibiotic Usage");
+
+        // 2. Pie Chart 1 Data (Antibiotic Usage by name)
+        var pieData = [
+            ["Antibiotic", "Usage in Units"]
+            <?php
+            foreach ($pieData as $name => $units) {
+                echo ", [\"". addslashes($name) ."\", ". round($units, 2) ."]";
+            }
+            ?>
+        ];
+        var ws2 = XLSX.utils.aoa_to_sheet(pieData);
+        XLSX.utils.book_append_sheet(wb, ws2, "Usage by Antibiotic");
+
+        // 3. Pie Chart 2 Data (Category Usage)
+        var categoryData = [
+            ["Category", "Usage in Units"]
+            <?php
+            foreach ($categoryUnits as $category => $grams) {
+                echo ", [\"". addslashes($category) ."\", ". round($grams, 2) ."]";
+            }
+            ?>
+        ];
+        var ws3 = XLSX.utils.aoa_to_sheet(categoryData);
+        XLSX.utils.book_append_sheet(wb, ws3, "Usage by Category");
+
+        // Download
+        XLSX.writeFile(wb, "antibiotic_usage_report_<?= $selectedYear . '_' . $startMonth . '_' . $endMonth ?>.xlsx");
+        
+        setTimeout(hideLoading, 1000);
+    }
+
+    async function downloadPDF() {
+        showLoading('Generating PDF report...');
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'pt', 'a4');
+
+        const chart1 = document.getElementById('piechart');
+        const chart2 = document.getElementById('categoryPieChart');
+
+        // Convert charts to canvas and then to image
+        const canvas1 = await html2canvas(chart1);
+        const canvas2 = await html2canvas(chart2);
+
+        const imgData1 = canvas1.toDataURL('image/png');
+        const imgData2 = canvas2.toDataURL('image/png');
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const chartWidth = (pageWidth - 60) / 2;
+
+        // Add header
+        doc.setFontSize(20);
+        doc.setTextColor(44, 62, 80);
+        doc.text("Antibiotic Usage Report", pageWidth / 2, 40, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Period: <?= date('F Y', strtotime("$selectedYear-$startMonth-01")) ?> - <?= date('F Y', strtotime("$selectedYear-$endMonth-01")) ?>", pageWidth / 2, 60, { align: 'center' });
+
+        // Add chart 1
+        doc.text("Antibiotic Usage Distribution", 40, 90);
+        doc.addImage(imgData1, 'PNG', 40, 100, chartWidth, 200);
+
+        // Add chart 2
+        doc.text("Usage by Category", pageWidth / 2 + 20, 90);
+        doc.addImage(imgData2, 'PNG', pageWidth / 2 + 20, 100, chartWidth, 200);
+
+        // Add table on new page
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.setTextColor(44, 62, 80);
+        doc.text("Detailed Usage Data", 40, 40);
+
+        doc.autoTable({
+            html: '#antibioticTable',
+            startY: 60,
+            styles: { 
+                fontSize: 9,
+                cellPadding: 3
+            },
+            headStyles: {
+                fillColor: [44, 62, 80],
+                textColor: 255,
+                fontStyle: 'bold'
+            },
+            alternateRowStyles: {
+                fillColor: [248, 249, 250]
+            },
+            theme: 'grid'
+        });
+
+        // Add footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for(let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Page ${i} of ${pageCount}`, pageWidth - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+            doc.text("Generated on: <?= date('Y-m-d H:i:s') ?>", 40, doc.internal.pageSize.getHeight() - 20);
+        }
+
+        doc.save("antibiotic_usage_report_<?= $selectedYear . '_' . $startMonth . '_' . $endMonth ?>.pdf");
+        
+        hideLoading();
+    }
+
+    // Handle window resize for charts
+    window.addEventListener('resize', function() {
+        google.charts.setOnLoadCallback(function () {
+            drawAntibioticChart();
+            drawCategoryChart();
+        });
+    });
+</script>
 </body>
 </html>
