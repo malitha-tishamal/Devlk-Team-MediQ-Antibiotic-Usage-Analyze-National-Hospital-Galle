@@ -545,6 +545,7 @@ $chart2Width = max(1000, count($wards2) * 100);
                 }
             });
         }
+        
 
         // Function to export data to Excel
         function exportToExcel(type) {

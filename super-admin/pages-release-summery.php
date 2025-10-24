@@ -746,7 +746,6 @@ $categoryPieResult = $categoryPieStmt->get_result();
         
         setTimeout(hideLoading, 1000);
     }
-
     async function downloadPDF() {
         showLoading('Generating PDF report...');
         

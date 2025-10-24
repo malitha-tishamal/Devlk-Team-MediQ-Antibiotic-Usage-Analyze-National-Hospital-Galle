@@ -10,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 
 $user_id = (int)$_SESSION['admin_id'];
 
-// Get user data with error handling
+
 try {
     $stmt = $conn->prepare("SELECT name, email, nic, mobile, profile_picture FROM admins WHERE id = ?");
     $stmt->bind_param("i", $user_id);

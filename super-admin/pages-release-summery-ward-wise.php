@@ -389,7 +389,6 @@ $wardStmt->close();
                     <div id="loadingMessage">Processing...</div>
                 </div>
             </div>
-
             <!-- Statistics Cards -->
             <div class="stats-container">
                 <div class="stats-card">

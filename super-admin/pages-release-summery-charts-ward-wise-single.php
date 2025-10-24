@@ -412,6 +412,7 @@ foreach ($wards2 as $ward) {
             showNotification('Error downloading chart', 'error');
         }
     }
+    
 
     // Download Chart 1 as Image
     function downloadChart1() {
