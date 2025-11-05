@@ -1,6 +1,6 @@
-# mediq
+# MediQ
 
-MediQ — Antibiotic Usage Analyze System at Karapitiya Hospital 🏥
+MediQ — Antibiotic Usage Analyze System For Karapitiya National HospitalGalle ,Srilanka 🏥
 
 Dec 2024 - Present- 
 🚀 After 6 months of focused development, we’re proud to introduce MediQ – Antibiotic Usage Analysis System, built for Karapitiya Hospital, Galle.
@@ -60,6 +60,7 @@ Localhost Database Name = <strong>mediq_db</strong><br /><br />
    
 # Attention to these things
 <strong>* Don't edit codes, without asking from @malitha.</strong><br />
+
 
 
 
