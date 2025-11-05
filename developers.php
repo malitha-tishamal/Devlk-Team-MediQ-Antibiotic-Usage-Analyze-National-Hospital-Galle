@@ -12,8 +12,8 @@
     <?php include_once ("includes/css-links-inc.php"); ?>
     <style>
         .team-card img{
-            width :120px;
-            height :120px;
+            width :180px;
+            height :180px;
         }
     </style
 
@@ -36,22 +36,7 @@
         <h1 class="mb-5 text-primary fw-bold">Our Team</h1>
         <div class="row g-4 justify-content-center">
              <!-- Team Member 1-->
-            <!--div class="col-md-3">
-                <div class="team-card text-center">
-                    <img src="assets\images\Developers\supun.jpg" alt="Team Member">
-                    <h4 class="fw-bold">Supun Charuka</h4>
-                    <p>Full Stack Developer</p>
-                    <div class="team-icons">
-                        <a href="#" target="_blank"><i class="bi bi-globe"></i></a>
-                        <a href="#" target="_blank"><i class="bi bi-github"></i></a>
-                        <a href="#" target="_blank"><i class="bi bi-linkedin"></i></a>
-                        <a href="#" target="_blank"><i class="bi bi-facebook"></i></a>
-                        <a href="#" target="_blank"><i class="bi bi-envelope"></i></a>
-                    </div>
-                </div>
-            </div-->
 
-            <!-- Team Member 2 -->
             <div class="col-md-3">
                 <div class="team-card text-center">
                     <img src="assets\images\Developers\malitha3.jpg" alt="Team Member">
@@ -145,7 +130,7 @@
                     </div>
                     <span class="text-center text-danger"><b>&nbsp;</b></span>
                 </div>
-            </div-->
+            </div>
 
             <div class="col-md-3">
                 <div class="team-card text-center">
@@ -164,7 +149,7 @@
                     </div>
                     <span class="text-center text-danger"><b>&nbsp;</b></span>
                 </div>
-            </div>
+            </div-->
 
             <!--div class="col-md-3">
                 <div class="team-card text-center">
