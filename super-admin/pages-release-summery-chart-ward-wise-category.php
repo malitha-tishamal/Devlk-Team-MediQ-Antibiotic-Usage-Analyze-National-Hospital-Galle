@@ -114,10 +114,10 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Calculate summary statistics
+// Calculate summary statistics - FIXED VERSION
 $totalUsage = array_sum($usageTotals);
-$maxUsageWard = array_keys($usageTotals, max($usageTotals))[0] ?? 'N/A';
-$maxUsageValue = max($usageTotals);
+$maxUsageValue = !empty($usageTotals) ? max($usageTotals) : 0;
+$maxUsageWard = !empty($usageTotals) ? array_keys($usageTotals, $maxUsageValue)[0] : 'N/A';
 ?>
 
 <!DOCTYPE html>
@@ -284,6 +284,12 @@ $maxUsageValue = max($usageTotals);
             font-weight: 600;
             font-size: 1.1rem;
         }
+        .no-data-message {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
@@ -408,34 +414,48 @@ $maxUsageValue = max($usageTotals);
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="chart1-chart">
-                        <div id="chart1" class="chart-container"></div>
+                        <div id="chart1" class="chart-container">
+                            <?php if(empty($antibiotics) || empty($antibioticData)): ?>
+                                <div class="no-data-message">
+                                    <h5>📭 No antibiotic usage data available for the selected period</h5>
+                                    <p>Please try selecting a different date range.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="chart1-table">
                         <div class="data-table-container">
-                            <div class="table-responsive">
-                                <table class="table table-striped data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Ward Category</th>
-                                            <?php foreach ($antibiotics as $antibiotic): ?>
-                                                <th class="text-end"><?= htmlspecialchars($antibiotic) ?> (g)</th>
-                                            <?php endforeach; ?>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($wardCategories as $wc): ?>
+                            <?php if(empty($antibiotics)): ?>
+                                <div class="no-data-message">
+                                    <h5>📭 No antibiotic usage data available for the selected period</h5>
+                                    <p>Please try selecting a different date range.</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-striped data-table">
+                                        <thead>
                                             <tr>
-                                                <td><strong><?= $wc ?></strong></td>
-                                                <?php foreach ($antibiotics as $a): 
-                                                    $val = isset($antibioticData[$wc][$a]) ? round($antibioticData[$wc][$a], 2) : 0;
-                                                ?>
-                                                    <td class="text-end"><?= number_format($val, 2) ?></td>
+                                                <th>Ward Category</th>
+                                                <?php foreach ($antibiotics as $antibiotic): ?>
+                                                    <th class="text-end"><?= htmlspecialchars($antibiotic) ?> (g)</th>
                                                 <?php endforeach; ?>
                                             </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($wardCategories as $wc): ?>
+                                                <tr>
+                                                    <td><strong><?= $wc ?></strong></td>
+                                                    <?php foreach ($antibiotics as $a): 
+                                                        $val = isset($antibioticData[$wc][$a]) ? round($antibioticData[$wc][$a], 2) : 0;
+                                                    ?>
+                                                        <td class="text-end"><?= number_format($val, 2) ?></td>
+                                                    <?php endforeach; ?>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -456,42 +476,56 @@ $maxUsageValue = max($usageTotals);
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="chart2-chart">
-                        <div id="chart2" class="chart-container"></div>
+                        <div id="chart2" class="chart-container">
+                            <?php if(empty($dataMap)): ?>
+                                <div class="no-data-message">
+                                    <h5>📭 No category usage data available for the selected period</h5>
+                                    <p>Please try selecting a different date range.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="chart2-table">
                         <div class="data-table-container">
-                            <div class="table-responsive">
-                                <table class="table table-striped data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Ward Category</th>
-                                            <th class="text-end">Access (g)</th>
-                                            <th class="text-end">Watch (g)</th>
-                                            <th class="text-end">Reserve (g)</th>
-                                            <th class="text-end">Other (g)</th>
-                                            <th class="text-end">Total (g)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($wardCategories as $wc): 
-                                            $access = isset($dataMap[$wc]['Access']) ? round($dataMap[$wc]['Access'], 2) : 0;
-                                            $watch = isset($dataMap[$wc]['Watch']) ? round($dataMap[$wc]['Watch'], 2) : 0;
-                                            $reserve = isset($dataMap[$wc]['Reserve']) ? round($dataMap[$wc]['Reserve'], 2) : 0;
-                                            $other = isset($dataMap[$wc]['Other']) ? round($dataMap[$wc]['Other'], 2) : 0;
-                                            $total = $access + $watch + $reserve + $other;
-                                        ?>
+                            <?php if(empty($dataMap)): ?>
+                                <div class="no-data-message">
+                                    <h5>📭 No category usage data available for the selected period</h5>
+                                    <p>Please try selecting a different date range.</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-striped data-table">
+                                        <thead>
                                             <tr>
-                                                <td><strong><?= $wc ?></strong></td>
-                                                <td class="text-end"><?= number_format($access, 2) ?></td>
-                                                <td class="text-end"><?= number_format($watch, 2) ?></td>
-                                                <td class="text-end"><?= number_format($reserve, 2) ?></td>
-                                                <td class="text-end"><?= number_format($other, 2) ?></td>
-                                                <td class="text-end"><strong><?= number_format($total, 2) ?></strong></td>
+                                                <th>Ward Category</th>
+                                                <th class="text-end">Access (g)</th>
+                                                <th class="text-end">Watch (g)</th>
+                                                <th class="text-end">Reserve (g)</th>
+                                                <th class="text-end">Other (g)</th>
+                                                <th class="text-end">Total (g)</th>
                                             </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($wardCategories as $wc): 
+                                                $access = isset($dataMap[$wc]['Access']) ? round($dataMap[$wc]['Access'], 2) : 0;
+                                                $watch = isset($dataMap[$wc]['Watch']) ? round($dataMap[$wc]['Watch'], 2) : 0;
+                                                $reserve = isset($dataMap[$wc]['Reserve']) ? round($dataMap[$wc]['Reserve'], 2) : 0;
+                                                $other = isset($dataMap[$wc]['Other']) ? round($dataMap[$wc]['Other'], 2) : 0;
+                                                $total = $access + $watch + $reserve + $other;
+                                            ?>
+                                                <tr>
+                                                    <td><strong><?= $wc ?></strong></td>
+                                                    <td class="text-end"><?= number_format($access, 2) ?></td>
+                                                    <td class="text-end"><?= number_format($watch, 2) ?></td>
+                                                    <td class="text-end"><?= number_format($reserve, 2) ?></td>
+                                                    <td class="text-end"><?= number_format($other, 2) ?></td>
+                                                    <td class="text-end"><strong><?= number_format($total, 2) ?></strong></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -512,40 +546,54 @@ $maxUsageValue = max($usageTotals);
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="chart3-chart">
-                        <div id="chart3" class="chart-container"></div>
+                        <div id="chart3" class="chart-container">
+                            <?php if(empty($usageTotals)): ?>
+                                <div class="no-data-message">
+                                    <h5>📭 No total usage data available for the selected period</h5>
+                                    <p>Please try selecting a different date range.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="chart3-table">
                         <div class="data-table-container">
-                            <div class="table-responsive">
-                                <table class="table table-striped data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Ward Category</th>
-                                            <th class="text-end">Total Usage (g)</th>
-                                            <th class="text-end">Percentage</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $grandTotal = array_sum($usageTotals);
-                                        foreach ($wardCategories as $wc): 
-                                            $val = isset($usageTotals[$wc]) ? round($usageTotals[$wc], 2) : 0;
-                                            $percentage = $grandTotal > 0 ? ($val / $grandTotal) * 100 : 0;
-                                        ?>
+                            <?php if(empty($usageTotals)): ?>
+                                <div class="no-data-message">
+                                    <h5>📭 No total usage data available for the selected period</h5>
+                                    <p>Please try selecting a different date range.</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-striped data-table">
+                                        <thead>
                                             <tr>
-                                                <td><strong><?= $wc ?></strong></td>
-                                                <td class="text-end"><?= number_format($val, 2) ?></td>
-                                                <td class="text-end"><?= number_format($percentage, 1) ?>%</td>
+                                                <th>Ward Category</th>
+                                                <th class="text-end">Total Usage (g)</th>
+                                                <th class="text-end">Percentage</th>
                                             </tr>
-                                        <?php endforeach; ?>
-                                        <tr class="table-primary">
-                                            <td><strong>TOTAL</strong></td>
-                                            <td class="text-end"><strong><?= number_format($grandTotal, 2) ?></strong></td>
-                                            <td class="text-end"><strong>100%</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            <?php 
+                                            $grandTotal = array_sum($usageTotals);
+                                            foreach ($wardCategories as $wc): 
+                                                $val = isset($usageTotals[$wc]) ? round($usageTotals[$wc], 2) : 0;
+                                                $percentage = $grandTotal > 0 ? ($val / $grandTotal) * 100 : 0;
+                                            ?>
+                                                <tr>
+                                                    <td><strong><?= $wc ?></strong></td>
+                                                    <td class="text-end"><?= number_format($val, 2) ?></td>
+                                                    <td class="text-end"><?= number_format($percentage, 1) ?>%</td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                            <tr class="table-primary">
+                                                <td><strong>TOTAL</strong></td>
+                                                <td class="text-end"><strong><?= number_format($grandTotal, 2) ?></strong></td>
+                                                <td class="text-end"><strong>100%</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -566,6 +614,11 @@ $maxUsageValue = max($usageTotals);
     }
 
     function drawChart1() {
+        <?php if(empty($antibiotics) || empty($antibioticData)): ?>
+            console.log('No data for Chart 1');
+            return;
+        <?php endif; ?>
+        
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'Ward Category');
         <?php foreach ($antibiotics as $a): ?>
@@ -607,6 +660,11 @@ $maxUsageValue = max($usageTotals);
     }
 
     function drawChart2() {
+        <?php if(empty($dataMap)): ?>
+            console.log('No data for Chart 2');
+            return;
+        <?php endif; ?>
+        
         var data = google.visualization.arrayToDataTable([
             ['Ward Category', 'Access', 'Watch', 'Reserve', 'Other'],
             <?php foreach ($wardCategories as $wc): ?>
@@ -635,6 +693,11 @@ $maxUsageValue = max($usageTotals);
     }
 
     function drawChart3() {
+        <?php if(empty($usageTotals)): ?>
+            console.log('No data for Chart 3');
+            return;
+        <?php endif; ?>
+        
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'Ward Category');
         data.addColumn('number', 'Total Usage (g)');
@@ -681,6 +744,7 @@ $maxUsageValue = max($usageTotals);
         csvContent += "Period: <?= date('F Y', strtotime($startDate)) ?> to <?= date('F Y', strtotime($endDate)) ?>\r\n";
         csvContent += "Generated on: <?= date('Y-m-d H:i:s') ?>\r\n\r\n";
         
+        <?php if(!empty($antibiotics)): ?>
         // Chart 1 data
         csvContent += "ANTIBIOTIC USAGE BY WARD CATEGORY (grams)\r\n";
         csvContent += "Ward Category," + <?= json_encode($antibiotics) ?>.join(",") + "\r\n";
@@ -691,7 +755,9 @@ $maxUsageValue = max($usageTotals);
         <?php endforeach; ?>
         csvContent += "\r\n";
         <?php endforeach; ?>
+        <?php endif; ?>
         
+        <?php if(!empty($dataMap)): ?>
         csvContent += "\r\nWHO CATEGORY USAGE BY WARD (grams)\r\n";
         csvContent += "Ward Category,Access,Watch,Reserve,Other,Total\r\n";
         <?php foreach ($wardCategories as $wc): 
@@ -703,7 +769,9 @@ $maxUsageValue = max($usageTotals);
         ?>
         csvContent += "<?= $wc ?>,<?= $access ?>,<?= $watch ?>,<?= $reserve ?>,<?= $other ?>,<?= $total ?>\r\n";
         <?php endforeach; ?>
+        <?php endif; ?>
         
+        <?php if(!empty($usageTotals)): ?>
         csvContent += "\r\nTOTAL USAGE BY WARD CATEGORY (grams)\r\n";
         csvContent += "Ward Category,Total Usage,Percentage\r\n";
         <?php 
@@ -715,6 +783,7 @@ $maxUsageValue = max($usageTotals);
         csvContent += "<?= $wc ?>,<?= $val ?>,<?= number_format($percentage, 1) ?>%\r\n";
         <?php endforeach; ?>
         csvContent += "TOTAL,<?= $grandTotal ?>,100%\r\n";
+        <?php endif; ?>
         
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");

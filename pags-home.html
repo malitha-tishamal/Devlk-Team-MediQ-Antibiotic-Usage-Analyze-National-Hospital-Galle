@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediQ - Antibiotic Usage Analysis System</title>
+    <link rel="icon" href="assets\images\logos\favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a76d2;
+            --primary-dark: #0d47a1;
+            --primary-light: #42a5f5;
+            --secondary: #00b0a6;
+            --accent: #7e57c2;
+            --dark: #1a237e;
+            --light: #f5fbff;
+            --gray: #546e7a;
+            --success: #00c853;
+            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            --gradient-alt: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: var(--dark);
+            background-color: var(--light);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        
+        .navbar {
+            padding: 18px 0;
+            background-color: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .navbar.scrolled {
+            padding: 12px 0;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 800;
+            color: var(--primary) !important;
+            font-size: 1.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            margin: 0 8px;
+            position: relative;
+            color: var(--dark) !important;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .hero-section {
+            background: var(--gradient);
+            color: white;
+            padding: 160px 0 120px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-title {
+            font-size: 3.8rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .badge-custom {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .section-title {
+            color: var(--dark);
+            font-weight: 800;
+            margin-bottom: 50px;
+            position: relative;
+            padding-bottom: 20px;
+            text-align: center;
+        }
+        
+        .section-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 5px;
+            background: var(--gradient);
+            border-radius: 5px;
+        }
+        
+        .highlight-card {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 40px 30px;
+            height: 100%;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+        
+        .highlight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient);
+        }
+        
+        .highlight-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+        }
+        
+        .highlight-icon {
+            font-size: 3.2rem;
+            color: var(--primary);
+            margin-bottom: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        }
+        
+        .tech-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item {
+            padding: 30px 20px;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            background-color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transform: translateY(-5px);
+        }
+        
+        .tech-item:hover .tech-icon {
+            transform: scale(1.15);
+        }
+        
+        .impact-section {
+            background: linear-gradient(135deg, var(--light) 0%, #e3f2fd 100%);
+            padding: 120px 0;
+            position: relative;
+        }
+        
+        .cta-button {
+            background: var(--gradient);
+            border: none;
+            padding: 16px 40px;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: all 0.6s ease;
+        }
+        
+        .cta-button:hover::before {
+            left: 100%;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.4);
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 14px 35px;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, var(--dark) 0%, #0d47a1 100%);
+            color: white;
+            padding: 80px 0 40px;
+        }
+        
+        .hashtag {
+            color: var(--secondary);
+            font-weight: 600;
+            background-color: rgba(255, 255, 255, 0.08);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            margin: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .hashtag:hover {
+            background-color: var(--secondary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+            text-decoration: none;
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 40px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--gradient);
+            transform: translateX(-50%);
+            border-radius: 4px;
+        }
+        
+        .timeline-item {
+            margin-bottom: 70px;
+            position: relative;
+            width: 50%;
+            padding-right: 60px;
+        }
+        
+        .timeline-item:nth-child(even) {
+            margin-left: 50%;
+            padding-left: 60px;
+            padding-right: 0;
+        }
+        
+        .timeline-content {
+            background-color: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-content:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .timeline-item:nth-child(odd) .timeline-content::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 40px;
+            width: 0;
+            height: 0;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-left: 12px solid white;
+        }
+        
+        .timeline-item:nth-child(even) .timeline-content::after {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 40px;
+            width: 0;
+            height: 0;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-right: 12px solid white;
+        }
+        
+        .timeline-icon {
+            position: absolute;
+            right: -75px;
+            top: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+        
+        .timeline-item:nth-child(even) .timeline-icon {
+            right: auto;
+            left: -75px;
+        }
+        
+        .stats-counter {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+        
+        .stats-text {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            right: -100px;
+        }
+        
+        .shape-2 {
+            width: 200px;
+            height: 200px;
+            bottom: 50px;
+            left: -80px;
+            background: var(--accent);
+        }
+        
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .feature-badge i {
+            margin-right: 8px;
+        }
+        
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .floating-btn:hover {
+            transform: translateY(-5px) scale(1.1);
+            color: white;
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.4);
+        }
+        
+        .testimonial-card {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 40px 30px;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .testimonial-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 3px solid var(--primary-light);
+        }
+        
+        .testimonial-name {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+        
+        .testimonial-role {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .stats-section {
+            background: var(--gradient-alt);
+            padding: 80px 0;
+            color: white;
+        }
+        
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .feature-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .feature-list li {
+            margin-bottom: 15px;
+            padding-left: 35px;
+            position: relative;
+        }
+        
+        .feature-list li:before {
+            content: '\f00c';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--success);
+            background: rgba(0, 200, 83, 0.1);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @media (max-width: 992px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+                text-align: center;
+            }
+            
+            .timeline::before {
+                left: 30px;
+            }
+            
+            .timeline-item {
+                width: 100%;
+                padding-left: 80px;
+                padding-right: 0;
+            }
+            
+            .timeline-item:nth-child(even) {
+                margin-left: 0;
+                padding-left: 80px;
+            }
+            
+            .timeline-icon {
+                left: 10px;
+                right: auto;
+            }
+            
+            .timeline-item:nth-child(even) .timeline-icon {
+                left: 10px;
+            }
+            
+            .timeline-item:nth-child(odd) .timeline-content::after,
+            .timeline-item:nth-child(even) .timeline-content::after {
+                display: none;
+            }
+        }
+        
+        /* Animation classes */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* NEW ANIMATIONS AND STYLES */
+
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loader {
+            width: 80px;
+            height: 80px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Enhanced hero animations */
+        .hero-title span {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        /* Pulse animation for stats */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Parallax effect */
+        .parallax {
+            background-attachment: fixed;
+        }
+
+        /* Typing effect */
+        .typing-text {
+            overflow: hidden;
+            border-right: 2px solid white;
+            white-space: nowrap;
+            margin: 0 auto;
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: white }
+        }
+
+        /* Floating particles */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Glow effect */
+        .glow {
+            box-shadow: 0 0 20px rgba(26, 118, 210, 0.4);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 10px rgba(26, 118, 210, 0.4);
+            }
+            to {
+                box-shadow: 0 0 20px rgba(26, 118, 210, 0.8);
+            }
+        }
+
+        /* Bounce animation */
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Rotating animation */
+        .rotate {
+            animation: rotate 10s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Morphing background */
+        .morphing-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Staggered animations */
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .stagger-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hover tilt effect */
+        .tilt-hover {
+            transition: transform 0.3s ease;
+        }
+        
+        .tilt-hover:hover {
+            transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
+        }
+
+        /* Text gradient animation */
+        .gradient-text {
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+
+        /* Modern progress bars */
+        .progress-container {
+            height: 8px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* Wave animation */
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+        }
+        
+        .wave svg {
+            position: relative;
+            display: block;
+            width: calc(100% + 1.3px);
+            height: 100px;
+        }
+        
+        .wave .shape-fill {
+            fill: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="assets\images\logos\favicon.png" width="40px"> &nbsp;<span style="color:">MEDI-Q
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+
+                    <li class="nav-item ms-2">
+                        <a class="btn cta-button" href="index.php" target="_self">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <div class="morphing-bg"></div>
+        <div class="particles-container" id="particles"></div>
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+        </div>
+        <div class="wave">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+            </svg>
+        </div>
+        <div class="container position-relative">
+            <div class="row align-items-center hero-content">
+                <div class="col-lg-7">
+                    <span class="badge-custom fade-in">Antibiotics</span>
+                    <h1 class="hero-title fade-in">
+                        MediQ– Antibiotic Usage Analysis System
+                    </h1>
+                    <p class="hero-subtitle fade-in typing-text">Built for Karapitiya Hospital, Galle</p>
+                    <p class="lead mb-4 fade-in">A comprehensive platform designed to tackle one of healthcare's most critical challenges – responsible antibiotic management. By integrating real-time monitoring, advanced analytics, and streamlined workflows, MediQ empowers healthcare teams to make data-driven decisions that optimize antibiotic usage.</p>
+                    <div class="d-flex flex-wrap gap-3 fade-in">
+                    </div>
+                </div>
+                <div class="col-lg-5 text-center">
+                    <div class="p-4 tilt-hover">
+                        <i class="fas fa-laptop-medical display-1 mb-3 fade-in pulse"></i>
+                        <div class="row mt-4 text-start fade-in">
+                            <div class="col-6 mb-4">
+                                <div class="stats-counter">24/7</div>
+                                <div class="stats-text">Hospital Access</div>
+                            </div>
+                            <div class="col-6 mb-4">
+                                <div class="stats-counter">100%</div>
+                                <div class="stats-text">Secure Data</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stats-counter">Real-time</div>
+                                <div class="stats-text">Monitoring</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stats-counter">Smart</div>
+                                <div class="stats-text">Analytics</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Highlights -->
+    <section id="highlights" class="py-5" style="background-color: white;">
+        <div class="container">
+            <h2 class="section-title fade-in">🎯 Key Features</h2>
+            <div class="row g-4 mt-4">
+                <div class="col-md-6 col-lg-4 stagger-item">
+                    <div class="highlight-card tilt-hover">
+                        <div class="feature-badge">
+                            <i class="fas fa-user-shield"></i> Security
+                        </div>
+                        <div class="highlight-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <h4>Multi-tier Account Management</h4>
+                        <p>Secure role-based access for administrators, pharmacists, and ward staff with comprehensive audit trails and permission controls.</p>
+                        <div class="progress-container mt-3">
+                            <div class="progress-bar" style="width: 95%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 stagger-item">
+                    <div class="highlight-card tilt-hover">
+                        <div class="feature-badge">
+                            <i class="fas fa-sync-alt"></i> Real-time
+                        </div>
+                        <div class="highlight-icon">
+                            <i class="fas fa-sync-alt rotate"></i>
+                        </div>
+                        <h4>Dynamic Antibiotic Operations</h4>
+                        <p>Real-time release, updates, and distribution control for efficient medication management across all hospital departments.</p>
+                        <div class="progress-container mt-3">
+                            <div class="progress-bar" style="width: 90%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 stagger-item">
+                    <div class="highlight-card tilt-hover">
+                        <div class="feature-badge">
+                            <i class="fas fa-procedures"></i> Ward Management
+                        </div>
+                        <div class="highlight-icon">
+                            <i class="fas fa-procedures"></i>
+                        </div>
+                        <h4>Ward-centric Management</h4>
+                        <p>Centralized ward data management with real-time update capabilities for streamlined hospital workflows and optimal resource allocation.</p>
+                        <div class="progress-container mt-3">
+                            <div class="progress-bar" style="width: 88%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 stagger-item">
+                    <div class="highlight-card tilt-hover">
+                        <div class="feature-badge">
+                            <i class="fas fa-database"></i> Database
+                        </div>
+                        <div class="highlight-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h4>Comprehensive Drug Database</h4>
+                        <p>Detailed antibiotic catalog with specifications, interactions, contraindications, and evidence-based usage guidelines for informed prescribing.</p>
+                        <div class="progress-container mt-3">
+                            <div class="progress-bar" style="width: 92%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 stagger-item">
+                    <div class="highlight-card tilt-hover">
+                        <div class="feature-badge">
+                            <i class="fas fa-warehouse"></i> Inventory
+                        </div>
+                        <div class="highlight-icon">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                        <h4>Intelligent Stock Control</h4>
+                        <p>Automated inventory tracking with predictive analytics to prevent shortages, minimize pharmaceutical waste, and optimize stock levels.</p>
+                        <div class="progress-container mt-3">
+                            <div class="progress-bar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 stagger-item">
+                    <div class="highlight-card tilt-hover">
+                        <div class="feature-badge">
+                            <i class="fas fa-chart-line"></i> Analytics
+                        </div>
+                        <div class="highlight-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h4>Advanced Analytics Engine</h4>
+                        <p>Comprehensive usage insights by ward, antibiotic type, and temporal patterns for data-driven clinical decisions and policy formulation.</p>
+                        <div class="progress-container mt-3">
+                            <div class="progress-bar" style="width: 96%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+   
+
+    <!-- How It Works -->
+    <section class="py-5 parallax" style="background-color: #f8fafc; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><rect width=\"100\" height=\"100\" fill=\"%23f8fafc\"/><path d=\"M0 0L100 100M100 0L0 100\" stroke=\"%23e2e8f0\" stroke-width=\"1\"/></svg>')
+        <div class="container">
+            <h2 class="section-title fade-in">⚙️ How MediQ Works</h2>
+            <div class="row mt-5">
+                <div class="col-lg-6 fade-in">
+                    <div class="card border-0 shadow-sm mb-4 tilt-hover">
+                        <div class="card-body p-4">
+                            <h4 class="mb-3"><i class="fas fa-sign-in-alt text-primary me-2 bounce"></i>Step 1: Role-based Access</h4>
+                            <p>Healthcare professionals log in with secure, role-specific credentials that determine their access levels and permissions within the system.</p>
+                        </div>
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4 tilt-hover">
+                        <div class="card-body p-4">
+                            <h4 class="mb-3"><i class="fas fa-prescription text-primary me-2 bounce"></i>Step 2: Antibiotic Management</h4>
+                            <p>Prescribe, dispense, and track antibiotics with real-time updates on availability, interactions, and appropriate usage guidelines.</p>
+                        </div>
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4 tilt-hover">
+                        <div class="card-body p-4">
+                            <h4 class="mb-3"><i class="fas fa-chart-bar text-primary me-2 bounce"></i>Step 3: Analytics & Reporting</h4>
+                            <p>Generate comprehensive reports on antibiotic usage patterns, resistance trends, and compliance metrics for informed decision-making.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 fade-in">
+                    <div class="p-4 text-center">
+                        <div class="position-relative d-inline-block">
+                            <i class="fas fa-cogs display-1 text-primary mb-3 rotate"></i>
+                            <div class="position-absolute top-0 start-100 translate-middle">
+                                <span class="badge bg-primary rounded-pill pulse">Live</span>
+                            </div>
+                        </div>
+                        <h3 class="mt-4 mb-3">Real-time Workflow Integration</h3>
+                        <p class="mb-4">MediQ seamlessly integrates with hospital workflows, providing instant access to critical antibiotic data when and where it's needed most.</p>
+                        <div class="progress-container mb-3">
+                            <div class="progress-bar" style="width: 75%"></div>
+                        </div>
+                        <p class="small text-muted">Workflow efficiency improvement</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials >
+    <section class="py-5" style="background-color: white;">
+        <div class="container">
+            <h2 class="section-title fade-in">💬 What Healthcare Professionals Say</h2>
+            <div class="row mt-4">
+                <div class="col-md-4 fade-in">
+                    <div class="testimonial-card tilt-hover">
+                        <div class="text-center">
+                            <i class="fas fa-user-md testimonial-avatar d-flex align-items-center justify-content-center mx-auto bg-primary text-white"></i>
+                            <h5 class="testimonial-name">Dr. Samantha Perera</h5>
+                            <p class="testimonial-role">Chief Pharmacist</p>
+                        </div>
+                        <p class="mb-0">"MediQ has revolutionized our antibiotic stewardship program. The real-time tracking and analytics have helped us reduce inappropriate prescriptions by 35%."</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-in">
+                    <div class="testimonial-card tilt-hover">
+                        <div class="text-center">
+                            <i class="fas fa-user-nurse testimonial-avatar d-flex align-items-center justify-content-center mx-auto bg-secondary text-white"></i>
+                            <h5 class="testimonial-name">Nurse Anusha Silva</h5>
+                            <p class="testimonial-role">Ward Manager</p>
+                        </div>
+                        <p class="mb-0">"The intuitive interface makes it easy to track medication administration. We've seen a significant improvement in medication safety since implementation."</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-in">
+                    <div class="testimonial-card tilt-hover">
+                        <div class="text-center">
+                            <i class="fas fa-user-md testimonial-avatar d-flex align-items-center justify-content-center mx-auto bg-accent text-white"></i>
+                            <h5 class="testimonial-name">Dr. Rajiv Fernando</h5>
+                            <p class="testimonial-role">Infectious Disease Specialist</p>
+                        </div>
+                        <p class="mb-0">"The comprehensive drug database and interaction alerts have been invaluable in our fight against antimicrobial resistance. A game-changer for modern healthcare."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section-->
+
+    <!-- Impact & Future -->
+    <section id="impact" class="impact-section">
+        <div class="container">
+            <h2 class="section-title fade-in">🤝 Impact & Future Vision</h2>
+            <div class="row mt-4">
+                <div class="col-lg-10 mx-auto fade-in">
+                    <div class="card border-0 shadow tilt-hover">
+                        <div class="card-body p-4 p-md-5">
+                            <p class="card-text fs-5">
+                                Developed in close collaboration with Karapitiya Hospital, MediQ represents a significant advancement in leveraging technology to strengthen Sri Lanka's healthcare infrastructure.
+                            </p>
+                            
+                           
+                            
+                            <div class="mt-4 pt-3 border-top">
+                                <p class="mb-0 text-muted">
+                                    <i class="fas fa-rocket me-2"></i> We're proud to introduce MediQ – Antibiotic Usage Analysis System, a step toward smarter, safer, and more sustainable healthcare practices.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+      /* Team Section Styles */
+.team-card {
+    text-align: center;
+    padding: 30px 25px;
+    transition: all 0.4s ease;
+}
+
+.team-img-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.team-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.team-status {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.team-status.online {
+    background-color: var(--success);
+}
+
+.team-status.busy {
+    background-color: #ff9800;
+}
+
+.team-status.offline {
+    background-color: var(--gray);
+}
+
+.skills-container {
+    text-align: left;
+}
+
+.skill-item {
+    margin-bottom: 15px;
+}
+
+.skill-item span {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.team-social {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.social-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-3px);
+}
+
+.process-step {
+    display: flex;
+    align-items: flex-start;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content h5 {
+    margin-bottom: 8px;
+    color: var(--dark);
+}
+
+.step-content p {
+    margin-bottom: 0;
+    color: var(--gray);
+}
+
+.tech-stack {
+    margin-top: 30px;
+}
+
+.tech-item {
+    padding: 20px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.tech-item:hover {
+    background-color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transform: translateY(-5px);
+}
+
+.tech-item:hover .tech-icon {
+    transform: scale(1.15);
+}
+    </style>
+
+  <!-- Development Team Section -->
+<section id="team" class="py-5" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+  <div class="container">
+    <h2 class="section-title fade-in text-center mb-3">👨‍💻 Development Team</h2>
+    <p class="text-center mb-5 fade-in">Meet the talented developers behind MediQ - Antibiotic Usage Analysis System</p>
+    
+    <div class="row justify-content-center g-4">
+      <!-- Team Member 1 -->
+      <div class="col-md-4 fade-in">
+        <div class="team-card highlight-card tilt-hover shadow-lg p-4 rounded-4 bg-white text-center">
+          <div class="team-img-container mx-auto mb-4 position-relative">
+            <div class="team-img rounded-circle d-flex align-items-center justify-content-center" 
+                  style="width:120px; height:120px; background:linear-gradient(135deg,#2563eb,#1e40af); color:white; font-size:48px;">
+              <img src="assets\images\Developers\malitha3.jpg" style="width:160px; height:160px; border-radius:50%; background:#22c55e; border:2px solid white";>
+            </div>
+            <div class="team-status online" 
+                 style="width:16px; height:16px; border-radius:50%; background:#22c55e; border:2px solid white; position:absolute; bottom:10px; right:120px;">
+            </div>
+          </div>
+
+          <h4 class="fw-bold mb-1">Malitha Tishamal</h4>
+          <p class="text-primary mb-3">Lead Full-Stack Developer</p>
+
+          <p class="text-muted small px-3">
+            Passionate software Developer specializing in modern technologies. Expert in Flutter, Firebase, MySQL, PHP, and full-stack architecture — focused on creating intelligent solutions.
+          </p>
+
+          <hr class="my-3">
+
+          <div class="team-social mt-3">
+
+            <a href="https://www.malithatishamal.42web.io" target="_blank" class="social-icon mx-2 text-primary" title="Visit My Website">
+              <i class="fas fa-globe fa-lg"></i>
+            </a>
+            <a href="https://github.com/malithatishamal" target="_blank" class="social-icon mx-2 text-dark" title="GitHub">
+              <i class="fab fa-github fa-lg"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/malithatishamal" target="_blank" class="social-icon mx-2 text-primary" title="LinkedIn">
+              <i class="fab fa-linkedin fa-lg"></i>
+            </a>
+
+            </a>
+            <a href="mailto:malithatishamal@example.com" class="social-icon mx-2 text-danger" title="Email">
+              <i class="fas fa-envelope fa-lg"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-4 fade-in">
+                    <h4><i class="fas fa-pills me-2"></i>MediQ</h4>
+                    <p>Antibiotic Usage Analysis System</p>
+                    <p>Empowering healthcare through innovative technology solutions for antimicrobial stewardship and optimized patient care.</p>
+
+                </div>
+                <div class="col-md-3 mb-4 fade-in">
+                    
+                </div>
+                
+            </div>
+            <div class="row mt-4 pt-3 border-top">
+                <div class="col text-center">
+                    <p class="mb-0">&copy; 2025 MediQ. All rights reserved. Built for Karapitiya Hospital, Galle.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Action Button -->
+    <a href="#home" class="floating-btn bounce">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Loading screen
+        window.addEventListener('load', function() {
+            const loadingScreen = document.querySelector('.loading-screen');
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+            }, 250);
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+        
+        // Fade-in animation on scroll
+        const fadeElements = document.querySelectorAll('.fade-in');
+        
+        const fadeInObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        fadeElements.forEach(el => {
+            fadeInObserver.observe(el);
+        });
+
+        // Staggered animation on scroll
+        const staggerItems = document.querySelectorAll('.stagger-item');
+        
+        const staggerObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('visible');
+                    }, index * 150);
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        staggerItems.forEach(el => {
+            staggerObserver.observe(el);
+        });
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Animated counter for stats
+        const counters = document.querySelectorAll('.stat-number');
+        const speed = 200;
+
+        const animateCounter = () => {
+            counters.forEach(counter => {
+                const target = +counter.getAttribute('data-count');
+                const count = +counter.innerText;
+                const increment = target / speed;
+
+                if (count < target) {
+                    counter.innerText = Math.ceil(count + increment);
+                    setTimeout(animateCounter, 1);
+                } else {
+                    counter.innerText = target;
+                }
+            });
+        };
+
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounter();
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        counters.forEach(counter => {
+            counterObserver.observe(counter);
+        });
+
+        // Create floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random size between 5 and 15px
+                const size = Math.random() * 10 + 5;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation duration
+                const duration = Math.random() * 20 + 10;
+                particle.style.animationDuration = `${duration}s`;
+                
+                // Random animation delay
+                const delay = Math.random() * 5;
+                particle.style.animationDelay = `${delay}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize particles
+        createParticles();
+    </script>
+</body>
+</html>
