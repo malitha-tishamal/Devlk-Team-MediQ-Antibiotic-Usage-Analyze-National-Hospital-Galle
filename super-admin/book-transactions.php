@@ -118,7 +118,7 @@ $result = $conn->query("SELECT * FROM book_transactions ORDER BY created_at DESC
                 <table class="table table-bordered text-center align-middle">
                     <thead class="table-dark">
                         <tr>
-                            <th>ID</th>
+                            <th>ID</th><!--auto incerement--->
                             <th>Book Number</th>
                             <th>Created At</th>
                             <th>Status</th>
